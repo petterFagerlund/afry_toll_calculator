@@ -17,6 +17,8 @@ public sealed class TollDbContext : DbContext
 
     public DbSet<Holiday> Holidays { get; init; } = null!;
 
+    public DbSet<VehicleTypeRule> VehicleTypeRules { get; init; } = null!;
+
     public DbSet<TollSettings> TollSettings { get; init; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

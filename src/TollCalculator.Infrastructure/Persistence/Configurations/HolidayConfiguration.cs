@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using TollCalculator.Domain.Models;
+using TollCalculator.Infrastructure.Persistence.Seed;
 
 namespace TollCalculator.Infrastructure.Persistence.Configurations;
 
@@ -14,5 +15,7 @@ internal sealed class HolidayConfiguration : IEntityTypeConfiguration<Holiday>
 
         builder.Property(holiday => holiday.Name)
             .HasMaxLength(100);
+
+        builder.HasData(TollSeedData.Holidays);
     }
 }

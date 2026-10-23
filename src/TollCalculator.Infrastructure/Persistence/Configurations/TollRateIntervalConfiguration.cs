@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using TollCalculator.Domain.Models;
+using TollCalculator.Infrastructure.Persistence.Seed;
 
 namespace TollCalculator.Infrastructure.Persistence.Configurations;
 
@@ -21,5 +22,10 @@ internal sealed class TollRateIntervalConfiguration : IEntityTypeConfiguration<T
 
         builder.HasIndex(interval => interval.Start)
             .IsUnique();
+
+        foreach (var seed in TollSeedData.RateIntervals)
+        {
+            builder.HasData(new { seed.Id, seed.Start, seed.End, seed.Amount });
+        }
     }
 }

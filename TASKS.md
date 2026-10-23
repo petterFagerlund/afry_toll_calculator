@@ -184,7 +184,7 @@ vehicle; a holiday.
 ## Task 8 — DbContext and entity configurations
 
 - `Infrastructure/Persistence/TollDbContext.cs` with `DbSet`s for `Vehicles`, `TollPassages`,
-  `TollRateIntervals`, `Holidays`, `TollSettings`.
+  `TollRateIntervals`, `Holidays`, `TollSettings`, `VehicleTypeRules`.
 - One `IEntityTypeConfiguration<T>` per entity under `Persistence/Configurations`: keys, max lengths, a
   unique index on `TollPassages(RegistrationNumber, PassedAt)`, `TimeOnly`/`DateOnly` conversions.
 - SQL Server provider; connection string read from `ConnectionStrings:TollDb`.
@@ -196,7 +196,8 @@ Files: `src/TollCalculator.Infrastructure/Persistence/**`
 ## Task 9 — Seed data
 
 - `HasData` for: the nine rate intervals from the schedule table; the 60 SEK daily cap row in `TollSettings`;
-  the seven vehicle types with their toll-free flag; Swedish public holidays for the current and next year.
+  the seven vehicle types with their toll-free flag in `VehicleTypeRules`; Swedish public holidays for 2026
+  and 2027 (hardcoded — `HasData` must be deterministic, so adding a year means a new migration).
 - Seed values live as constants in one file so the table above and the code cannot drift apart.
 
 Files: `src/TollCalculator.Infrastructure/Persistence/Seed/*.cs`
