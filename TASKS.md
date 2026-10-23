@@ -207,14 +207,17 @@ Files: `src/TollCalculator.Infrastructure/Persistence/Seed/*.cs`
 ## Task 10 — Repositories
 
 - Interfaces in `Infrastructure/Repositories`, EF implementations in `Repositories/Implementations`:
-  `IVehicleRepository`, `ITollPassageRepository`, `ITollScheduleRepository`, `IHolidayRepository`.
+  `IVehicleRepository`, `ITollPassageRepository`, `ITollScheduleRepository`, `IHolidayRepository`,
+  `IVehicleTypeRuleRepository`.
 - Async throughout with a `CancellationToken` on every method; `AsNoTracking` on reads.
 - The daily-passage query filters on the date in the service's time zone, not UTC-naively.
 
 Files: `src/TollCalculator.Infrastructure/Repositories/**`,
 `test/TollCalculator.Infrastructure.UnitTests/Repositories/*.cs`
 
-**Done when:** every interface has exactly one implementation, with tests over an in-memory/SQLite context.
+**Done when:** every interface has exactly one implementation, with tests over an in-memory context.
+SQLite is not usable here — its provider cannot translate `DateTimeOffset` comparisons, so the day-boundary
+query is proven against real SQL Server in Task 23 instead.
 
 ## Task 11 — Migration and infrastructure registration
 
