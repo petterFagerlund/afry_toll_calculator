@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TollCalculator.Application/TollCalculator.Application.csproj" />
+    <Project Path="src/TollCalculator.Domain/TollCalculator.Domain.csproj" />
+    <Project Path="src/TollCalculator.Infrastructure/TollCalculator.Infrastructure.csproj" />
+    <Project Path="src/TollCalculator.WebApi.Host/TollCalculator.WebApi.Host.csproj" />
+    <Project Path="src/TollCalculator.WebApi.Models/TollCalculator.WebApi.Models.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/TollCalculator.Application.UnitTests/TollCalculator.Application.UnitTests.csproj" />
+    <Project Path="test/TollCalculator.Domain.UnitTests/TollCalculator.Domain.UnitTests.csproj" />
+    <Project Path="test/TollCalculator.Infrastructure.UnitTests/TollCalculator.Infrastructure.UnitTests.csproj" />
+    <Project Path="test/TollCalculator.WebApi.Host.IntegrationTests/TollCalculator.WebApi.Host.IntegrationTests.csproj" />
+  </Folder>
+</Solution>

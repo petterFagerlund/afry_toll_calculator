@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TollCalculator.WebApi.Models\TollCalculator.WebApi.Models.csproj" />
+    <ProjectReference Include="..\TollCalculator.Application\TollCalculator.Application.csproj" />
+    <ProjectReference Include="..\TollCalculator.Domain\TollCalculator.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TollCalculator.WebApi.Host.IntegrationTests" />
+  </ItemGroup>
+
+</Project>
