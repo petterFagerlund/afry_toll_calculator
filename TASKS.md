@@ -67,7 +67,9 @@ Weekends and holidays are free.
 
 1. `:25` — the hour window is computed from `DateTime.Millisecond`, not a real time difference.
 2. `:66` — `hour >= 8 && hour <= 14 && minute >= 30` never charges 8 SEK for e.g. 09:05.
-3. `:68` — `hour == 15 && minute >= 0 || hour == 16 && minute <= 59` shadows the 15:00–15:29 case.
+3. `:68` — `hour == 15 && minute >= 0 || hour == 16 && minute <= 59` mixes `&&` and `||` without
+   parentheses. It happens to return the right amount only because the preceding branch catches
+   15:00–15:29 first; reorder the branches and 15:00 silently becomes 18 SEK.
 4. `:82` — holidays are hardcoded to the year 2013.
 5. `GetTollFee` assumes `dates` is non-empty and already sorted; no input validation.
 6. Toll-free vehicles are matched by string comparison against a private enum.
