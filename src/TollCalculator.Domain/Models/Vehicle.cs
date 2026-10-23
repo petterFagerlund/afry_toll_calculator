@@ -19,11 +19,8 @@ public sealed record Vehicle
 
     public static Vehicle Create(string registrationNumber, VehicleType vehicleType)
     {
-        if (string.IsNullOrWhiteSpace(registrationNumber))
-        {
-            throw new ArgumentException("A registration number is required.", nameof(registrationNumber));
-        }
+        var normalized = RegistrationNumbers.Normalize(registrationNumber, nameof(registrationNumber));
 
-        return new Vehicle(registrationNumber.Trim().ToUpperInvariant(), vehicleType);
+        return new Vehicle(normalized, vehicleType);
     }
 }

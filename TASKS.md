@@ -116,13 +116,13 @@ Files: `src/TollCalculator.Domain/{Enums,Models,Constants}/*.cs`,
 
 **Done when:** unit tests cover normalisation, equality, and `IsTollFree` for all seven types.
 
-## Task 3 — Passage model
+## Task 3 — TollPassage model
 
-- `Domain/Models/Passage.cs`: `Id`, `RegistrationNumber`, `PassedAt` (`DateTimeOffset`).
+- `Domain/Models/TollPassage.cs`: `Id`, `RegistrationNumber`, `PassedAt` (`DateTimeOffset`).
 - Factory method validating a non-empty registration number.
 
-Files: `src/TollCalculator.Domain/Models/Passage.cs`,
-`test/TollCalculator.Domain.UnitTests/Models/PassageTests.cs`
+Files: `src/TollCalculator.Domain/Models/TollPassage.cs`,
+`test/TollCalculator.Domain.UnitTests/Models/TollPassageTests.cs`
 
 **Done when:** tests cover a valid passage and the invalid-input throw.
 
@@ -181,10 +181,10 @@ vehicle; a holiday.
 
 ## Task 8 — DbContext and entity configurations
 
-- `Infrastructure/Persistence/TollDbContext.cs` with `DbSet`s for `Vehicles`, `Passages`,
+- `Infrastructure/Persistence/TollDbContext.cs` with `DbSet`s for `Vehicles`, `TollPassages`,
   `TollRateIntervals`, `Holidays`, `TollSettings`.
 - One `IEntityTypeConfiguration<T>` per entity under `Persistence/Configurations`: keys, max lengths, a
-  unique index on `Passages(RegistrationNumber, PassedAt)`, `TimeOnly`/`DateOnly` conversions.
+  unique index on `TollPassages(RegistrationNumber, PassedAt)`, `TimeOnly`/`DateOnly` conversions.
 - SQL Server provider; connection string read from `ConnectionStrings:TollDb`.
 
 Files: `src/TollCalculator.Infrastructure/Persistence/**`
@@ -204,7 +204,7 @@ Files: `src/TollCalculator.Infrastructure/Persistence/Seed/*.cs`
 ## Task 10 — Repositories
 
 - Interfaces in `Infrastructure/Repositories`, EF implementations in `Repositories/Implementations`:
-  `IVehicleRepository`, `IPassageRepository`, `ITollScheduleRepository`, `IHolidayRepository`.
+  `IVehicleRepository`, `ITollPassageRepository`, `ITollScheduleRepository`, `IHolidayRepository`.
 - Async throughout with a `CancellationToken` on every method; `AsNoTracking` on reads.
 - The daily-passage query filters on the date in the service's time zone, not UTC-naively.
 
@@ -229,14 +229,14 @@ Files: `src/TollCalculator.Infrastructure/Registrations/ServiceCollectionExtensi
 
 # Phase 3 — Application
 
-## Task 12 — Passage service
+## Task 12 — Toll passage service
 
-- `Application/Services/IPassageService.cs` + `Implementations/PassageService.cs`: `RecordPassageAsync`
-  looks up (or rejects) the vehicle, creates a `Passage`, persists it.
+- `Application/Services/ITollPassageService.cs` + `Implementations/TollPassageService.cs`: `RecordTollPassageAsync`
+  looks up (or rejects) the vehicle, creates a `TollPassage`, persists it.
 - Returns an application result carrying the new passage id or a not-found error.
 
 Files: `src/TollCalculator.Application/Services/**`,
-`test/TollCalculator.Application.UnitTests/Services/PassageServiceTests.cs`
+`test/TollCalculator.Application.UnitTests/Services/TollPassageServiceTests.cs`
 
 **Done when:** tests (NSubstitute fakes) cover the happy path and the unknown-vehicle failure.
 
@@ -278,8 +278,8 @@ Files: `src/TollCalculator.Application/Registrations/ServiceCollectionExtensions
 
 ## Task 16 — Request/response contracts
 
-- `WebApi.Models/V1/Requests`: `RecordPassageRequest`, `CalculateTollRequest`, `TokenRequest`.
-- `WebApi.Models/V1/Responses`: `RecordPassageResponse`, `DailyTollResponse` (plus `ChargedPassage`),
+- `WebApi.Models/V1/Requests`: `RecordTollPassageRequest`, `CalculateTollRequest`, `TokenRequest`.
+- `WebApi.Models/V1/Responses`: `RecordTollPassageResponse`, `DailyTollResponse` (plus `ChargedTollPassage`),
   `CalculateTollResponse`, `TokenResponse`, `TollRateResponse`, `HolidayResponse`, `VehicleTypeResponse`.
 - **Vehicle type and every other categorical field is a `string`.** No enums in this project.
 - Mappers between contracts and domain models in `WebApi.Host/Mappers/Implementations`.
@@ -302,14 +302,14 @@ Files: `src/TollCalculator.WebApi.Host/Program.cs`, `src/TollCalculator.WebApi.H
 **Done when:** `dotnet run` starts on `https://localhost:7xxx`, the health endpoint returns 200, and plain
 HTTP redirects.
 
-## Task 18 — Passage controller
+## Task 18 — Toll passage controller
 
-- `Controllers/V1/PassagesController.cs`:
-  - `POST /api/v1/passages` → 201 with the passage id; 400 on bad input; 404 on an unknown vehicle.
+- `Controllers/V1/TollPassagesController.cs`:
+  - `POST /api/v1/toll-passages` → 201 with the passage id; 400 on bad input; 404 on an unknown vehicle.
   - `GET /api/v1/vehicles/{registrationNumber}/toll?date=yyyy-MM-dd` → `DailyTollResponse`.
 - Request validation in `Validators/Implementation`.
 
-Files: `src/TollCalculator.WebApi.Host/Controllers/V1/PassagesController.cs`,
+Files: `src/TollCalculator.WebApi.Host/Controllers/V1/TollPassagesController.cs`,
 `src/TollCalculator.WebApi.Host/Validators/**`
 
 **Done when:** both routes appear in the OpenAPI document with their response types.
