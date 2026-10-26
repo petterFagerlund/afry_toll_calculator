@@ -5,6 +5,8 @@ namespace TollCalculator.Domain.Models;
 
 public sealed record Vehicle
 {
+    public const string UnregisteredRegistrationNumber = "UNREGISTERED";
+
     private Vehicle(string registrationNumber, VehicleType vehicleType)
     {
         RegistrationNumber = registrationNumber;
@@ -16,6 +18,11 @@ public sealed record Vehicle
     public VehicleType VehicleType { get; }
 
     public bool IsTollFree => TollFreeVehicleTypes.Contains(VehicleType);
+
+    public static Vehicle Unregistered(VehicleType vehicleType)
+    {
+        return new Vehicle(UnregisteredRegistrationNumber, vehicleType);
+    }
 
     public static Vehicle Create(string registrationNumber, VehicleType vehicleType)
     {
