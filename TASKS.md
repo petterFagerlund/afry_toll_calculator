@@ -259,13 +259,18 @@ Files: `src/TollCalculator.Application/Services/**`,
 **Done when:** tests cover a day with passages, a day with none, an unknown vehicle, an unknown vehicle-type
 string, and an empty timestamp list.
 
-## Task 14 — Reference-data service
+## Task 14 — Reference-data services
 
-- `Application/Services/IReferenceDataService.cs` + implementation: toll rates, holidays filtered by year,
-  toll-free vehicle types.
+One service per kind of reference data, each over a single repository — not one grab-bag service:
+
+- `Application/Services/ITollRateService.cs` + implementation: the rate intervals from the schedule.
+- `Application/Services/IHolidayService.cs` + implementation: holidays, filtered by year when one is given,
+  all of them when it is not. An impossible year is an `Invalid` result, not a read.
+- `Application/Services/IVehicleTypeService.cs` + implementation: every vehicle-type rule with its
+  toll-free flag, so a caller can filter.
 
 Files: `src/TollCalculator.Application/Services/**`,
-`test/TollCalculator.Application.UnitTests/Services/ReferenceDataServiceTests.cs`
+`test/TollCalculator.Application.UnitTests/Services/{TollRate,Holiday,VehicleType}ServiceTests.cs`
 
 **Done when:** each read has a unit test asserting it returns what the repository gave it.
 
@@ -323,8 +328,11 @@ Files: `src/TollCalculator.WebApi.Host/Controllers/V1/TollPassagesController.cs`
 ## Task 19 — Toll and reference controllers
 
 - `Controllers/V1/TollController.cs`: `POST /api/v1/toll/calculate`.
-- `Controllers/V1/ReferenceController.cs`: `GET /api/v1/toll-rates`, `GET /api/v1/holidays?year=`,
-  `GET /api/v1/vehicle-types`.
+- `Controllers/V1/TollRatesController.cs`: `GET /api/v1/toll-rates`.
+- `Controllers/V1/HolidaysController.cs`: `GET /api/v1/holidays?year=`.
+- `Controllers/V1/VehicleTypesController.cs`: `GET /api/v1/vehicle-types`.
+
+One controller per resource, each injecting its own Task 14 service.
 
 Files: `src/TollCalculator.WebApi.Host/Controllers/V1/*.cs`
 
