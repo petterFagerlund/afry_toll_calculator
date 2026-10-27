@@ -1,5 +1,10 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using TollCalculator.Infrastructure.Persistence;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using TollCalculator.Infrastructure.Registrations;
@@ -43,10 +48,24 @@ internal sealed class IntegrationTestFactory : WebApplicationFactory<Program>
 
         builder.UseEnvironment(_environmentName);
 
-        builder.ConfigureAppConfiguration((_, configuration) =>
+        builder.ConfigureTestServices(services =>
+        {
+            services.RemoveAll<DbContextOptions<TollDbContext>>();
+            services.RemoveAll<DbContextOptions>();
+            services.AddDbContext<TollDbContext>(options => options.UseSqlServer(_connectionString));
+        });
+    }
+
+    protected override IHost CreateHost(IHostBuilder builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        builder.ConfigureAppConfiguration(configuration =>
         {
             configuration.AddInMemoryCollection(Settings());
         });
+
+        return base.CreateHost(builder);
     }
 
     private Dictionary<string, string?> Settings()

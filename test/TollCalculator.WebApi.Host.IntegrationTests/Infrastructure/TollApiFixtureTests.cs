@@ -1,4 +1,7 @@
 using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using TollCalculator.Infrastructure.Persistence;
 using Xunit;
 
 namespace TollCalculator.WebApi.Host.IntegrationTests.Infrastructure;
@@ -25,6 +28,20 @@ public class TollApiFixtureTests
 
         Assert.NotEqual(DefaultSqlServerPort.ToString(), port);
         Assert.NotEqual("TollCalculator", builder.InitialCatalog);
+    }
+
+    [Fact]
+    public void TheApplicationUnderTest_TalksToTheSameContainerTheFixtureSeeds()
+    {
+        using var scope = _fixture.Development.Services.CreateScope();
+
+        var context = scope.ServiceProvider.GetRequiredService<TollDbContext>();
+
+        var application = new SqlConnectionStringBuilder(context.Database.GetConnectionString()!);
+        var fixture = new SqlConnectionStringBuilder(_fixture.ConnectionString);
+
+        Assert.Equal(fixture.DataSource, application.DataSource);
+        Assert.Equal(fixture.InitialCatalog, application.InitialCatalog);
     }
 
     [Fact]
