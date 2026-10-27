@@ -20,6 +20,7 @@ public sealed class TollApiFixture : IAsyncLifetime
     private readonly MsSqlContainer _container = new MsSqlBuilder(SqlServerImage).Build();
 
     private IntegrationTestFactory? _developmentFactory;
+    private IntegrationTestFactory? _productionFactory;
 
     public string ConnectionString
     {
@@ -29,6 +30,11 @@ public sealed class TollApiFixture : IAsyncLifetime
     internal IntegrationTestFactory Development
     {
         get { return _developmentFactory ??= IntegrationTestFactory.Development(ConnectionString); }
+    }
+
+    internal IntegrationTestFactory Production
+    {
+        get { return _productionFactory ??= IntegrationTestFactory.Production(ConnectionString); }
     }
 
     public async Task InitializeAsync()
@@ -42,6 +48,11 @@ public sealed class TollApiFixture : IAsyncLifetime
         if (_developmentFactory is not null)
         {
             await _developmentFactory.DisposeAsync();
+        }
+
+        if (_productionFactory is not null)
+        {
+            await _productionFactory.DisposeAsync();
         }
 
         await _container.DisposeAsync();

@@ -48,6 +48,11 @@ internal sealed class IntegrationTestFactory : WebApplicationFactory<Program>
 
         builder.UseEnvironment(_environmentName);
 
+        foreach (var setting in Settings())
+        {
+            builder.UseSetting(setting.Key, setting.Value);
+        }
+
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<DbContextOptions<TollDbContext>>();
@@ -56,17 +61,6 @@ internal sealed class IntegrationTestFactory : WebApplicationFactory<Program>
         });
     }
 
-    protected override IHost CreateHost(IHostBuilder builder)
-    {
-        ArgumentNullException.ThrowIfNull(builder);
-
-        builder.ConfigureAppConfiguration(configuration =>
-        {
-            configuration.AddInMemoryCollection(Settings());
-        });
-
-        return base.CreateHost(builder);
-    }
 
     private Dictionary<string, string?> Settings()
     {
