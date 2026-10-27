@@ -1,9 +1,11 @@
 using TollCalculator.Infrastructure.Registrations;
+using TollCalculator.WebApi.Host.Registrations;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddMappers();
 
 var app = builder.Build();
 
