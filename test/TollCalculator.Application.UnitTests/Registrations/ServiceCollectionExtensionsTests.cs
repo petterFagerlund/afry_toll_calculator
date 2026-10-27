@@ -1,9 +1,10 @@
 using Microsoft.Extensions.DependencyInjection;
+using TollCalculator.Domain.Models;
 using NSubstitute;
 using TollCalculator.Application.Registrations;
 using TollCalculator.Application.Services;
 using TollCalculator.Domain.Services;
-using TollCalculator.Infrastructure.Repositories;
+using TollCalculator.Domain.Repositories;
 using Xunit;
 
 namespace TollCalculator.Application.UnitTests.Registrations;
@@ -16,7 +17,7 @@ public class ServiceCollectionExtensionsTests
     [InlineData(typeof(ITollRateService))]
     [InlineData(typeof(IHolidayService))]
     [InlineData(typeof(IVehicleTypeService))]
-    [InlineData(typeof(IDailyTollServiceFactory))]
+    [InlineData(typeof(IDailyTollService))]
     public void AddApplication_ResolvesRegisteredService(Type serviceType)
     {
         using var provider = BuildProvider();
@@ -40,13 +41,28 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddApplication_RegistersAFactoryThatComposesTheDomainServices()
+    public void AddApplication_ComposesTheDomainServices()
     {
         using var provider = BuildProvider();
 
-        var factory = provider.GetRequiredService<IDailyTollServiceFactory>();
+        var dailyTollService = provider.GetRequiredService<IDailyTollService>();
+        var vehicle = Vehicle.Unregistered(Domain.Enums.VehicleType.Car);
+        var tariff = TollTariff.Create(TollSchedule.Create([]), 60);
 
-        Assert.IsAssignableFrom<IDailyTollService>(factory.Create([]));
+        Assert.Equal(0, dailyTollService.Calculate(vehicle, [], tariff, []).TotalFee);
+    }
+
+    [Fact]
+    public void AddApplication_RegistersTheDomainServicesAsSingletons()
+    {
+        using var provider = BuildProvider();
+
+        using var firstScope = provider.CreateScope();
+        using var secondScope = provider.CreateScope();
+
+        Assert.Same(
+            firstScope.ServiceProvider.GetRequiredService<IDailyTollService>(),
+            secondScope.ServiceProvider.GetRequiredService<IDailyTollService>());
     }
 
     [Fact]

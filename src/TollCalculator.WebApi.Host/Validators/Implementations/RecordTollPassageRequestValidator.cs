@@ -1,10 +1,10 @@
 using TollCalculator.WebApi.Models.V1.Requests;
 
-namespace TollCalculator.WebApi.Host.Validators.Implementation;
+namespace TollCalculator.WebApi.Host.Validators.Implementations;
 
-internal sealed class RecordTollPassageRequestValidator : IRecordTollPassageRequestValidator
+internal static class RecordTollPassageRequestValidator
 {
-    public ValidationResult Validate(RecordTollPassageRequest? request)
+    public static ValidationResult Validate(RecordTollPassageRequest? request)
     {
         var errors = new ValidationErrors();
 
@@ -20,7 +20,7 @@ internal sealed class RecordTollPassageRequestValidator : IRecordTollPassageRequ
             errors.Add(nameof(RecordTollPassageRequest.RegistrationNumber), registrationNumberError);
         }
 
-        if (request.PassedAt == default)
+        if (request.PassedAt == DateTimeOffset.MinValue)
         {
             errors.Add(nameof(RecordTollPassageRequest.PassedAt), "A passage timestamp is required.");
         }

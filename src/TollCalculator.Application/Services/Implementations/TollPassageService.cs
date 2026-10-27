@@ -1,6 +1,6 @@
 using TollCalculator.Application.Results;
 using TollCalculator.Domain.Models;
-using TollCalculator.Infrastructure.Repositories;
+using TollCalculator.Domain.Repositories;
 
 namespace TollCalculator.Application.Services.Implementations;
 
@@ -23,11 +23,6 @@ internal sealed class TollPassageService : ITollPassageService
         DateTimeOffset passedAt,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(registrationNumber))
-        {
-            return ApplicationResult<Guid>.Invalid("A registration number is required.");
-        }
-
         var vehicle = await _vehicleRepository.GetAsync(registrationNumber, cancellationToken);
 
         if (vehicle is null)

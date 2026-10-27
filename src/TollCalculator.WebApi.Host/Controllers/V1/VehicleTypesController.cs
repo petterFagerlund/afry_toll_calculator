@@ -10,30 +10,21 @@ namespace TollCalculator.WebApi.Host.Controllers.V1;
 public sealed class VehicleTypesController : ApiControllerBase
 {
     private readonly IVehicleTypeService _vehicleTypeService;
-    private readonly IVehicleTypeMapper _vehicleTypeMapper;
 
-    public VehicleTypesController(IVehicleTypeService vehicleTypeService, IVehicleTypeMapper vehicleTypeMapper)
+    public VehicleTypesController(IVehicleTypeService vehicleTypeService)
     {
         ArgumentNullException.ThrowIfNull(vehicleTypeService);
-        ArgumentNullException.ThrowIfNull(vehicleTypeMapper);
 
         _vehicleTypeService = vehicleTypeService;
-        _vehicleTypeMapper = vehicleTypeMapper;
     }
 
     /// <summary>Returns every vehicle type with the flag that says whether it is toll free.</summary>
     [HttpGet("api/v{version:apiVersion}/vehicle-types")]
     [ProducesResponseType<VehicleTypeResponse[]>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<VehicleTypeResponse[]>> GetVehicleTypes(CancellationToken cancellationToken)
     {
-        var result = await _vehicleTypeService.GetVehicleTypeRulesAsync(cancellationToken);
+        var rules = await _vehicleTypeService.GetVehicleTypeRulesAsync(cancellationToken);
 
-        if (!result.IsSuccess)
-        {
-            return Failure(result);
-        }
-
-        return Ok(_vehicleTypeMapper.ToResponses(result.Value!));
+        return Ok(VehicleTypeMapper.ToResponses(rules));
     }
 }

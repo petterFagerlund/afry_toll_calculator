@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using TollCalculator.Application.Services;
 using TollCalculator.Domain.Constants;
 using TollCalculator.WebApi.Host.Mappers;
-using TollCalculator.WebApi.Host.Validators;
+using TollCalculator.WebApi.Host.Validators.Implementations;
 using TollCalculator.WebApi.Models.V1.Requests;
 using TollCalculator.WebApi.Models.V1.Responses;
 
@@ -14,32 +14,14 @@ public sealed class TollPassagesController : ApiControllerBase
 {
     private readonly ITollPassageService _tollPassageService;
     private readonly ITollService _tollService;
-    private readonly ITollPassageMapper _tollPassageMapper;
-    private readonly IDailyTollMapper _dailyTollMapper;
-    private readonly IRecordTollPassageRequestValidator _recordTollPassageRequestValidator;
-    private readonly IDailyTollQueryValidator _dailyTollQueryValidator;
 
-    public TollPassagesController(
-        ITollPassageService tollPassageService,
-        ITollService tollService,
-        ITollPassageMapper tollPassageMapper,
-        IDailyTollMapper dailyTollMapper,
-        IRecordTollPassageRequestValidator recordTollPassageRequestValidator,
-        IDailyTollQueryValidator dailyTollQueryValidator)
+    public TollPassagesController(ITollPassageService tollPassageService, ITollService tollService)
     {
         ArgumentNullException.ThrowIfNull(tollPassageService);
         ArgumentNullException.ThrowIfNull(tollService);
-        ArgumentNullException.ThrowIfNull(tollPassageMapper);
-        ArgumentNullException.ThrowIfNull(dailyTollMapper);
-        ArgumentNullException.ThrowIfNull(recordTollPassageRequestValidator);
-        ArgumentNullException.ThrowIfNull(dailyTollQueryValidator);
 
         _tollPassageService = tollPassageService;
         _tollService = tollService;
-        _tollPassageMapper = tollPassageMapper;
-        _dailyTollMapper = dailyTollMapper;
-        _recordTollPassageRequestValidator = recordTollPassageRequestValidator;
-        _dailyTollQueryValidator = dailyTollQueryValidator;
     }
 
     /// <summary>Records that a vehicle passed a toll station.</summary>
@@ -51,7 +33,7 @@ public sealed class TollPassagesController : ApiControllerBase
         [FromBody] RecordTollPassageRequest request,
         CancellationToken cancellationToken)
     {
-        var validationResult = _recordTollPassageRequestValidator.Validate(request);
+        var validationResult = RecordTollPassageRequestValidator.Validate(request);
 
         if (!validationResult.IsValid)
         {
@@ -73,7 +55,9 @@ public sealed class TollPassagesController : ApiControllerBase
             date = TollTimeZone.DateOf(request.PassedAt),
         };
 
-        return CreatedAtAction(nameof(GetDailyToll), routeValues, _tollPassageMapper.ToResponse(result.Value));
+        var response = new RecordTollPassageResponse { TollPassageId = result.Value };
+
+        return CreatedAtAction(nameof(GetDailyToll), routeValues, response);
     }
 
     /// <summary>Returns the toll a vehicle owes for a single day, with the passages that were charged.</summary>
@@ -86,7 +70,7 @@ public sealed class TollPassagesController : ApiControllerBase
         [FromQuery] DateOnly? date,
         CancellationToken cancellationToken)
     {
-        var validationResult = _dailyTollQueryValidator.Validate(registrationNumber, date);
+        var validationResult = DailyTollQueryValidator.Validate(registrationNumber, date);
 
         if (!validationResult.IsValid)
         {
@@ -100,6 +84,6 @@ public sealed class TollPassagesController : ApiControllerBase
             return Failure(result);
         }
 
-        return Ok(_dailyTollMapper.ToDailyTollResponse(registrationNumber, date.Value, result.Value!));
+        return Ok(DailyTollMapper.ToDailyTollResponse(registrationNumber, date.Value, result.Value!));
     }
 }

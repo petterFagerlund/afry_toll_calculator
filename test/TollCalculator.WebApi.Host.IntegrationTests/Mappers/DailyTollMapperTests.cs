@@ -1,5 +1,5 @@
 using TollCalculator.Domain.Models;
-using TollCalculator.WebApi.Host.Mappers.Implementations;
+using TollCalculator.WebApi.Host.Mappers;
 using Xunit;
 
 namespace TollCalculator.WebApi.Host.IntegrationTests.Mappers;
@@ -9,14 +9,12 @@ public class DailyTollMapperTests
     private static readonly DateTimeOffset Morning = new(2026, 3, 16, 7, 15, 0, TimeSpan.FromHours(1));
     private static readonly DateTimeOffset Afternoon = new(2026, 3, 16, 15, 40, 0, TimeSpan.FromHours(1));
 
-    private readonly DailyTollMapper _mapper = new();
-
     [Fact]
     public void ToDailyTollResponse_MapsTheTotalAndEveryChargedPassage()
     {
         var dailyToll = new DailyToll(36, [new ChargedTollPassage(Morning, 18), new ChargedTollPassage(Afternoon, 18)]);
 
-        var response = _mapper.ToDailyTollResponse("ABC123", new DateOnly(2026, 3, 16), dailyToll);
+        var response = DailyTollMapper.ToDailyTollResponse("ABC123", new DateOnly(2026, 3, 16), dailyToll);
 
         Assert.Equal("ABC123", response.RegistrationNumber);
         Assert.Equal(new DateOnly(2026, 3, 16), response.Date);
@@ -28,7 +26,7 @@ public class DailyTollMapperTests
     [Fact]
     public void ToDailyTollResponse_MapsADayWithoutChargedPassages()
     {
-        var response = _mapper.ToDailyTollResponse("ABC123", new DateOnly(2026, 3, 15), DailyToll.None());
+        var response = DailyTollMapper.ToDailyTollResponse("ABC123", new DateOnly(2026, 3, 15), DailyToll.None());
 
         Assert.Equal(0, response.TotalFee);
         Assert.Empty(response.ChargedPassages);
@@ -39,7 +37,7 @@ public class DailyTollMapperTests
     {
         var dailyToll = new DailyToll(18, [new ChargedTollPassage(Morning, 18)]);
 
-        var response = _mapper.ToCalculateTollResponse("Car", dailyToll);
+        var response = DailyTollMapper.ToCalculateTollResponse("Car", dailyToll);
 
         Assert.Equal("Car", response.VehicleType);
         Assert.Equal(18, response.TotalFee);
@@ -49,7 +47,7 @@ public class DailyTollMapperTests
     [Fact]
     public void ToCalculateTollResponse_MapsATollFreeResult()
     {
-        var response = _mapper.ToCalculateTollResponse("Motorbike", DailyToll.None());
+        var response = DailyTollMapper.ToCalculateTollResponse("Motorbike", DailyToll.None());
 
         Assert.Equal(0, response.TotalFee);
         Assert.Empty(response.ChargedPassages);
@@ -59,12 +57,12 @@ public class DailyTollMapperTests
     public void ToDailyTollResponse_ThrowsWhenTheDailyTollIsNull()
     {
         Assert.Throws<ArgumentNullException>(
-            () => _mapper.ToDailyTollResponse("ABC123", new DateOnly(2026, 3, 16), null!));
+            () => DailyTollMapper.ToDailyTollResponse("ABC123", new DateOnly(2026, 3, 16), null!));
     }
 
     [Fact]
     public void ToCalculateTollResponse_ThrowsWhenTheDailyTollIsNull()
     {
-        Assert.Throws<ArgumentNullException>(() => _mapper.ToCalculateTollResponse("Car", null!));
+        Assert.Throws<ArgumentNullException>(() => DailyTollMapper.ToCalculateTollResponse("Car", null!));
     }
 }

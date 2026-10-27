@@ -1,11 +1,11 @@
 using TollCalculator.Domain.Models;
 using TollCalculator.WebApi.Models.V1.Responses;
 
-namespace TollCalculator.WebApi.Host.Mappers.Implementations;
+namespace TollCalculator.WebApi.Host.Mappers;
 
-internal sealed class VehicleTypeMapper : IVehicleTypeMapper
+internal static class VehicleTypeMapper
 {
-    public VehicleTypeResponse[] ToResponses(VehicleTypeRule[] rules)
+    public static VehicleTypeResponse[] ToResponses(VehicleTypeRule[] rules)
     {
         ArgumentNullException.ThrowIfNull(rules);
 

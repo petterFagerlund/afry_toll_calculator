@@ -1,7 +1,8 @@
 using TollCalculator.Application.Results;
 using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
-using TollCalculator.Infrastructure.Repositories;
+using TollCalculator.Domain.Repositories;
+using TollCalculator.Domain.Services;
 
 namespace TollCalculator.Application.Services.Implementations;
 
@@ -11,26 +12,26 @@ internal sealed class TollService : ITollService
     private readonly ITollPassageRepository _tollPassageRepository;
     private readonly ITollScheduleRepository _tollScheduleRepository;
     private readonly IHolidayRepository _holidayRepository;
-    private readonly IDailyTollServiceFactory _dailyTollServiceFactory;
+    private readonly IDailyTollService _dailyTollService;
 
     public TollService(
         IVehicleRepository vehicleRepository,
         ITollPassageRepository tollPassageRepository,
         ITollScheduleRepository tollScheduleRepository,
         IHolidayRepository holidayRepository,
-        IDailyTollServiceFactory dailyTollServiceFactory)
+        IDailyTollService dailyTollService)
     {
         ArgumentNullException.ThrowIfNull(vehicleRepository);
         ArgumentNullException.ThrowIfNull(tollPassageRepository);
         ArgumentNullException.ThrowIfNull(tollScheduleRepository);
         ArgumentNullException.ThrowIfNull(holidayRepository);
-        ArgumentNullException.ThrowIfNull(dailyTollServiceFactory);
+        ArgumentNullException.ThrowIfNull(dailyTollService);
 
         _vehicleRepository = vehicleRepository;
         _tollPassageRepository = tollPassageRepository;
         _tollScheduleRepository = tollScheduleRepository;
         _holidayRepository = holidayRepository;
-        _dailyTollServiceFactory = dailyTollServiceFactory;
+        _dailyTollService = dailyTollService;
     }
 
     public async Task<ApplicationResult<DailyToll>> GetDailyTollAsync(
@@ -38,11 +39,6 @@ internal sealed class TollService : ITollService
         DateOnly date,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(registrationNumber))
-        {
-            return ApplicationResult<DailyToll>.Invalid("A registration number is required.");
-        }
-
         var vehicle = await _vehicleRepository.GetAsync(registrationNumber, cancellationToken);
 
         if (vehicle is null)
@@ -54,7 +50,7 @@ internal sealed class TollService : ITollService
         var passages = await _tollPassageRepository.GetForDayAsync(registrationNumber, date, cancellationToken);
         var holidays = await _holidayRepository.GetByYearAsync(date.Year, cancellationToken);
 
-        return await CalculateDailyTollAsync(vehicle, passages, holidays, cancellationToken);
+        return await CalculateTollAsync(vehicle, passages, holidays, cancellationToken);
     }
 
     public async Task<ApplicationResult<DailyToll>> CalculateAsync(
@@ -62,14 +58,9 @@ internal sealed class TollService : ITollService
         DateTimeOffset[] timestamps,
         CancellationToken cancellationToken)
     {
-        if (!VehicleTypes.TryParse(vehicleType, out var parsedVehicleType))
+        if (!VehicleTypeParser.TryParse(vehicleType, out var parsedVehicleType))
         {
             return ApplicationResult<DailyToll>.Invalid($"'{vehicleType}' is not a known vehicle type.");
-        }
-
-        if (timestamps is null)
-        {
-            return ApplicationResult<DailyToll>.Invalid("A list of passage timestamps is required.");
         }
 
         var vehicle = Vehicle.Unregistered(parsedVehicleType);
@@ -82,20 +73,17 @@ internal sealed class TollService : ITollService
 
         var holidays = await _holidayRepository.GetAllAsync(cancellationToken);
 
-        return await CalculateDailyTollAsync(vehicle, passages, holidays, cancellationToken);
+        return await CalculateTollAsync(vehicle, passages, holidays, cancellationToken);
     }
 
-    private async Task<ApplicationResult<DailyToll>> CalculateDailyTollAsync(
+    private async Task<ApplicationResult<DailyToll>> CalculateTollAsync(
         Vehicle vehicle,
         TollPassage[] passages,
         Holiday[] holidays,
         CancellationToken cancellationToken)
     {
-        var schedule = await _tollScheduleRepository.GetScheduleAsync(cancellationToken);
-        var dailyCap = await _tollScheduleRepository.GetDailyCapAsync(cancellationToken);
+        var tariff = await _tollScheduleRepository.GetTariffAsync(cancellationToken);
 
-        var dailyTollService = _dailyTollServiceFactory.Create(holidays);
-
-        return ApplicationResult<DailyToll>.Success(dailyTollService.Calculate(vehicle, passages, schedule, dailyCap));
+        return ApplicationResult<DailyToll>.Success(_dailyTollService.Calculate(vehicle, passages, tariff, holidays));
     }
 }

@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using NSubstitute;
 using TollCalculator.WebApi.Host.Auth;
 using TollCalculator.WebApi.Host.Controllers.V1;
-using TollCalculator.WebApi.Host.Validators.Implementation;
+using TollCalculator.WebApi.Host.Validators.Implementations;
 using TollCalculator.WebApi.Models.V1.Requests;
 using TollCalculator.WebApi.Models.V1.Responses;
 using Xunit;
@@ -25,7 +25,7 @@ public class AuthControllerTests
 
     public AuthControllerTests()
     {
-        _controller = new AuthController(_tokenIssuer, new TokenRequestValidator());
+        _controller = new AuthController(_tokenIssuer);
     }
 
     [Fact]

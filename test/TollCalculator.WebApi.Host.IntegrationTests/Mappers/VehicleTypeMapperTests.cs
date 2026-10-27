@@ -1,14 +1,12 @@
 using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
-using TollCalculator.WebApi.Host.Mappers.Implementations;
+using TollCalculator.WebApi.Host.Mappers;
 using Xunit;
 
 namespace TollCalculator.WebApi.Host.IntegrationTests.Mappers;
 
 public class VehicleTypeMapperTests
 {
-    private readonly VehicleTypeMapper _mapper = new();
-
     [Theory]
     [InlineData(VehicleType.Car, false)]
     [InlineData(VehicleType.Motorbike, true)]
@@ -17,7 +15,7 @@ public class VehicleTypeMapperTests
     {
         var rule = VehicleTypeRule.Create(vehicleType, isTollFree);
 
-        var response = Assert.Single(_mapper.ToResponses([rule]));
+        var response = Assert.Single(VehicleTypeMapper.ToResponses([rule]));
 
         Assert.Equal(vehicleType.ToString(), response.VehicleType);
         Assert.Equal(isTollFree, response.IsTollFree);
@@ -29,7 +27,7 @@ public class VehicleTypeMapperTests
         var car = VehicleTypeRule.Create(VehicleType.Car, isTollFree: false);
         var tractor = VehicleTypeRule.Create(VehicleType.Tractor, isTollFree: true);
 
-        var responses = _mapper.ToResponses([car, tractor]);
+        var responses = VehicleTypeMapper.ToResponses([car, tractor]);
 
         Assert.Equal(["Car", "Tractor"], responses.Select(response => response.VehicleType));
     }
@@ -37,12 +35,12 @@ public class VehicleTypeMapperTests
     [Fact]
     public void ToResponses_MapsAnEmptySet()
     {
-        Assert.Empty(_mapper.ToResponses([]));
+        Assert.Empty(VehicleTypeMapper.ToResponses([]));
     }
 
     [Fact]
     public void ToResponses_ThrowsWhenTheRulesAreNull()
     {
-        Assert.Throws<ArgumentNullException>(() => _mapper.ToResponses(null!));
+        Assert.Throws<ArgumentNullException>(() => VehicleTypeMapper.ToResponses(null!));
     }
 }

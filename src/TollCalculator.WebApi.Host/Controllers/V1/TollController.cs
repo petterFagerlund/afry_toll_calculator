@@ -2,7 +2,7 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using TollCalculator.Application.Services;
 using TollCalculator.WebApi.Host.Mappers;
-using TollCalculator.WebApi.Host.Validators;
+using TollCalculator.WebApi.Host.Validators.Implementations;
 using TollCalculator.WebApi.Models.V1.Requests;
 using TollCalculator.WebApi.Models.V1.Responses;
 
@@ -12,21 +12,12 @@ namespace TollCalculator.WebApi.Host.Controllers.V1;
 public sealed class TollController : ApiControllerBase
 {
     private readonly ITollService _tollService;
-    private readonly IDailyTollMapper _dailyTollMapper;
-    private readonly ICalculateTollRequestValidator _calculateTollRequestValidator;
 
-    public TollController(
-        ITollService tollService,
-        IDailyTollMapper dailyTollMapper,
-        ICalculateTollRequestValidator calculateTollRequestValidator)
+    public TollController(ITollService tollService)
     {
         ArgumentNullException.ThrowIfNull(tollService);
-        ArgumentNullException.ThrowIfNull(dailyTollMapper);
-        ArgumentNullException.ThrowIfNull(calculateTollRequestValidator);
 
         _tollService = tollService;
-        _dailyTollMapper = dailyTollMapper;
-        _calculateTollRequestValidator = calculateTollRequestValidator;
     }
 
     /// <summary>Calculates the toll for a set of passage timestamps without recording anything.</summary>
@@ -37,7 +28,7 @@ public sealed class TollController : ApiControllerBase
         [FromBody] CalculateTollRequest request,
         CancellationToken cancellationToken)
     {
-        var validationResult = _calculateTollRequestValidator.Validate(request);
+        var validationResult = CalculateTollRequestValidator.Validate(request);
 
         if (!validationResult.IsValid)
         {
@@ -51,6 +42,6 @@ public sealed class TollController : ApiControllerBase
             return Failure(result);
         }
 
-        return Ok(_dailyTollMapper.ToCalculateTollResponse(request.VehicleType!, result.Value!));
+        return Ok(DailyTollMapper.ToCalculateTollResponse(request.VehicleType!, result.Value!));
     }
 }

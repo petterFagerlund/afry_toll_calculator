@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using TollCalculator.WebApi.Host.Auth;
-using TollCalculator.WebApi.Host.Validators;
+using TollCalculator.WebApi.Host.Validators.Implementations;
 using TollCalculator.WebApi.Models.V1.Requests;
 using TollCalculator.WebApi.Models.V1.Responses;
 
@@ -13,15 +13,12 @@ namespace TollCalculator.WebApi.Host.Controllers.V1;
 public sealed class AuthController : ApiControllerBase
 {
     private readonly IJwtTokenIssuer _tokenIssuer;
-    private readonly ITokenRequestValidator _tokenRequestValidator;
 
-    public AuthController(IJwtTokenIssuer tokenIssuer, ITokenRequestValidator tokenRequestValidator)
+    public AuthController(IJwtTokenIssuer tokenIssuer)
     {
         ArgumentNullException.ThrowIfNull(tokenIssuer);
-        ArgumentNullException.ThrowIfNull(tokenRequestValidator);
 
         _tokenIssuer = tokenIssuer;
-        _tokenRequestValidator = tokenRequestValidator;
     }
 
     /// <summary>Exchanges client credentials for a bearer token that the other endpoints accept.</summary>
@@ -33,7 +30,7 @@ public sealed class AuthController : ApiControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     public ActionResult<TokenResponse> IssueToken([FromBody] TokenRequest request)
     {
-        var validationResult = _tokenRequestValidator.Validate(request);
+        var validationResult = TokenRequestValidator.Validate(request);
 
         if (!validationResult.IsValid)
         {

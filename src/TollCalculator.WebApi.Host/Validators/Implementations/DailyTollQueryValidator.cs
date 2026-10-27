@@ -1,11 +1,11 @@
-namespace TollCalculator.WebApi.Host.Validators.Implementation;
+namespace TollCalculator.WebApi.Host.Validators.Implementations;
 
-internal sealed class DailyTollQueryValidator : IDailyTollQueryValidator
+internal static class DailyTollQueryValidator
 {
     private const string RegistrationNumberMember = "registrationNumber";
     private const string DateMember = "date";
 
-    public ValidationResult Validate(string? registrationNumber, DateOnly? date)
+    public static ValidationResult Validate(string? registrationNumber, DateOnly? date)
     {
         var errors = new ValidationErrors();
 

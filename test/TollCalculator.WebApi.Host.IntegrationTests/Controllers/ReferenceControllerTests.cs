@@ -6,7 +6,7 @@ using TollCalculator.Application.Services;
 using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
 using TollCalculator.WebApi.Host.Controllers.V1;
-using TollCalculator.WebApi.Host.Mappers.Implementations;
+using TollCalculator.WebApi.Host.Mappers;
 using TollCalculator.WebApi.Models.V1.Responses;
 using Xunit;
 
@@ -19,15 +19,14 @@ public class TollRatesControllerTests
 
     public TollRatesControllerTests()
     {
-        _controller = new TollRatesController(_tollRateService, new TollRateMapper());
+        _controller = new TollRatesController(_tollRateService);
     }
 
     [Fact]
     public async Task GetTollRates_ReturnsTheScheduleIntervals()
     {
         var interval = TollRateInterval.Create(new TimeOnly(6, 0), new TimeOnly(6, 29), 8);
-        _tollRateService.GetTollRatesAsync(Arg.Any<CancellationToken>())
-            .Returns(ApplicationResult<TollRateInterval[]>.Success([interval]));
+        _tollRateService.GetTollRatesAsync(Arg.Any<CancellationToken>()).Returns([interval]);
 
         var result = await _controller.GetTollRates(CancellationToken.None);
 
@@ -38,17 +37,6 @@ public class TollRatesControllerTests
         Assert.Equal(8, response.Amount);
     }
 
-    [Fact]
-    public async Task GetTollRates_ReturnsBadRequestWhenTheServiceFails()
-    {
-        _tollRateService.GetTollRatesAsync(Arg.Any<CancellationToken>())
-            .Returns(ApplicationResult<TollRateInterval[]>.Invalid("The schedule is unavailable."));
-
-        var result = await _controller.GetTollRates(CancellationToken.None);
-
-        var problem = Assert.IsType<ObjectResult>(result.Result);
-        Assert.Equal(StatusCodes.Status400BadRequest, problem.StatusCode);
-    }
 }
 
 public class HolidaysControllerTests
@@ -58,7 +46,7 @@ public class HolidaysControllerTests
 
     public HolidaysControllerTests()
     {
-        _controller = new HolidaysController(_holidayService, new HolidayMapper());
+        _controller = new HolidaysController(_holidayService);
     }
 
     [Fact]
@@ -108,7 +96,7 @@ public class VehicleTypesControllerTests
 
     public VehicleTypesControllerTests()
     {
-        _controller = new VehicleTypesController(_vehicleTypeService, new VehicleTypeMapper());
+        _controller = new VehicleTypesController(_vehicleTypeService);
     }
 
     [Fact]
@@ -116,8 +104,7 @@ public class VehicleTypesControllerTests
     {
         var car = VehicleTypeRule.Create(VehicleType.Car, isTollFree: false);
         var motorbike = VehicleTypeRule.Create(VehicleType.Motorbike, isTollFree: true);
-        _vehicleTypeService.GetVehicleTypeRulesAsync(Arg.Any<CancellationToken>())
-            .Returns(ApplicationResult<VehicleTypeRule[]>.Success([car, motorbike]));
+        _vehicleTypeService.GetVehicleTypeRulesAsync(Arg.Any<CancellationToken>()).Returns([car, motorbike]);
 
         var result = await _controller.GetVehicleTypes(CancellationToken.None);
 
@@ -126,14 +113,4 @@ public class VehicleTypesControllerTests
         Assert.Equal([false, true], responses.Select(response => response.IsTollFree));
     }
 
-    [Fact]
-    public async Task GetVehicleTypes_ReturnsBadRequestWhenTheServiceFails()
-    {
-        _vehicleTypeService.GetVehicleTypeRulesAsync(Arg.Any<CancellationToken>())
-            .Returns(ApplicationResult<VehicleTypeRule[]>.Invalid("The vehicle type rules are unavailable."));
-
-        var result = await _controller.GetVehicleTypes(CancellationToken.None);
-
-        Assert.Equal(StatusCodes.Status400BadRequest, Assert.IsType<ObjectResult>(result.Result).StatusCode);
-    }
 }

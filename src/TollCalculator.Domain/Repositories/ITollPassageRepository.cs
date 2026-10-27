@@ -1,6 +1,6 @@
 using TollCalculator.Domain.Models;
 
-namespace TollCalculator.Infrastructure.Repositories;
+namespace TollCalculator.Domain.Repositories;
 
 public interface ITollPassageRepository
 {

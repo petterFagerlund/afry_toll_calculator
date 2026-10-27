@@ -10,25 +10,25 @@ public class ReferenceRepositoryTests : IDisposable
     private readonly RepositoryTestContext _fixture = new();
 
     [Fact]
-    public async Task GetScheduleAsync_ReturnsTheSeededSchedule()
+    public async Task GetTariffAsync_ReturnsTheSeededSchedule()
     {
         var repository = new TollScheduleRepository(_fixture.Context);
 
-        var schedule = await repository.GetScheduleAsync(CancellationToken.None);
+        var tariff = await repository.GetTariffAsync(CancellationToken.None);
 
-        Assert.Equal(9, schedule.Intervals.Count);
-        Assert.Equal(18, schedule.FeeFor(new TimeOnly(7, 30)));
-        Assert.Equal(8, schedule.FeeFor(new TimeOnly(9, 5)));
+        Assert.Equal(9, tariff.Schedule.Intervals.Count);
+        Assert.Equal(18, tariff.Schedule.FeeFor(new TimeOnly(7, 30)));
+        Assert.Equal(8, tariff.Schedule.FeeFor(new TimeOnly(9, 5)));
     }
 
     [Fact]
-    public async Task GetDailyCapAsync_ReturnsTheSeededCap()
+    public async Task GetTariffAsync_ReturnsTheSeededCap()
     {
         var repository = new TollScheduleRepository(_fixture.Context);
 
-        var dailyCap = await repository.GetDailyCapAsync(CancellationToken.None);
+        var tariff = await repository.GetTariffAsync(CancellationToken.None);
 
-        Assert.Equal(60, dailyCap);
+        Assert.Equal(60, tariff.DailyCap);
     }
 
     [Fact]

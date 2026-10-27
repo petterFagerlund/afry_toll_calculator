@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TollCalculator.Domain.Models;
+using TollCalculator.Domain.Repositories;
 using TollCalculator.Infrastructure.Persistence;
 
 namespace TollCalculator.Infrastructure.Repositories.Implementations;
@@ -15,22 +16,22 @@ internal sealed class TollScheduleRepository : ITollScheduleRepository
         _context = context;
     }
 
-    public async Task<TollSchedule> GetScheduleAsync(CancellationToken cancellationToken)
+    public async Task<TollTariff> GetTariffAsync(CancellationToken cancellationToken)
     {
-        var intervals = await _context.TollRateIntervals
-            .AsNoTracking()
-            .OrderBy(interval => interval.Start)
-            .ToArrayAsync(cancellationToken);
+        var intervals = await GetRateIntervalsAsync(cancellationToken);
 
-        return TollSchedule.Create(intervals);
-    }
-
-    public async Task<int> GetDailyCapAsync(CancellationToken cancellationToken)
-    {
         var settings = await _context.TollSettings
             .AsNoTracking()
             .SingleAsync(cancellationToken);
 
-        return settings.DailyCap;
+        return TollTariff.Create(TollSchedule.Create(intervals), settings.DailyCap);
+    }
+
+    public async Task<TollRateInterval[]> GetRateIntervalsAsync(CancellationToken cancellationToken)
+    {
+        return await _context.TollRateIntervals
+            .AsNoTracking()
+            .OrderBy(interval => interval.Start)
+            .ToArrayAsync(cancellationToken);
     }
 }

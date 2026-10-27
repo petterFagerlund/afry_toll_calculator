@@ -1,6 +1,5 @@
-using TollCalculator.Application.Results;
 using TollCalculator.Domain.Models;
-using TollCalculator.Infrastructure.Repositories;
+using TollCalculator.Domain.Repositories;
 
 namespace TollCalculator.Application.Services.Implementations;
 
@@ -15,10 +14,8 @@ internal sealed class TollRateService : ITollRateService
         _tollScheduleRepository = tollScheduleRepository;
     }
 
-    public async Task<ApplicationResult<TollRateInterval[]>> GetTollRatesAsync(CancellationToken cancellationToken)
+    public async Task<TollRateInterval[]> GetTollRatesAsync(CancellationToken cancellationToken)
     {
-        var schedule = await _tollScheduleRepository.GetScheduleAsync(cancellationToken);
-
-        return ApplicationResult<TollRateInterval[]>.Success(schedule.Intervals.ToArray());
+        return await _tollScheduleRepository.GetRateIntervalsAsync(cancellationToken);
     }
 }

@@ -5,8 +5,8 @@ using TollCalculator.Application.Results;
 using TollCalculator.Application.Services;
 using TollCalculator.Domain.Models;
 using TollCalculator.WebApi.Host.Controllers.V1;
-using TollCalculator.WebApi.Host.Mappers.Implementations;
-using TollCalculator.WebApi.Host.Validators.Implementation;
+using TollCalculator.WebApi.Host.Mappers;
+using TollCalculator.WebApi.Host.Validators.Implementations;
 using TollCalculator.WebApi.Models.V1.Requests;
 using TollCalculator.WebApi.Models.V1.Responses;
 using Xunit;
@@ -22,7 +22,7 @@ public class TollControllerTests
 
     public TollControllerTests()
     {
-        _controller = new TollController(_tollService, new DailyTollMapper(), new CalculateTollRequestValidator());
+        _controller = new TollController(_tollService);
     }
 
     [Fact]

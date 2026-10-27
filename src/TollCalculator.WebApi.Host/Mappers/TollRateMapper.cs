@@ -2,13 +2,13 @@ using System.Globalization;
 using TollCalculator.Domain.Models;
 using TollCalculator.WebApi.Models.V1.Responses;
 
-namespace TollCalculator.WebApi.Host.Mappers.Implementations;
+namespace TollCalculator.WebApi.Host.Mappers;
 
-internal sealed class TollRateMapper : ITollRateMapper
+internal static class TollRateMapper
 {
     private const string TimeOfDayFormat = @"HH\:mm";
 
-    public TollRateResponse[] ToResponses(TollRateInterval[] intervals)
+    public static TollRateResponse[] ToResponses(TollRateInterval[] intervals)
     {
         ArgumentNullException.ThrowIfNull(intervals);
 

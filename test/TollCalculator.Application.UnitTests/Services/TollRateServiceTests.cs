@@ -1,7 +1,7 @@
 using NSubstitute;
 using TollCalculator.Application.Services.Implementations;
 using TollCalculator.Domain.Models;
-using TollCalculator.Infrastructure.Repositories;
+using TollCalculator.Domain.Repositories;
 using Xunit;
 
 namespace TollCalculator.Application.UnitTests.Services;
@@ -21,23 +21,20 @@ public class TollRateServiceTests
     {
         var morning = TollRateInterval.Create(new TimeOnly(6, 0), new TimeOnly(6, 29), 8);
         var rush = TollRateInterval.Create(new TimeOnly(7, 0), new TimeOnly(7, 59), 18);
-        _tollScheduleRepository.GetScheduleAsync(Arg.Any<CancellationToken>())
-            .Returns(TollSchedule.Create([morning, rush]));
+        _tollScheduleRepository.GetRateIntervalsAsync(Arg.Any<CancellationToken>()).Returns([morning, rush]);
 
         var result = await _service.GetTollRatesAsync(CancellationToken.None);
 
-        Assert.True(result.IsSuccess);
-        Assert.Equal([morning, rush], result.Value!);
+        Assert.Equal([morning, rush], result);
     }
 
     [Fact]
     public async Task GetTollRatesAsync_EmptySchedule_ReturnsNoIntervals()
     {
-        _tollScheduleRepository.GetScheduleAsync(Arg.Any<CancellationToken>()).Returns(TollSchedule.Create([]));
+        _tollScheduleRepository.GetRateIntervalsAsync(Arg.Any<CancellationToken>()).Returns([]);
 
         var result = await _service.GetTollRatesAsync(CancellationToken.None);
 
-        Assert.True(result.IsSuccess);
-        Assert.Empty(result.Value!);
+        Assert.Empty(result);
     }
 }

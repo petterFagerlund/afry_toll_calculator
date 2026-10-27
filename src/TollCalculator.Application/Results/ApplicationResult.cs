@@ -8,18 +8,15 @@ public sealed record ApplicationResult<TValue>
         Value = value;
     }
 
-    private ApplicationResult(string errorMessage, bool isNotFound, bool isInvalid)
+    private ApplicationResult(string errorMessage, bool isNotFound)
     {
         ErrorMessage = errorMessage;
         IsNotFound = isNotFound;
-        IsInvalid = isInvalid;
     }
 
     public bool IsSuccess { get; }
 
     public bool IsNotFound { get; }
-
-    public bool IsInvalid { get; }
 
     public TValue? Value { get; }
 
@@ -32,21 +29,21 @@ public sealed record ApplicationResult<TValue>
 
     public static ApplicationResult<TValue> NotFound(string message)
     {
-        return WithError(message, isNotFound: true, isInvalid: false);
+        return WithError(message, isNotFound: true);
     }
 
     public static ApplicationResult<TValue> Invalid(string message)
     {
-        return WithError(message, isNotFound: false, isInvalid: true);
+        return WithError(message, isNotFound: false);
     }
 
-    private static ApplicationResult<TValue> WithError(string message, bool isNotFound, bool isInvalid)
+    private static ApplicationResult<TValue> WithError(string message, bool isNotFound)
     {
         if (string.IsNullOrWhiteSpace(message))
         {
             throw new ArgumentException("An error message is required.", nameof(message));
         }
 
-        return new ApplicationResult<TValue>(message, isNotFound, isInvalid);
+        return new ApplicationResult<TValue>(message, isNotFound);
     }
 }

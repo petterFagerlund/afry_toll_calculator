@@ -1,3 +1,4 @@
+using TollCalculator.Domain.Constants;
 using TollCalculator.Domain.Models;
 
 namespace TollCalculator.Domain.Services.Implementations;
@@ -13,21 +14,24 @@ public sealed class TollFeeService : ITollFeeService
         _tollFreeDateService = tollFreeDateService;
     }
 
-    public int CalculateFee(Vehicle vehicle, DateTimeOffset passedAt, TollSchedule schedule)
+    public int CalculateFee(Vehicle vehicle, DateTimeOffset passedAt, TollSchedule schedule, Holiday[] holidays)
     {
         ArgumentNullException.ThrowIfNull(vehicle);
         ArgumentNullException.ThrowIfNull(schedule);
+        ArgumentNullException.ThrowIfNull(holidays);
 
         if (vehicle.IsTollFree)
         {
             return 0;
         }
 
-        if (_tollFreeDateService.IsTollFree(DateOnly.FromDateTime(passedAt.DateTime)))
+        var localPassedAt = TollTimeZone.ToLocalTime(passedAt);
+
+        if (_tollFreeDateService.IsTollFree(DateOnly.FromDateTime(localPassedAt), holidays))
         {
             return 0;
         }
 
-        return schedule.FeeFor(TimeOnly.FromDateTime(passedAt.DateTime));
+        return schedule.FeeFor(TimeOnly.FromDateTime(localPassedAt));
     }
 }

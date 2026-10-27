@@ -22,8 +22,10 @@ was rewritten from. `C#/TollCalculator.cs` is also where the six bugs listed at 
 | 18:30–05:59 | 0 SEK  |
 
 A vehicle is charged at most once per 60-minute window, and the highest fee in that window applies.
-The day is capped at 60 SEK. Weekends and holidays are free, as are Motorbike, Tractor, Emergency,
-Diplomat, Foreign and Military vehicles. The day boundary is Europe/Stockholm, not UTC.
+Each day is capped at 60 SEK. Weekends and holidays are free, as are Motorbike, Tractor, Emergency,
+Diplomat, Foreign and Military vehicles. Every timestamp is converted to Europe/Stockholm before the
+schedule and the holiday calendar are consulted, so the same instant costs the same whether it arrives
+as `07:15+01:00` or as `06:15Z`.
 
 None of this is configuration. The rates, the cap, the toll-free vehicle types and the holidays are rows
 in the database, seeded by the initial migration.
@@ -32,9 +34,9 @@ in the database, seeded by the initial migration.
 
 ```
 src/
-  TollCalculator.Domain/           Models, Enums, Constants, Services   — references nothing
-  TollCalculator.Infrastructure/   DbContext, configurations, seed, repositories
-  TollCalculator.Application/      Services over the repositories, ApplicationResult
+  TollCalculator.Domain/           Models, Enums, Constants, Services, repository interfaces — references nothing
+  TollCalculator.Infrastructure/   DbContext, configurations, seed, repository implementations
+  TollCalculator.Application/      Services over the repository interfaces, ApplicationResult
   TollCalculator.WebApi.Models/    V1 request/response contracts        — references nothing
   TollCalculator.WebApi.Host/      Controllers, validators, mappers, auth, OpenAPI
 test/
@@ -44,16 +46,21 @@ test/
   TollCalculator.WebApi.Host.IntegrationTests/
 ```
 
-Dependencies point inward: Infrastructure → Domain, Application → Infrastructure + Domain,
-WebApi.Host → WebApi.Models + Application + Domain.
+Dependencies point inward: Infrastructure → Domain, Application → Domain. Neither Application nor
+Domain knows that EF Core exists — the repository *interfaces* live in `Domain/Repositories/` and only
+`Infrastructure` implements them. `WebApi.Host` is the composition root and references all of them.
 
 **Why DDD here.** The interesting part of this problem is a handful of rules that interact — the hourly
 window, the daily cap, toll-free dates, toll-free vehicle types. In the original they were tangled into
 one method together with the data they operate on, which is why four of the six bugs are arithmetic or
 operator-precedence mistakes hiding inside an if-chain. Putting the rules in `Domain` with no dependencies
 means they can be tested directly, exhaustively and without a database: `DailyTollService` takes a vehicle,
-its passages, a schedule and a cap, and returns the day's total plus which passages were charged. Everything
-else — SQL, HTTP, JSON, auth — is arranged around that and can be changed without touching it.
+its passages, a tariff (the schedule plus the daily cap) and the holidays, and returns the total plus which
+passages were charged. It holds no state, so it is a singleton. Everything else — SQL, HTTP, JSON, auth — is
+arranged around that and can be changed without touching it.
+
+Passages are grouped by Stockholm day before the hourly window and the daily cap are applied, so a set of
+timestamps spanning several days is charged correctly rather than stopping at the first day's cap.
 
 `TollCalculator.WebApi.Models` deliberately contains no enums. Vehicle type and every other categorical
 field is a `string` on the wire, so adding a domain enum value cannot silently change the contract.
@@ -176,8 +183,8 @@ is rate limited to 10 requests per minute. In Scalar, paste the `accessToken` in
 dotnet test
 ```
 
-360 tests. The Domain, Application and Infrastructure projects, and most of the host test project, are
-in-process and need nothing beyond the SDK — 336 of the 360.
+355 tests. The Domain, Application and Infrastructure projects, and most of the host test project, are
+in-process and need nothing beyond the SDK — 331 of the 355.
 
 The integration tests under `test/TollCalculator.WebApi.Host.IntegrationTests/{Infrastructure,Tolls,Auth}`
 **require Docker** — Testcontainers starts `mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04`, applies

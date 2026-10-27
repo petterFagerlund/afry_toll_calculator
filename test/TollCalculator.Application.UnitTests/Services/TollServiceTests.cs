@@ -2,7 +2,8 @@ using NSubstitute;
 using TollCalculator.Application.Services.Implementations;
 using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
-using TollCalculator.Infrastructure.Repositories;
+using TollCalculator.Domain.Repositories;
+using TollCalculator.Domain.Services.Implementations;
 using Xunit;
 
 namespace TollCalculator.Application.UnitTests.Services;
@@ -19,8 +20,8 @@ public class TollServiceTests
 
     public TollServiceTests()
     {
-        _tollScheduleRepository.GetScheduleAsync(Arg.Any<CancellationToken>()).Returns(StandardSchedule());
-        _tollScheduleRepository.GetDailyCapAsync(Arg.Any<CancellationToken>()).Returns(60);
+        _tollScheduleRepository.GetTariffAsync(Arg.Any<CancellationToken>())
+            .Returns(TollTariff.Create(StandardSchedule(), 60));
         _holidayRepository.GetAllAsync(Arg.Any<CancellationToken>()).Returns([]);
         _holidayRepository.GetByYearAsync(Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns([]);
 
@@ -29,7 +30,7 @@ public class TollServiceTests
             _tollPassageRepository,
             _tollScheduleRepository,
             _holidayRepository,
-            new DailyTollServiceFactory());
+            new DailyTollService(new TollFeeService(new WeekendAndHolidayService())));
     }
 
     [Fact]
@@ -72,16 +73,6 @@ public class TollServiceTests
         Assert.Contains("XYZ789", result.ErrorMessage);
     }
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("   ")]
-    public async Task GetDailyTollAsync_BlankRegistrationNumber_ReturnsInvalid(string? registrationNumber)
-    {
-        var result = await _service.GetDailyTollAsync(registrationNumber!, Monday, CancellationToken.None);
-
-        Assert.False(result.IsSuccess);
-        Assert.True(result.IsInvalid);
-    }
 
     [Fact]
     public async Task CalculateAsync_KnownVehicleType_ChargesTheHighestFeeWithinTheHourlyWindow()
@@ -115,7 +106,7 @@ public class TollServiceTests
         var result = await _service.CalculateAsync(vehicleType!, [At(Monday, 7, 15)], CancellationToken.None);
 
         Assert.False(result.IsSuccess);
-        Assert.True(result.IsInvalid);
+        Assert.False(result.IsNotFound);
     }
 
     [Fact]

@@ -1,6 +1,5 @@
-using TollCalculator.Application.Results;
 using TollCalculator.Domain.Models;
-using TollCalculator.Infrastructure.Repositories;
+using TollCalculator.Domain.Repositories;
 
 namespace TollCalculator.Application.Services.Implementations;
 
@@ -15,11 +14,8 @@ internal sealed class VehicleTypeService : IVehicleTypeService
         _vehicleTypeRuleRepository = vehicleTypeRuleRepository;
     }
 
-    public async Task<ApplicationResult<VehicleTypeRule[]>> GetVehicleTypeRulesAsync(
-        CancellationToken cancellationToken)
+    public async Task<VehicleTypeRule[]> GetVehicleTypeRulesAsync(CancellationToken cancellationToken)
     {
-        var rules = await _vehicleTypeRuleRepository.GetAllAsync(cancellationToken);
-
-        return ApplicationResult<VehicleTypeRule[]>.Success(rules);
+        return await _vehicleTypeRuleRepository.GetAllAsync(cancellationToken);
     }
 }

@@ -7,6 +7,13 @@ namespace TollCalculator.Domain.UnitTests.Services;
 
 public class WeekendAndHolidayServiceTests
 {
+    private static readonly Holiday[] Holidays =
+    [
+        Holiday.Create(new DateOnly(2026, 1, 1), "Nyårsdagen"),
+        Holiday.Create(new DateOnly(2026, 6, 19), "Midsommarafton"),
+        Holiday.Create(new DateOnly(2027, 1, 1), "Nyårsdagen")
+    ];
+
     [Theory]
     [InlineData(2026, 10, 24)]
     [InlineData(2026, 10, 25)]
@@ -16,7 +23,7 @@ public class WeekendAndHolidayServiceTests
     {
         var service = CreateService();
 
-        Assert.True(service.IsTollFree(new DateOnly(year, month, day)));
+        Assert.True(service.IsTollFree(new DateOnly(year, month, day), Holidays));
     }
 
     [Theory]
@@ -26,7 +33,7 @@ public class WeekendAndHolidayServiceTests
     {
         var service = CreateService();
 
-        Assert.True(service.IsTollFree(new DateOnly(year, month, day)));
+        Assert.True(service.IsTollFree(new DateOnly(year, month, day), Holidays));
     }
 
     [Theory]
@@ -36,7 +43,7 @@ public class WeekendAndHolidayServiceTests
     {
         var service = CreateService();
 
-        Assert.False(service.IsTollFree(new DateOnly(year, month, day)));
+        Assert.False(service.IsTollFree(new DateOnly(year, month, day), Holidays));
     }
 
     [Fact]
@@ -44,25 +51,20 @@ public class WeekendAndHolidayServiceTests
     {
         var service = CreateService();
 
-        Assert.True(service.IsTollFree(new DateOnly(2026, 6, 19)));
-        Assert.False(service.IsTollFree(new DateOnly(2027, 6, 18)));
+        Assert.True(service.IsTollFree(new DateOnly(2026, 6, 19), Holidays));
+        Assert.False(service.IsTollFree(new DateOnly(2027, 6, 18), Holidays));
     }
 
     [Fact]
-    public void IsTollFree_NoHolidaysConfigured_WeekdayIsCharged()
+    public void IsTollFree_NoHolidaysGiven_WeekdayIsCharged()
     {
-        var service = new WeekendAndHolidayService([]);
+        var service = CreateService();
 
-        Assert.False(service.IsTollFree(new DateOnly(2026, 10, 23)));
+        Assert.False(service.IsTollFree(new DateOnly(2026, 10, 23), []));
     }
 
     private static ITollFreeDateService CreateService()
     {
-        return new WeekendAndHolidayService(
-        [
-            Holiday.Create(new DateOnly(2026, 1, 1), "Nyårsdagen"),
-            Holiday.Create(new DateOnly(2026, 6, 19), "Midsommarafton"),
-            Holiday.Create(new DateOnly(2027, 1, 1), "Nyårsdagen")
-        ]);
+        return new WeekendAndHolidayService();
     }
 }

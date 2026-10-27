@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TollCalculator.Infrastructure.Persistence;
-using TollCalculator.Infrastructure.Repositories;
+using TollCalculator.Domain.Repositories;
 using TollCalculator.Infrastructure.Repositories.Implementations;
 
 namespace TollCalculator.Infrastructure.Registrations;

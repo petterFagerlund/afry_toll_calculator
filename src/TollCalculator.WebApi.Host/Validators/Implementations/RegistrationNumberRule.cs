@@ -1,4 +1,4 @@
-namespace TollCalculator.WebApi.Host.Validators.Implementation;
+namespace TollCalculator.WebApi.Host.Validators.Implementations;
 
 internal static class RegistrationNumberRule
 {

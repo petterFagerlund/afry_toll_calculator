@@ -1,4 +1,4 @@
-using TollCalculator.WebApi.Host.Validators.Implementation;
+using TollCalculator.WebApi.Host.Validators.Implementations;
 using TollCalculator.WebApi.Models.V1.Requests;
 using Xunit;
 
@@ -8,12 +8,10 @@ public class CalculateTollRequestValidatorTests
 {
     private static readonly DateTimeOffset Morning = new(2026, 3, 16, 7, 15, 0, TimeSpan.FromHours(1));
 
-    private readonly CalculateTollRequestValidator _validator = new();
-
     [Fact]
     public void Validate_AcceptsACompleteRequest()
     {
-        var result = _validator.Validate(new CalculateTollRequest
+        var result = CalculateTollRequestValidator.Validate(new CalculateTollRequest
         {
             VehicleType = "Car",
             Timestamps = [Morning],
@@ -26,7 +24,7 @@ public class CalculateTollRequestValidatorTests
     [Fact]
     public void Validate_RejectsAMissingRequest()
     {
-        var result = _validator.Validate(null);
+        var result = CalculateTollRequestValidator.Validate(null);
 
         Assert.False(result.IsValid);
         Assert.Contains(nameof(CalculateTollRequest), result.Errors.Keys);
@@ -38,7 +36,7 @@ public class CalculateTollRequestValidatorTests
     [InlineData("   ")]
     public void Validate_RejectsAMissingVehicleType(string? vehicleType)
     {
-        var result = _validator.Validate(new CalculateTollRequest
+        var result = CalculateTollRequestValidator.Validate(new CalculateTollRequest
         {
             VehicleType = vehicleType,
             Timestamps = [Morning],
@@ -51,7 +49,7 @@ public class CalculateTollRequestValidatorTests
     [Fact]
     public void Validate_AcceptsAnUnknownVehicleTypeAndLeavesItToTheService()
     {
-        var result = _validator.Validate(new CalculateTollRequest
+        var result = CalculateTollRequestValidator.Validate(new CalculateTollRequest
         {
             VehicleType = "Hovercraft",
             Timestamps = [Morning],
@@ -63,7 +61,7 @@ public class CalculateTollRequestValidatorTests
     [Fact]
     public void Validate_RejectsAnEmptyTimestampList()
     {
-        var result = _validator.Validate(new CalculateTollRequest { VehicleType = "Car", Timestamps = [] });
+        var result = CalculateTollRequestValidator.Validate(new CalculateTollRequest { VehicleType = "Car", Timestamps = [] });
 
         Assert.False(result.IsValid);
         Assert.Contains(nameof(CalculateTollRequest.Timestamps), result.Errors.Keys);
@@ -72,7 +70,7 @@ public class CalculateTollRequestValidatorTests
     [Fact]
     public void Validate_RejectsANullTimestampList()
     {
-        var result = _validator.Validate(new CalculateTollRequest { VehicleType = "Car", Timestamps = null! });
+        var result = CalculateTollRequestValidator.Validate(new CalculateTollRequest { VehicleType = "Car", Timestamps = null! });
 
         Assert.False(result.IsValid);
         Assert.Contains(nameof(CalculateTollRequest.Timestamps), result.Errors.Keys);
@@ -81,7 +79,7 @@ public class CalculateTollRequestValidatorTests
     [Fact]
     public void Validate_ReportsEveryBrokenRuleAtOnce()
     {
-        var result = _validator.Validate(new CalculateTollRequest());
+        var result = CalculateTollRequestValidator.Validate(new CalculateTollRequest());
 
         Assert.False(result.IsValid);
         Assert.Equal(2, result.Errors.Count);

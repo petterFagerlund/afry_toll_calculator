@@ -10,15 +10,12 @@ namespace TollCalculator.WebApi.Host.Controllers.V1;
 public sealed class HolidaysController : ApiControllerBase
 {
     private readonly IHolidayService _holidayService;
-    private readonly IHolidayMapper _holidayMapper;
 
-    public HolidaysController(IHolidayService holidayService, IHolidayMapper holidayMapper)
+    public HolidaysController(IHolidayService holidayService)
     {
         ArgumentNullException.ThrowIfNull(holidayService);
-        ArgumentNullException.ThrowIfNull(holidayMapper);
 
         _holidayService = holidayService;
-        _holidayMapper = holidayMapper;
     }
 
     /// <summary>Returns the toll-free holidays, optionally narrowed to a single year.</summary>
@@ -36,6 +33,6 @@ public sealed class HolidaysController : ApiControllerBase
             return Failure(result);
         }
 
-        return Ok(_holidayMapper.ToResponses(result.Value!));
+        return Ok(HolidayMapper.ToResponses(result.Value!));
     }
 }

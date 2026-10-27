@@ -1,6 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using TollCalculator.Application.Services;
 using TollCalculator.Application.Services.Implementations;
+using TollCalculator.Domain.Services;
+using TollCalculator.Domain.Services.Implementations;
 
 namespace TollCalculator.Application.Registrations;
 
@@ -10,7 +12,9 @@ public static class ServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.AddSingleton<IDailyTollServiceFactory, DailyTollServiceFactory>();
+        services.AddSingleton<ITollFreeDateService, WeekendAndHolidayService>();
+        services.AddSingleton<ITollFeeService, TollFeeService>();
+        services.AddSingleton<IDailyTollService, DailyTollService>();
 
         services.AddScoped<ITollPassageService, TollPassageService>();
         services.AddScoped<ITollService, TollService>();

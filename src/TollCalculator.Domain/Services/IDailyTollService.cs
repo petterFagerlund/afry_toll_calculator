@@ -4,5 +4,5 @@ namespace TollCalculator.Domain.Services;
 
 public interface IDailyTollService
 {
-    DailyToll Calculate(Vehicle vehicle, TollPassage[] passages, TollSchedule schedule, int dailyCap);
+    DailyToll Calculate(Vehicle vehicle, TollPassage[] passages, TollTariff tariff, Holiday[] holidays);
 }

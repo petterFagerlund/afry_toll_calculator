@@ -2,7 +2,7 @@ using NSubstitute;
 using TollCalculator.Application.Services.Implementations;
 using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
-using TollCalculator.Infrastructure.Repositories;
+using TollCalculator.Domain.Repositories;
 using Xunit;
 
 namespace TollCalculator.Application.UnitTests.Services;
@@ -31,9 +31,8 @@ public class VehicleTypeServiceTests
 
         var result = await _service.GetVehicleTypeRulesAsync(CancellationToken.None);
 
-        Assert.True(result.IsSuccess);
-        Assert.Equal(rules, result.Value);
-        Assert.False(result.Value![0].IsTollFree);
-        Assert.True(result.Value[1].IsTollFree);
+        Assert.Equal(rules, result);
+        Assert.False(result[0].IsTollFree);
+        Assert.True(result[1].IsTollFree);
     }
 }

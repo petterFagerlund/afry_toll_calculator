@@ -3,11 +3,11 @@ using TollCalculator.WebApi.Models.V1.Responses;
 using ChargedTollPassageResponse = TollCalculator.WebApi.Models.V1.Responses.ChargedTollPassage;
 using DomainChargedTollPassage = TollCalculator.Domain.Models.ChargedTollPassage;
 
-namespace TollCalculator.WebApi.Host.Mappers.Implementations;
+namespace TollCalculator.WebApi.Host.Mappers;
 
-internal sealed class DailyTollMapper : IDailyTollMapper
+internal static class DailyTollMapper
 {
-    public DailyTollResponse ToDailyTollResponse(string registrationNumber, DateOnly date, DailyToll dailyToll)
+    public static DailyTollResponse ToDailyTollResponse(string registrationNumber, DateOnly date, DailyToll dailyToll)
     {
         ArgumentNullException.ThrowIfNull(dailyToll);
 
@@ -20,7 +20,7 @@ internal sealed class DailyTollMapper : IDailyTollMapper
         };
     }
 
-    public CalculateTollResponse ToCalculateTollResponse(string vehicleType, DailyToll dailyToll)
+    public static CalculateTollResponse ToCalculateTollResponse(string vehicleType, DailyToll dailyToll)
     {
         ArgumentNullException.ThrowIfNull(dailyToll);
 

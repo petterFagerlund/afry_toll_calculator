@@ -11,8 +11,13 @@ public static class TollTimeZone
         return new DateTimeOffset(localMidnight, Instance.GetUtcOffset(localMidnight));
     }
 
+    public static DateTime ToLocalTime(DateTimeOffset moment)
+    {
+        return TimeZoneInfo.ConvertTime(moment, Instance).DateTime;
+    }
+
     public static DateOnly DateOf(DateTimeOffset moment)
     {
-        return DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(moment, Instance).DateTime);
+        return DateOnly.FromDateTime(ToLocalTime(moment));
     }
 }

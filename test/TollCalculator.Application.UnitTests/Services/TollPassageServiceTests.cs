@@ -2,7 +2,7 @@ using NSubstitute;
 using TollCalculator.Application.Services.Implementations;
 using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
-using TollCalculator.Infrastructure.Repositories;
+using TollCalculator.Domain.Repositories;
 using Xunit;
 
 namespace TollCalculator.Application.UnitTests.Services;
@@ -32,7 +32,6 @@ public class TollPassageServiceTests
         Assert.True(result.IsSuccess);
         Assert.Equal(expectedId, result.Value);
         Assert.False(result.IsNotFound);
-        Assert.False(result.IsInvalid);
     }
 
     [Fact]
@@ -61,20 +60,6 @@ public class TollPassageServiceTests
         await _tollPassageRepository.DidNotReceiveWithAnyArgs().AddAsync(null!, CancellationToken.None);
     }
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
-    public async Task RecordTollPassageAsync_BlankRegistrationNumber_ReturnsInvalidWithoutLookup(string? registrationNumber)
-    {
-        var result = await _service.RecordTollPassageAsync(registrationNumber!, PassedAt, CancellationToken.None);
-
-        Assert.False(result.IsSuccess);
-        Assert.True(result.IsInvalid);
-
-        await _vehicleRepository.DidNotReceiveWithAnyArgs().GetAsync(null!, CancellationToken.None);
-        await _tollPassageRepository.DidNotReceiveWithAnyArgs().AddAsync(null!, CancellationToken.None);
-    }
 
     private void KnownVehicle(string lookupValue)
     {

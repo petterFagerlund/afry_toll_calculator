@@ -1,10 +1,10 @@
 using TollCalculator.WebApi.Models.V1.Requests;
 
-namespace TollCalculator.WebApi.Host.Validators.Implementation;
+namespace TollCalculator.WebApi.Host.Validators.Implementations;
 
-internal sealed class CalculateTollRequestValidator : ICalculateTollRequestValidator
+internal static class CalculateTollRequestValidator
 {
-    public ValidationResult Validate(CalculateTollRequest? request)
+    public static ValidationResult Validate(CalculateTollRequest? request)
     {
         var errors = new ValidationErrors();
 

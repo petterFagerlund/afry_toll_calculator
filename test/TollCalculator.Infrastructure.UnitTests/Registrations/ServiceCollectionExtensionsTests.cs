@@ -3,7 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TollCalculator.Infrastructure.Persistence;
 using TollCalculator.Infrastructure.Registrations;
-using TollCalculator.Infrastructure.Repositories;
+using TollCalculator.Domain.Repositories;
 using Xunit;
 
 namespace TollCalculator.Infrastructure.UnitTests.Registrations;

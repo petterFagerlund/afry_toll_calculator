@@ -1,11 +1,11 @@
 using TollCalculator.Domain.Models;
 using TollCalculator.WebApi.Models.V1.Responses;
 
-namespace TollCalculator.WebApi.Host.Mappers.Implementations;
+namespace TollCalculator.WebApi.Host.Mappers;
 
-internal sealed class HolidayMapper : IHolidayMapper
+internal static class HolidayMapper
 {
-    public HolidayResponse[] ToResponses(Holiday[] holidays)
+    public static HolidayResponse[] ToResponses(Holiday[] holidays)
     {
         ArgumentNullException.ThrowIfNull(holidays);
 

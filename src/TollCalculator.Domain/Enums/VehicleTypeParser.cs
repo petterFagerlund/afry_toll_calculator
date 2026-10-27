@@ -1,6 +1,6 @@
 namespace TollCalculator.Domain.Enums;
 
-public static class VehicleTypes
+public static class VehicleTypeParser
 {
     public static bool TryParse(string? value, out VehicleType vehicleType)
     {

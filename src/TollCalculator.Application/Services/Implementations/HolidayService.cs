@@ -1,6 +1,6 @@
 using TollCalculator.Application.Results;
 using TollCalculator.Domain.Models;
-using TollCalculator.Infrastructure.Repositories;
+using TollCalculator.Domain.Repositories;
 
 namespace TollCalculator.Application.Services.Implementations;
 

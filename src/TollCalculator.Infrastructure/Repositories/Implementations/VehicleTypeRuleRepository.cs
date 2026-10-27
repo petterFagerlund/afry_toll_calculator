@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TollCalculator.Domain.Models;
+using TollCalculator.Domain.Repositories;
 using TollCalculator.Infrastructure.Persistence;
 
 namespace TollCalculator.Infrastructure.Repositories.Implementations;

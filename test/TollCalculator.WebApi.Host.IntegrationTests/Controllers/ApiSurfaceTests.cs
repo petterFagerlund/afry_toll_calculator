@@ -62,7 +62,6 @@ public class ApiSurfaceTests
 
     [Theory]
     [InlineData(200, typeof(TollRateResponse[]))]
-    [InlineData(400, null)]
     public void GetTollRates_DeclaresItsResponseType(int statusCode, Type? responseType)
     {
         AssertDeclaresResponse("GET", TollRatesRoute, statusCode, responseType);
@@ -78,7 +77,6 @@ public class ApiSurfaceTests
 
     [Theory]
     [InlineData(200, typeof(VehicleTypeResponse[]))]
-    [InlineData(400, null)]
     public void GetVehicleTypes_DeclaresItsResponseType(int statusCode, Type? responseType)
     {
         AssertDeclaresResponse("GET", VehicleTypesRoute, statusCode, responseType);

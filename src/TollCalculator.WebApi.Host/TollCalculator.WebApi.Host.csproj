@@ -12,6 +12,7 @@
   <ItemGroup>
     <ProjectReference Include="..\TollCalculator.WebApi.Models\TollCalculator.WebApi.Models.csproj" />
     <ProjectReference Include="..\TollCalculator.Application\TollCalculator.Application.csproj" />
+    <ProjectReference Include="..\TollCalculator.Infrastructure\TollCalculator.Infrastructure.csproj" />
     <ProjectReference Include="..\TollCalculator.Domain\TollCalculator.Domain.csproj" />
   </ItemGroup>
 

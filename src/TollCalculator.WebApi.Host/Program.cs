@@ -16,8 +16,6 @@ builder.Services.AddBearerAuthentication(builder.Environment);
 builder.Services.AddTokenRateLimiting();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication();
-builder.Services.AddMappers();
-builder.Services.AddValidators();
 builder.Services.AddVersionedOpenApi();
 
 var app = builder.Build();

@@ -1,3 +1,4 @@
+using TollCalculator.Domain.Constants;
 using TollCalculator.Domain.Models;
 
 namespace TollCalculator.Domain.Services.Implementations;
@@ -15,18 +16,14 @@ public sealed class DailyTollService : IDailyTollService
         _tollFeeService = tollFeeService;
     }
 
-    public DailyToll Calculate(Vehicle vehicle, TollPassage[] passages, TollSchedule schedule, int dailyCap)
+    public DailyToll Calculate(Vehicle vehicle, TollPassage[] passages, TollTariff tariff, Holiday[] holidays)
     {
         ArgumentNullException.ThrowIfNull(vehicle);
         ArgumentNullException.ThrowIfNull(passages);
-        ArgumentNullException.ThrowIfNull(schedule);
+        ArgumentNullException.ThrowIfNull(tariff);
+        ArgumentNullException.ThrowIfNull(holidays);
 
-        if (dailyCap < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(dailyCap), dailyCap, "A daily cap cannot be negative.");
-        }
-
-        var chargeable = ChargeablePassages(vehicle, passages, schedule);
+        var chargeable = ChargeablePassages(vehicle, passages, tariff.Schedule, holidays);
 
         if (chargeable.Length == 0)
         {
@@ -37,26 +34,28 @@ public sealed class DailyTollService : IDailyTollService
         var total = 0;
         var index = 0;
 
-        while (index < chargeable.Length && total < dailyCap)
+        while (index < chargeable.Length)
         {
-            var window = HighestWithinWindow(chargeable, index);
-            var amount = Math.Min(window.Amount, dailyCap - total);
+            var dayEnd = EndOfDay(chargeable, index);
 
-            charged.Add(new ChargedTollPassage(window.PassedAt, amount));
-            total += amount;
-            index = window.NextIndex;
+            total += ChargeDay(chargeable, index, dayEnd, tariff.DailyCap, charged);
+            index = dayEnd;
         }
 
         return new DailyToll(total, charged.ToArray());
     }
 
-    private ChargedTollPassage[] ChargeablePassages(Vehicle vehicle, TollPassage[] passages, TollSchedule schedule)
+    private ChargedTollPassage[] ChargeablePassages(
+        Vehicle vehicle,
+        TollPassage[] passages,
+        TollSchedule schedule,
+        Holiday[] holidays)
     {
         var chargeable = new List<ChargedTollPassage>();
 
         foreach (var passage in passages)
         {
-            var fee = _tollFeeService.CalculateFee(vehicle, passage.PassedAt, schedule);
+            var fee = _tollFeeService.CalculateFee(vehicle, passage.PassedAt, schedule, holidays);
 
             if (fee > 0)
             {
@@ -70,13 +69,49 @@ public sealed class DailyTollService : IDailyTollService
         return ordered;
     }
 
-    private static TollWindow HighestWithinWindow(ChargedTollPassage[] chargeable, int startIndex)
+    private static int EndOfDay(ChargedTollPassage[] chargeable, int startIndex)
+    {
+        var day = TollTimeZone.DateOf(chargeable[startIndex].PassedAt);
+        var next = startIndex + 1;
+
+        while (next < chargeable.Length && TollTimeZone.DateOf(chargeable[next].PassedAt) == day)
+        {
+            next++;
+        }
+
+        return next;
+    }
+
+    private static int ChargeDay(
+        ChargedTollPassage[] chargeable,
+        int startIndex,
+        int endIndex,
+        int dailyCap,
+        List<ChargedTollPassage> charged)
+    {
+        var dayTotal = 0;
+        var index = startIndex;
+
+        while (index < endIndex && dayTotal < dailyCap)
+        {
+            var window = HighestWithinWindow(chargeable, index, endIndex);
+            var amount = Math.Min(window.Amount, dailyCap - dayTotal);
+
+            charged.Add(new ChargedTollPassage(window.PassedAt, amount));
+            dayTotal += amount;
+            index = window.NextIndex;
+        }
+
+        return dayTotal;
+    }
+
+    private static TollWindow HighestWithinWindow(ChargedTollPassage[] chargeable, int startIndex, int endIndex)
     {
         var windowStart = chargeable[startIndex].PassedAt;
         var highest = chargeable[startIndex];
         var next = startIndex + 1;
 
-        while (next < chargeable.Length && chargeable[next].PassedAt - windowStart < ChargeWindow)
+        while (next < endIndex && chargeable[next].PassedAt - windowStart < ChargeWindow)
         {
             if (chargeable[next].Amount > highest.Amount)
             {
