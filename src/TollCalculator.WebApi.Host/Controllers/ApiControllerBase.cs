@@ -27,11 +27,26 @@ public abstract class ApiControllerBase : ControllerBase
 
         var statusCode = result.IsNotFound ? StatusCodes.Status404NotFound : StatusCodes.Status400BadRequest;
 
+        var title = result.IsNotFound ? "Resource not found." : "The request could not be processed.";
+
+        return ProblemResult(statusCode, title, result.ErrorMessage);
+    }
+
+    protected ActionResult InvalidCredentials()
+    {
+        return ProblemResult(
+            StatusCodes.Status401Unauthorized,
+            "Invalid client credentials.",
+            "The client id and secret did not match a known client.");
+    }
+
+    private static ActionResult ProblemResult(int statusCode, string title, string? detail)
+    {
         var problemDetails = new ProblemDetails
         {
             Status = statusCode,
-            Title = result.IsNotFound ? "Resource not found." : "The request could not be processed.",
-            Detail = result.ErrorMessage,
+            Title = title,
+            Detail = detail,
         };
 
         return new ObjectResult(problemDetails) { StatusCode = statusCode };

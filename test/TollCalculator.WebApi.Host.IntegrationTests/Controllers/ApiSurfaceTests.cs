@@ -16,6 +16,7 @@ public class ApiSurfaceTests
     private const string TollRatesRoute = "api/v1/toll-rates";
     private const string HolidaysRoute = "api/v1/holidays";
     private const string VehicleTypesRoute = "api/v1/vehicle-types";
+    private const string TokenRoute = "api/v1/auth/token";
 
     private static readonly ApiDescription[] Descriptions = DescribeApi();
 
@@ -26,6 +27,7 @@ public class ApiSurfaceTests
     [InlineData("GET", TollRatesRoute)]
     [InlineData("GET", HolidaysRoute)]
     [InlineData("GET", VehicleTypesRoute)]
+    [InlineData("POST", TokenRoute)]
     public void TheApiDescription_IncludesTheRoute(string httpMethod, string relativePath)
     {
         Assert.Single(Descriptions, description =>
@@ -80,6 +82,15 @@ public class ApiSurfaceTests
     public void GetVehicleTypes_DeclaresItsResponseType(int statusCode, Type? responseType)
     {
         AssertDeclaresResponse("GET", VehicleTypesRoute, statusCode, responseType);
+    }
+
+    [Theory]
+    [InlineData(200, typeof(TokenResponse))]
+    [InlineData(400, null)]
+    [InlineData(401, null)]
+    public void IssueToken_DeclaresItsResponseType(int statusCode, Type? responseType)
+    {
+        AssertDeclaresResponse("POST", TokenRoute, statusCode, responseType);
     }
 
     private static void AssertDeclaresResponse(string httpMethod, string relativePath, int statusCode, Type? responseType)

@@ -32,6 +32,7 @@ internal static class ServiceCollectionExtensions
         services.AddSingleton<IRecordTollPassageRequestValidator, RecordTollPassageRequestValidator>();
         services.AddSingleton<IDailyTollQueryValidator, DailyTollQueryValidator>();
         services.AddSingleton<ICalculateTollRequestValidator, CalculateTollRequestValidator>();
+        services.AddSingleton<ITokenRequestValidator, TokenRequestValidator>();
 
         return services;
     }

@@ -10,6 +10,8 @@ namespace TollCalculator.WebApi.Host.IntegrationTests.Configuration;
 public class JwtOptionsTests
 {
     private const string SigningKey = "a-development-signing-key-of-at-least-32-characters";
+    private const string ClientId = "toll-client";
+    private const string ClientSecret = "a-client-secret-long-enough";
 
     [Fact]
     public void AddJwtOptions_BindsTheJwtSection()
@@ -20,6 +22,8 @@ public class JwtOptionsTests
         Assert.Equal("toll-calculator-api", options.Audience);
         Assert.Equal(SigningKey, options.SigningKey);
         Assert.Equal(60, options.TokenLifetimeMinutes);
+        Assert.Equal(ClientId, options.ClientId);
+        Assert.Equal(ClientSecret, options.ClientSecret);
     }
 
     [Fact]
@@ -89,7 +93,34 @@ public class JwtOptionsTests
         return provider.GetRequiredService<IOptions<JwtOptions>>().Value;
     }
 
-    private static IConfiguration BuildSection(string? signingKey, string? issuer, string? audience, string lifetime)
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    public void AddJwtOptions_RejectsAMissingClientId(string? clientId)
+    {
+        var configuration = BuildSection(SigningKey, "toll-calculator", "toll-calculator-api", "60", clientId, ClientSecret);
+
+        Assert.Throws<OptionsValidationException>(() => Resolve(configuration));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("short")]
+    public void AddJwtOptions_RejectsAClientSecretShorterThanTheRequiredLength(string? clientSecret)
+    {
+        var configuration = BuildSection(SigningKey, "toll-calculator", "toll-calculator-api", "60", ClientId, clientSecret);
+
+        Assert.Throws<OptionsValidationException>(() => Resolve(configuration));
+    }
+
+    private static IConfiguration BuildSection(
+        string? signingKey,
+        string? issuer,
+        string? audience,
+        string lifetime,
+        string? clientId = ClientId,
+        string? clientSecret = ClientSecret)
     {
         var values = new Dictionary<string, string?>
         {
@@ -97,6 +128,8 @@ public class JwtOptionsTests
             [$"{JwtOptions.SectionName}:Issuer"] = issuer,
             [$"{JwtOptions.SectionName}:Audience"] = audience,
             [$"{JwtOptions.SectionName}:TokenLifetimeMinutes"] = lifetime,
+            [$"{JwtOptions.SectionName}:ClientId"] = clientId,
+            [$"{JwtOptions.SectionName}:ClientSecret"] = clientSecret,
         };
 
         return new ConfigurationBuilder().AddInMemoryCollection(values).Build();
