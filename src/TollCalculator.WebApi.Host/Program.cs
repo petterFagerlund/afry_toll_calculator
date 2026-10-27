@@ -1,6 +1,7 @@
 using TollCalculator.Application.Registrations;
 using TollCalculator.Infrastructure.Registrations;
 using TollCalculator.WebApi.Host.Auth.Registrations;
+using TollCalculator.WebApi.Host.OpenApi.Extensions;
 using TollCalculator.WebApi.Host.Registrations;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,12 +18,14 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication();
 builder.Services.AddMappers();
 builder.Services.AddValidators();
+builder.Services.AddVersionedOpenApi();
 
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
     await app.Services.MigrateDatabaseAsync(CancellationToken.None);
+    app.MapApiReference();
 }
 else
 {
