@@ -1,5 +1,6 @@
 using TollCalculator.Application.Registrations;
 using TollCalculator.Infrastructure.Registrations;
+using TollCalculator.WebApi.Host.Auth.Registrations;
 using TollCalculator.WebApi.Host.Registrations;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,7 @@ builder.Services.AddProblemDetailsErrorHandling();
 builder.Services.AddHealthChecks();
 
 builder.Services.AddJwtOptions(builder.Configuration);
+builder.Services.AddBearerAuthentication(builder.Environment);
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication();
 builder.Services.AddMappers();
@@ -29,6 +31,7 @@ else
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHealthChecks("/health").AllowAnonymous();
