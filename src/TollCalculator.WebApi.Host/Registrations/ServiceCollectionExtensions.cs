@@ -3,6 +3,8 @@ using TollCalculator.WebApi.Host.Configuration;
 using TollCalculator.WebApi.Host.ErrorHandling.Implementations;
 using TollCalculator.WebApi.Host.Mappers;
 using TollCalculator.WebApi.Host.Mappers.Implementations;
+using TollCalculator.WebApi.Host.Validators;
+using TollCalculator.WebApi.Host.Validators.Implementation;
 
 namespace TollCalculator.WebApi.Host.Registrations;
 
@@ -19,6 +21,16 @@ internal static class ServiceCollectionExtensions
         services.AddSingleton<ITollRateMapper, TollRateMapper>();
         services.AddSingleton<IHolidayMapper, HolidayMapper>();
         services.AddSingleton<IVehicleTypeMapper, VehicleTypeMapper>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddValidators(this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        services.AddSingleton<IRecordTollPassageRequestValidator, RecordTollPassageRequestValidator>();
+        services.AddSingleton<IDailyTollQueryValidator, DailyTollQueryValidator>();
 
         return services;
     }

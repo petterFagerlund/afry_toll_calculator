@@ -10,4 +10,9 @@ public static class TollTimeZone
 
         return new DateTimeOffset(localMidnight, Instance.GetUtcOffset(localMidnight));
     }
+
+    public static DateOnly DateOf(DateTimeOffset moment)
+    {
+        return DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(moment, Instance).DateTime);
+    }
 }

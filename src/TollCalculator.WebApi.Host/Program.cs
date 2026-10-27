@@ -13,6 +13,7 @@ builder.Services.AddJwtOptions(builder.Configuration);
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication();
 builder.Services.AddMappers();
+builder.Services.AddValidators();
 
 var app = builder.Build();
 
