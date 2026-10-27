@@ -34,13 +34,13 @@ public class AuthorizationFallbackPolicyTests
     [Theory]
     [InlineData("Development")]
     [InlineData("Production")]
-    public void EveryEnvironment_RegistersTheBearerScheme(string environmentName)
+    public async Task EveryEnvironment_RegistersTheBearerScheme(string environmentName)
     {
         using var application = BuildApplication(environmentName);
 
         var schemes = application.Services.GetRequiredService<IAuthenticationSchemeProvider>();
 
-        Assert.NotNull(schemes.GetSchemeAsync(JwtBearerDefaults.AuthenticationScheme).GetAwaiter().GetResult());
+        Assert.NotNull(await schemes.GetSchemeAsync(JwtBearerDefaults.AuthenticationScheme));
     }
 
     private static async Task<AuthorizationPolicy?> GetFallbackPolicyAsync(string environmentName)

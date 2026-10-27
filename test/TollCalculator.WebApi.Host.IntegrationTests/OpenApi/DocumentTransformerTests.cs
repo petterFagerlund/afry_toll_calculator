@@ -8,20 +8,22 @@ namespace TollCalculator.WebApi.Host.IntegrationTests.OpenApi;
 
 public class BearerSecuritySchemeDocumentTransformerTests
 {
-    private readonly OpenApiDocument _document = new();
-
-    public BearerSecuritySchemeDocumentTransformerTests()
+    private static async Task<OpenApiDocument> TransformedDocumentAsync()
     {
-        new BearerSecuritySchemeDocumentTransformer()
-            .TransformAsync(_document, null!, CancellationToken.None)
-            .GetAwaiter()
-            .GetResult();
+        var document = new OpenApiDocument();
+
+        await new BearerSecuritySchemeDocumentTransformer().TransformAsync(document, null!, CancellationToken.None);
+
+        return document;
     }
 
     [Fact]
-    public void TransformAsync_DescribesAnHttpBearerSchemeCarryingAJwt()
+    public async Task TransformAsync_DescribesAnHttpBearerSchemeCarryingAJwt()
     {
-        var scheme = Assert.Contains(BearerSecuritySchemeDocumentTransformer.SchemeName, _document.Components!.SecuritySchemes);
+        var document = await TransformedDocumentAsync();
+
+        var schemes = document.Components!.SecuritySchemes!;
+        var scheme = Assert.Contains(BearerSecuritySchemeDocumentTransformer.SchemeName, schemes);
 
         Assert.Equal(SecuritySchemeType.Http, scheme.Type);
         Assert.Equal("bearer", scheme.Scheme);
@@ -29,9 +31,11 @@ public class BearerSecuritySchemeDocumentTransformerTests
     }
 
     [Fact]
-    public void TransformAsync_AppliesTheSchemeToTheWholeDocument()
+    public async Task TransformAsync_AppliesTheSchemeToTheWholeDocument()
     {
-        var requirement = Assert.Single(_document.Security!);
+        var document = await TransformedDocumentAsync();
+
+        var requirement = Assert.Single(document.Security!);
 
         Assert.Single(requirement);
     }
@@ -40,14 +44,12 @@ public class BearerSecuritySchemeDocumentTransformerTests
 public class ApiVersionInfoDocumentTransformerTests
 {
     [Fact]
-    public void TransformAsync_NamesTheApiAndItsVersion()
+    public async Task TransformAsync_NamesTheApiAndItsVersion()
     {
         var document = new OpenApiDocument();
 
-        new ApiVersionInfoDocumentTransformer(ApiDocuments.V1)
-            .TransformAsync(document, null!, CancellationToken.None)
-            .GetAwaiter()
-            .GetResult();
+        await new ApiVersionInfoDocumentTransformer(ApiDocuments.V1)
+            .TransformAsync(document, null!, CancellationToken.None);
 
         Assert.Equal(ApiVersionInfoDocumentTransformer.Title, document.Info!.Title);
         Assert.Equal(ApiDocuments.V1, document.Info.Version);
