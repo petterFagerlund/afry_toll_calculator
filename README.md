@@ -27,8 +27,9 @@ Diplomat, Foreign and Military vehicles. Every timestamp is converted to Europe/
 schedule and the holiday calendar are consulted, so the same instant costs the same whether it arrives
 as `07:15+01:00` or as `06:15Z`.
 
-None of this is configuration. The rates, the cap, the toll-free vehicle types and the holidays are rows
-in the database, seeded by the initial migration.
+None of this is configuration. The rates, the cap and the toll-free vehicle types are rows in the
+database, seeded by the initial migration. Holidays are not stored at all — they are resolved for any
+year through `IHolidayProvider`, backed by the Nager.Date library.
 
 ## Architecture
 
@@ -55,7 +56,7 @@ window, the daily cap, toll-free dates, toll-free vehicle types. In the original
 one method together with the data they operate on, which is why four of the six bugs are arithmetic or
 operator-precedence mistakes hiding inside an if-chain. Putting the rules in `Domain` with no dependencies
 means they can be tested directly, exhaustively and without a database: `DailyTollService` takes a vehicle,
-its passages, a tariff (the schedule plus the daily cap) and the holidays, and returns the total plus which
+its passages and a tariff (the schedule plus the daily cap), and returns the total plus which
 passages were charged. It holds no state, so it is a singleton. Everything else — SQL, HTTP, JSON, auth — is
 arranged around that and can be changed without touching it.
 
@@ -85,8 +86,8 @@ dotnet run
 ```
 
 The host listens on **https://localhost:7077** and http://localhost:5075; plain HTTP redirects to HTTPS.
-In Development the database is created and migrated automatically on startup, including the seeded rates,
-holidays and vehicle types — there is no separate migration step to run.
+In Development the database is created and migrated automatically on startup, including the seeded rates
+and vehicle types — there is no separate migration step to run.
 
 Check it is up:
 
@@ -109,7 +110,7 @@ In Development every endpoint is open, so the examples below need no token.
 | POST | `/api/v1/toll-passages` | Record that a vehicle passed a toll station |
 | GET | `/api/v1/vehicles/{registrationNumber}/toll?date=yyyy-MM-dd` | A vehicle's toll for one day |
 | GET | `/api/v1/toll-rates` | The seeded rate intervals |
-| GET | `/api/v1/holidays?year=` | The seeded holidays, optionally for one year |
+| GET | `/api/v1/holidays?year=` | Public holidays for a year, defaulting to the current one |
 | GET | `/api/v1/vehicle-types` | Every vehicle type and whether it is toll free |
 | POST | `/api/v1/auth/token` | Exchange client credentials for a bearer token |
 
@@ -244,8 +245,8 @@ if (year == 2013)
 
 From 2014 onward no holiday was toll free. The same block also made the whole of July free via a bare
 `month == 7`.
-*Fixed:* a `Holidays` table seeded with Swedish public holidays for 2026 and 2027, matched by
-`WeekendAndHolidayService` on the date itself. Adding a year is a migration, not a code change.
+*Fixed:* `WeekendAndHolidayService` matches the date against the Swedish public holidays for that year,
+resolved on demand through `IHolidayProvider` / Nager.Date. No year ever needs adding.
 
 **5. `GetTollFee` trusted its input (line 18).**
 

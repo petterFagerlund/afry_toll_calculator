@@ -15,8 +15,6 @@ public sealed class TollDbContext : DbContext
 
     public DbSet<TollRateInterval> TollRateIntervals { get; init; } = null!;
 
-    public DbSet<Holiday> Holidays { get; init; } = null!;
-
     public DbSet<VehicleTypeRule> VehicleTypeRules { get; init; } = null!;
 
     public DbSet<TollSettings> TollSettings { get; init; } = null!;

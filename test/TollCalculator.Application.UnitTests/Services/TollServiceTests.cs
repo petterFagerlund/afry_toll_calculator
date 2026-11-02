@@ -4,6 +4,7 @@ using TollCalculator.Application.Services.Implementations;
 using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
 using TollCalculator.Domain.Repositories;
+using TollCalculator.Domain.Services;
 using TollCalculator.Domain.Services.Implementations;
 using Xunit;
 
@@ -16,22 +17,19 @@ public class TollServiceTests
     private readonly IVehicleRepository _vehicleRepository = Substitute.For<IVehicleRepository>();
     private readonly ITollPassageRepository _tollPassageRepository = Substitute.For<ITollPassageRepository>();
     private readonly ITollScheduleRepository _tollScheduleRepository = Substitute.For<ITollScheduleRepository>();
-    private readonly IHolidayRepository _holidayRepository = Substitute.For<IHolidayRepository>();
+    private readonly IHolidayProvider _holidayProvider = Substitute.For<IHolidayProvider>();
     private readonly TollService _service;
 
     public TollServiceTests()
     {
         _tollScheduleRepository.GetTariffAsync(Arg.Any<CancellationToken>())
             .Returns(TollTariff.Create(StandardSchedule(), 60));
-        _holidayRepository.GetAllAsync(Arg.Any<CancellationToken>()).Returns([]);
-        _holidayRepository.GetByYearAsync(Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns([]);
 
         _service = new TollService(
             _vehicleRepository,
             _tollPassageRepository,
             _tollScheduleRepository,
-            _holidayRepository,
-            new DailyTollService(new TollFeeService(new WeekendAndHolidayService())));
+            new DailyTollService(new TollFeeService(new WeekendAndHolidayService(_holidayProvider))));
     }
 
     [Fact]
@@ -121,24 +119,23 @@ public class TollServiceTests
     }
 
     [Fact]
-    public async Task CalculateAsync_PersistsNothing()
-    {
-        await _service.CalculateAsync("Car", [At(Monday, 7, 15)], CancellationToken.None);
-
-        await _tollPassageRepository.DidNotReceiveWithAnyArgs().AddAsync(null!, CancellationToken.None);
-    }
-
-    [Fact]
     public async Task CalculateAsync_HolidayTimestamps_AreNotCharged()
     {
         var goodFriday = new DateOnly(2026, 4, 3);
-        _holidayRepository.GetAllAsync(Arg.Any<CancellationToken>())
-            .Returns([Holiday.Create(goodFriday, "Långfredagen")]);
+        _holidayProvider.GetHolidays(2026).Returns([Holiday.Create(goodFriday, "Långfredagen")]);
 
         var result = await _service.CalculateAsync("Car", [At(goodFriday, 7, 15)], CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(0, result.Value!.TotalFee);
+    }
+
+    [Fact]
+    public async Task CalculateAsync_PersistsNothing()
+    {
+        await _service.CalculateAsync("Car", [At(Monday, 7, 15)], CancellationToken.None);
+
+        await _tollPassageRepository.DidNotReceiveWithAnyArgs().AddAsync(null!, CancellationToken.None);
     }
 
     private void KnownVehicle(string registrationNumber, VehicleType vehicleType)

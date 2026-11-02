@@ -4,16 +4,23 @@ namespace TollCalculator.Domain.Services.Implementations;
 
 public sealed class WeekendAndHolidayService : ITollFreeDateService
 {
-    public bool IsTollFree(DateOnly date, Holiday[] holidays)
-    {
-        ArgumentNullException.ThrowIfNull(holidays);
+    private readonly IHolidayProvider _holidayProvider;
 
+    public WeekendAndHolidayService(IHolidayProvider holidayProvider)
+    {
+        ArgumentNullException.ThrowIfNull(holidayProvider);
+
+        _holidayProvider = holidayProvider;
+    }
+
+    public bool IsTollFree(DateOnly date)
+    {
         if (date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
         {
             return true;
         }
 
-        foreach (var holiday in holidays)
+        foreach (var holiday in _holidayProvider.GetHolidays(date.Year))
         {
             if (holiday.Date == date)
             {

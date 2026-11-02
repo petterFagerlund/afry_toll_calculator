@@ -24,36 +24,6 @@ internal static class TollSeedData
 
     public static VehicleTypeRule[] VehicleTypeRules { get; } = BuildVehicleTypeRules();
 
-    public static Holiday[] Holidays { get; } =
-    [
-        Holiday.Create(new DateOnly(2026, 1, 1), "Nyårsdagen"),
-        Holiday.Create(new DateOnly(2026, 1, 6), "Trettondedag jul"),
-        Holiday.Create(new DateOnly(2026, 4, 3), "Långfredagen"),
-        Holiday.Create(new DateOnly(2026, 4, 5), "Påskdagen"),
-        Holiday.Create(new DateOnly(2026, 4, 6), "Annandag påsk"),
-        Holiday.Create(new DateOnly(2026, 5, 1), "Första maj"),
-        Holiday.Create(new DateOnly(2026, 5, 14), "Kristi himmelsfärdsdag"),
-        Holiday.Create(new DateOnly(2026, 5, 24), "Pingstdagen"),
-        Holiday.Create(new DateOnly(2026, 6, 6), "Sveriges nationaldag"),
-        Holiday.Create(new DateOnly(2026, 6, 20), "Midsommardagen"),
-        Holiday.Create(new DateOnly(2026, 10, 31), "Alla helgons dag"),
-        Holiday.Create(new DateOnly(2026, 12, 25), "Juldagen"),
-        Holiday.Create(new DateOnly(2026, 12, 26), "Annandag jul"),
-        Holiday.Create(new DateOnly(2027, 1, 1), "Nyårsdagen"),
-        Holiday.Create(new DateOnly(2027, 1, 6), "Trettondedag jul"),
-        Holiday.Create(new DateOnly(2027, 3, 26), "Långfredagen"),
-        Holiday.Create(new DateOnly(2027, 3, 28), "Påskdagen"),
-        Holiday.Create(new DateOnly(2027, 3, 29), "Annandag påsk"),
-        Holiday.Create(new DateOnly(2027, 5, 1), "Första maj"),
-        Holiday.Create(new DateOnly(2027, 5, 6), "Kristi himmelsfärdsdag"),
-        Holiday.Create(new DateOnly(2027, 5, 16), "Pingstdagen"),
-        Holiday.Create(new DateOnly(2027, 6, 6), "Sveriges nationaldag"),
-        Holiday.Create(new DateOnly(2027, 6, 26), "Midsommardagen"),
-        Holiday.Create(new DateOnly(2027, 11, 6), "Alla helgons dag"),
-        Holiday.Create(new DateOnly(2027, 12, 25), "Juldagen"),
-        Holiday.Create(new DateOnly(2027, 12, 26), "Annandag jul")
-    ];
-
     private static VehicleTypeRule[] BuildVehicleTypeRules()
     {
         var vehicleTypes = Enum.GetValues<VehicleType>();

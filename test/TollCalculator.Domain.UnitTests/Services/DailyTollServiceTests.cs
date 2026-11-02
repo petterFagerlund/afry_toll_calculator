@@ -17,14 +17,16 @@ public class DailyTollServiceTests
 
     public DailyTollServiceTests()
     {
-        _service = new DailyTollService(new TollFeeService(new WeekendAndHolidayService()));
+        var tollFeeService = new TollFeeService(new WeekendAndHolidayService(new StubHolidayProvider(Holidays)));
+
+        _service = new DailyTollService(tollFeeService);
         _tariff = TollTariff.Create(TestSchedules.Standard(), DailyCap);
     }
 
     [Fact]
     public void Calculate_NoPassages_ReturnsZero()
     {
-        var result = _service.Calculate(Car(), [], _tariff, Holidays);
+        var result = _service.Calculate(Car(), [], _tariff);
 
         Assert.Equal(0, result.TotalFee);
         Assert.Empty(result.ChargedPassages);
@@ -35,7 +37,7 @@ public class DailyTollServiceTests
     {
         TollPassage[] unsorted = [PassageAt(15, 35), PassageAt(7, 15)];
 
-        var result = _service.Calculate(Car(), unsorted, _tariff, Holidays);
+        var result = _service.Calculate(Car(), unsorted, _tariff);
 
         Assert.Equal(36, result.TotalFee);
         Assert.Equal(PassageAt(7, 15).PassedAt, result.ChargedPassages[0].PassedAt);
@@ -46,7 +48,7 @@ public class DailyTollServiceTests
     {
         TollPassage[] passages = [PassageAt(6, 15), PassageAt(6, 35)];
 
-        var result = _service.Calculate(Car(), passages, _tariff, Holidays);
+        var result = _service.Calculate(Car(), passages, _tariff);
 
         Assert.Equal(13, result.TotalFee);
         Assert.Single(result.ChargedPassages);
@@ -58,7 +60,7 @@ public class DailyTollServiceTests
     {
         TollPassage[] passages = [PassageAt(6, 15), PassageAt(7, 25)];
 
-        var result = _service.Calculate(Car(), passages, _tariff, Holidays);
+        var result = _service.Calculate(Car(), passages, _tariff);
 
         Assert.Equal(26, result.TotalFee);
         Assert.Equal(2, result.ChargedPassages.Length);
@@ -69,7 +71,7 @@ public class DailyTollServiceTests
     {
         TollPassage[] passages = [PassageAt(6, 0), PassageAt(7, 0)];
 
-        var result = _service.Calculate(Car(), passages, _tariff, Holidays);
+        var result = _service.Calculate(Car(), passages, _tariff);
 
         Assert.Equal(26, result.TotalFee);
         Assert.Equal(2, result.ChargedPassages.Length);
@@ -83,7 +85,7 @@ public class DailyTollServiceTests
             PassageAt(6, 0), PassageAt(7, 5), PassageAt(8, 10), PassageAt(9, 15), PassageAt(15, 35)
         ];
 
-        var result = _service.Calculate(Car(), passages, _tariff, Holidays);
+        var result = _service.Calculate(Car(), passages, _tariff);
 
         Assert.Equal(DailyCap, result.TotalFee);
         Assert.Equal(DailyCap, result.ChargedPassages.Sum(charged => charged.Amount));
@@ -94,7 +96,7 @@ public class DailyTollServiceTests
     {
         var motorbike = Vehicle.Create("ABC123", VehicleType.Motorbike);
 
-        var result = _service.Calculate(motorbike, [PassageAt(7, 15)], _tariff, Holidays);
+        var result = _service.Calculate(motorbike, [PassageAt(7, 15)], _tariff);
 
         Assert.Equal(0, result.TotalFee);
         Assert.Empty(result.ChargedPassages);
@@ -105,7 +107,7 @@ public class DailyTollServiceTests
     {
         var onNewYearsDay = TollPassage.Create("ABC123", new DateTimeOffset(2026, 1, 1, 7, 15, 0, Offset));
 
-        var result = _service.Calculate(Car(), [onNewYearsDay], _tariff, Holidays);
+        var result = _service.Calculate(Car(), [onNewYearsDay], _tariff);
 
         Assert.Equal(0, result.TotalFee);
         Assert.Empty(result.ChargedPassages);
@@ -116,7 +118,7 @@ public class DailyTollServiceTests
     {
         TollPassage[] passages = [PassageAt(3, 0), PassageAt(22, 0)];
 
-        var result = _service.Calculate(Car(), passages, _tariff, Holidays);
+        var result = _service.Calculate(Car(), passages, _tariff);
 
         Assert.Equal(0, result.TotalFee);
         Assert.Empty(result.ChargedPassages);
@@ -127,7 +129,7 @@ public class DailyTollServiceTests
     {
         TollPassage[] passages = [PassageAt(5, 30), PassageAt(6, 15), PassageAt(6, 45)];
 
-        var result = _service.Calculate(Car(), passages, _tariff, Holidays);
+        var result = _service.Calculate(Car(), passages, _tariff);
 
         Assert.Equal(13, result.TotalFee);
         Assert.Single(result.ChargedPassages);
@@ -143,7 +145,7 @@ public class DailyTollServiceTests
             PassageOnNextDayAt(9, 15), PassageOnNextDayAt(15, 35)
         ];
 
-        var result = _service.Calculate(Car(), passages, _tariff, Holidays);
+        var result = _service.Calculate(Car(), passages, _tariff);
 
         Assert.Equal(DailyCap * 2, result.TotalFee);
     }
@@ -153,7 +155,7 @@ public class DailyTollServiceTests
     {
         TollPassage[] passages = [PassageAt(7, 15), PassageOnNextDayAt(7, 15)];
 
-        var result = _service.Calculate(Car(), passages, _tariff, Holidays);
+        var result = _service.Calculate(Car(), passages, _tariff);
 
         Assert.Equal(36, result.TotalFee);
         Assert.Equal(2, result.ChargedPassages.Length);
@@ -162,7 +164,7 @@ public class DailyTollServiceTests
     [Fact]
     public void Calculate_NullPassages_Throws()
     {
-        Assert.Throws<ArgumentNullException>(() => _service.Calculate(Car(), null!, _tariff, Holidays));
+        Assert.Throws<ArgumentNullException>(() => _service.Calculate(Car(), null!, _tariff));
     }
 
     private static Vehicle Car()

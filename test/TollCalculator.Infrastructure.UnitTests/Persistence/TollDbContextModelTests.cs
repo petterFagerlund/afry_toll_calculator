@@ -22,7 +22,6 @@ public class TollDbContextModelTests
     [InlineData(typeof(Vehicle), "Vehicles")]
     [InlineData(typeof(TollPassage), "TollPassages")]
     [InlineData(typeof(TollRateInterval), "TollRateIntervals")]
-    [InlineData(typeof(Holiday), "Holidays")]
     [InlineData(typeof(TollSettings), "TollSettings")]
     public void Model_Entity_MapsToExpectedTable(Type entityType, string expectedTable)
     {
@@ -77,15 +76,6 @@ public class TollDbContextModelTests
 
         Assert.Equal(typeof(Vehicle), foreignKey.PrincipalEntityType.ClrType);
         Assert.Equal(nameof(TollPassage.RegistrationNumber), Assert.Single(foreignKey.Properties).Name);
-    }
-
-    [Fact]
-    public void Model_Holiday_IsKeyedOnDate()
-    {
-        var key = _context.Model.FindEntityType(typeof(Holiday))!.FindPrimaryKey();
-
-        Assert.NotNull(key);
-        Assert.Equal(nameof(Holiday.Date), Assert.Single(key.Properties).Name);
     }
 
     [Fact]

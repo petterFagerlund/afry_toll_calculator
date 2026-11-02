@@ -95,7 +95,7 @@ public class TollFlowTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task APassageOnASeededHoliday_IsFree()
+    public async Task APassageOnAPublicHoliday_IsFree()
     {
         var registrationNumber = await _vehicles.AddAsync("HOL001", VehicleType.Car);
 

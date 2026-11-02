@@ -31,14 +31,12 @@ public sealed class AuthController : ApiControllerBase
     public ActionResult<TokenResponse> IssueToken([FromBody] TokenRequest request)
     {
         var modelState = TokenRequestValidator.Validate(request);
-
         if (!modelState.IsValid)
         {
             return MapValidationProblem(modelState);
         }
 
         var issued = _tokenIssuer.Issue(request.ClientId!, request.ClientSecret!);
-
         if (issued is null)
         {
             return InvalidCredentials();

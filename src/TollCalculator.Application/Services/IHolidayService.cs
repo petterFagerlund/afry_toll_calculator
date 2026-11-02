@@ -5,5 +5,5 @@ namespace TollCalculator.Application.Services;
 
 public interface IHolidayService
 {
-    Task<ApplicationResult<Holiday[]>> GetHolidaysAsync(int? year, CancellationToken cancellationToken);
+    ApplicationResult<Holiday[]> GetHolidays(int? year);
 }

@@ -14,11 +14,10 @@ public sealed class TollFeeService : ITollFeeService
         _tollFreeDateService = tollFreeDateService;
     }
 
-    public int CalculateFee(Vehicle vehicle, DateTimeOffset passedAt, TollSchedule schedule, Holiday[] holidays)
+    public int CalculateFee(Vehicle vehicle, DateTimeOffset passedAt, TollSchedule schedule)
     {
         ArgumentNullException.ThrowIfNull(vehicle);
         ArgumentNullException.ThrowIfNull(schedule);
-        ArgumentNullException.ThrowIfNull(holidays);
 
         if (vehicle.IsTollFree)
         {
@@ -27,7 +26,7 @@ public sealed class TollFeeService : ITollFeeService
 
         var localPassedAt = TollTimeZone.ToLocalTime(passedAt);
 
-        if (_tollFreeDateService.IsTollFree(DateOnly.FromDateTime(localPassedAt), holidays))
+        if (_tollFreeDateService.IsTollFree(DateOnly.FromDateTime(localPassedAt)))
         {
             return 0;
         }

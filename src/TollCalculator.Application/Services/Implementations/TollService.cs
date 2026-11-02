@@ -11,26 +11,22 @@ internal sealed class TollService : ITollService
     private readonly IVehicleRepository _vehicleRepository;
     private readonly ITollPassageRepository _tollPassageRepository;
     private readonly ITollScheduleRepository _tollScheduleRepository;
-    private readonly IHolidayRepository _holidayRepository;
     private readonly IDailyTollService _dailyTollService;
 
     public TollService(
         IVehicleRepository vehicleRepository,
         ITollPassageRepository tollPassageRepository,
         ITollScheduleRepository tollScheduleRepository,
-        IHolidayRepository holidayRepository,
         IDailyTollService dailyTollService)
     {
         ArgumentNullException.ThrowIfNull(vehicleRepository);
         ArgumentNullException.ThrowIfNull(tollPassageRepository);
         ArgumentNullException.ThrowIfNull(tollScheduleRepository);
-        ArgumentNullException.ThrowIfNull(holidayRepository);
         ArgumentNullException.ThrowIfNull(dailyTollService);
 
         _vehicleRepository = vehicleRepository;
         _tollPassageRepository = tollPassageRepository;
         _tollScheduleRepository = tollScheduleRepository;
-        _holidayRepository = holidayRepository;
         _dailyTollService = dailyTollService;
     }
 
@@ -48,9 +44,8 @@ internal sealed class TollService : ITollService
         }
 
         var passages = await _tollPassageRepository.GetForDayAsync(registrationNumber, date, cancellationToken);
-        var holidays = await _holidayRepository.GetByYearAsync(date.Year, cancellationToken);
 
-        return await CalculateTollAsync(vehicle, passages, holidays, cancellationToken);
+        return await CalculateTollAsync(vehicle, passages, cancellationToken);
     }
 
     public async Task<ApplicationResult<DailyToll>> CalculateAsync(
@@ -71,19 +66,16 @@ internal sealed class TollService : ITollService
             passages[i] = TollPassage.Create(vehicle.RegistrationNumber, timestamps[i]);
         }
 
-        var holidays = await _holidayRepository.GetAllAsync(cancellationToken);
-
-        return await CalculateTollAsync(vehicle, passages, holidays, cancellationToken);
+        return await CalculateTollAsync(vehicle, passages, cancellationToken);
     }
 
     private async Task<ApplicationResult<DailyToll>> CalculateTollAsync(
         Vehicle vehicle,
         TollPassage[] passages,
-        Holiday[] holidays,
         CancellationToken cancellationToken)
     {
         var tariff = await _tollScheduleRepository.GetTariffAsync(cancellationToken);
 
-        return ApplicationResult<DailyToll>.Success(_dailyTollService.Calculate(vehicle, passages, tariff, holidays));
+        return ApplicationResult<DailyToll>.Success(_dailyTollService.Calculate(vehicle, passages, tariff));
     }
 }

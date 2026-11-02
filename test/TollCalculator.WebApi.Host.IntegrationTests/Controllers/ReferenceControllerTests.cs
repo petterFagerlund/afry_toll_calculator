@@ -50,37 +50,37 @@ public class HolidaysControllerTests
     }
 
     [Fact]
-    public async Task GetHolidays_ReturnsEveryHolidayWhenNoYearIsGiven()
+    public void GetHolidays_ReturnsTheCurrentYearWhenNoYearIsGiven()
     {
         var holiday = Holiday.Create(new DateOnly(2026, 1, 1), "Nyårsdagen");
-        _holidayService.GetHolidaysAsync(null, Arg.Any<CancellationToken>())
+        _holidayService.GetHolidays(null)
             .Returns(ApplicationResult<Holiday[]>.Success([holiday]));
 
-        var result = await _controller.GetHolidays(null, CancellationToken.None);
+        var result = _controller.GetHolidays(null);
 
         var responses = Assert.IsType<HolidayResponse[]>(Assert.IsType<OkObjectResult>(result.Result).Value);
         Assert.Equal("Nyårsdagen", Assert.Single(responses).Name);
     }
 
     [Fact]
-    public async Task GetHolidays_PassesTheRequestedYearToTheService()
+    public void GetHolidays_PassesTheRequestedYearToTheService()
     {
-        _holidayService.GetHolidaysAsync(2027, Arg.Any<CancellationToken>())
+        _holidayService.GetHolidays(2027)
             .Returns(ApplicationResult<Holiday[]>.Success([]));
 
-        var result = await _controller.GetHolidays(2027, CancellationToken.None);
+        var result = _controller.GetHolidays(2027);
 
         Assert.Empty(Assert.IsType<HolidayResponse[]>(Assert.IsType<OkObjectResult>(result.Result).Value));
-        await _holidayService.Received(1).GetHolidaysAsync(2027, Arg.Any<CancellationToken>());
+        _holidayService.Received(1).GetHolidays(2027);
     }
 
     [Fact]
-    public async Task GetHolidays_ReturnsBadRequestForAnImpossibleYear()
+    public void GetHolidays_ReturnsBadRequestForAnImpossibleYear()
     {
-        _holidayService.GetHolidaysAsync(0, Arg.Any<CancellationToken>())
+        _holidayService.GetHolidays(0)
             .Returns(ApplicationResult<Holiday[]>.Invalid("The year 0 is outside the supported range 1-9999."));
 
-        var result = await _controller.GetHolidays(0, CancellationToken.None);
+        var result = _controller.GetHolidays(0);
 
         var problem = Assert.IsType<BadRequestObjectResult>(result.Result);
         Assert.Equal(StatusCodes.Status400BadRequest, problem.StatusCode);

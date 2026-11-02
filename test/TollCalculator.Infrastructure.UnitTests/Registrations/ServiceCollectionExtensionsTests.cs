@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using TollCalculator.Infrastructure.Persistence;
 using TollCalculator.Infrastructure.Registrations;
 using TollCalculator.Domain.Repositories;
+using TollCalculator.Domain.Services;
 using Xunit;
 
 namespace TollCalculator.Infrastructure.UnitTests.Registrations;
@@ -20,7 +21,7 @@ public class ServiceCollectionExtensionsTests
     [InlineData(typeof(IVehicleRepository))]
     [InlineData(typeof(ITollPassageRepository))]
     [InlineData(typeof(ITollScheduleRepository))]
-    [InlineData(typeof(IHolidayRepository))]
+    [InlineData(typeof(IHolidayProvider))]
     [InlineData(typeof(IVehicleTypeRuleRepository))]
     public void AddInfrastructure_ResolvesRegisteredService(Type serviceType)
     {

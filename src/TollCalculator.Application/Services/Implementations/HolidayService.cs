@@ -1,6 +1,6 @@
 using TollCalculator.Application.Results;
 using TollCalculator.Domain.Models;
-using TollCalculator.Domain.Repositories;
+using TollCalculator.Domain.Services;
 
 namespace TollCalculator.Application.Services.Implementations;
 
@@ -9,16 +9,16 @@ internal sealed class HolidayService : IHolidayService
     private const int EarliestYear = 1;
     private const int LatestYear = 9999;
 
-    private readonly IHolidayRepository _holidayRepository;
+    private readonly IHolidayProvider _holidayProvider;
 
-    public HolidayService(IHolidayRepository holidayRepository)
+    public HolidayService(IHolidayProvider holidayProvider)
     {
-        ArgumentNullException.ThrowIfNull(holidayRepository);
+        ArgumentNullException.ThrowIfNull(holidayProvider);
 
-        _holidayRepository = holidayRepository;
+        _holidayProvider = holidayProvider;
     }
 
-    public async Task<ApplicationResult<Holiday[]>> GetHolidaysAsync(int? year, CancellationToken cancellationToken)
+    public ApplicationResult<Holiday[]> GetHolidays(int? year)
     {
         if (year is < EarliestYear or > LatestYear)
         {
@@ -26,13 +26,6 @@ internal sealed class HolidayService : IHolidayService
                 $"The year {year} is outside the supported range {EarliestYear}-{LatestYear}.");
         }
 
-        if (year is null)
-        {
-            return ApplicationResult<Holiday[]>.Success(await _holidayRepository.GetAllAsync(cancellationToken));
-        }
-
-        var holidays = await _holidayRepository.GetByYearAsync(year.Value, cancellationToken);
-
-        return ApplicationResult<Holiday[]>.Success(holidays);
+        return ApplicationResult<Holiday[]>.Success(_holidayProvider.GetHolidays(year ?? DateTime.UtcNow.Year));
     }
 }

@@ -18,15 +18,13 @@ public sealed class HolidaysController : ApiControllerBase
         _holidayService = holidayService;
     }
 
-    /// <summary>Returns the toll-free holidays, optionally narrowed to a single year.</summary>
+    /// <summary>Returns the toll-free holidays for a year, defaulting to the current one.</summary>
     [HttpGet("api/v{version:apiVersion}/holidays")]
     [ProducesResponseType<HolidayResponse[]>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<HolidayResponse[]>> GetHolidays(
-        [FromQuery] int? year,
-        CancellationToken cancellationToken)
+    public ActionResult<HolidayResponse[]> GetHolidays([FromQuery] int? year)
     {
-        var result = await _holidayService.GetHolidaysAsync(year, cancellationToken);
+        var result = _holidayService.GetHolidays(year);
 
         if (!result.IsSuccess)
         {

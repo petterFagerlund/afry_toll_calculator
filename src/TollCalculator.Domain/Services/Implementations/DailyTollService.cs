@@ -16,14 +16,13 @@ public sealed class DailyTollService : IDailyTollService
         _tollFeeService = tollFeeService;
     }
 
-    public DailyToll Calculate(Vehicle vehicle, TollPassage[] passages, TollTariff tariff, Holiday[] holidays)
+    public DailyToll Calculate(Vehicle vehicle, TollPassage[] passages, TollTariff tariff)
     {
         ArgumentNullException.ThrowIfNull(vehicle);
         ArgumentNullException.ThrowIfNull(passages);
         ArgumentNullException.ThrowIfNull(tariff);
-        ArgumentNullException.ThrowIfNull(holidays);
 
-        var chargeable = ChargeablePassages(vehicle, passages, tariff.Schedule, holidays);
+        var chargeable = ChargeablePassages(vehicle, passages, tariff.Schedule);
 
         if (chargeable.Length == 0)
         {
@@ -48,14 +47,13 @@ public sealed class DailyTollService : IDailyTollService
     private ChargedTollPassage[] ChargeablePassages(
         Vehicle vehicle,
         TollPassage[] passages,
-        TollSchedule schedule,
-        Holiday[] holidays)
+        TollSchedule schedule)
     {
         var chargeable = new List<ChargedTollPassage>();
 
         foreach (var passage in passages)
         {
-            var fee = _tollFeeService.CalculateFee(vehicle, passage.PassedAt, schedule, holidays);
+            var fee = _tollFeeService.CalculateFee(vehicle, passage.PassedAt, schedule);
 
             if (fee > 0)
             {

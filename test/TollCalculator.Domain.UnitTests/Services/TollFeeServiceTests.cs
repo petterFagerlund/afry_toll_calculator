@@ -15,7 +15,7 @@ public class TollFeeServiceTests
 
     public TollFeeServiceTests()
     {
-        _service = new TollFeeService(new WeekendAndHolidayService());
+        _service = new TollFeeService(new WeekendAndHolidayService(new StubHolidayProvider(Holidays)));
 
         _schedule = TollSchedule.Create(
         [
@@ -31,7 +31,7 @@ public class TollFeeServiceTests
         var vehicle = Vehicle.Create("ABC123", VehicleType.Car);
         var passedAt = new DateTimeOffset(2026, 10, 23, 7, 15, 0, Offset);
 
-        Assert.Equal(18, _service.CalculateFee(vehicle, passedAt, _schedule, Holidays));
+        Assert.Equal(18, _service.CalculateFee(vehicle, passedAt, _schedule));
     }
 
     [Fact]
@@ -40,7 +40,7 @@ public class TollFeeServiceTests
         var vehicle = Vehicle.Create("ABC123", VehicleType.Motorbike);
         var passedAt = new DateTimeOffset(2026, 10, 23, 7, 15, 0, Offset);
 
-        Assert.Equal(0, _service.CalculateFee(vehicle, passedAt, _schedule, Holidays));
+        Assert.Equal(0, _service.CalculateFee(vehicle, passedAt, _schedule));
     }
 
     [Fact]
@@ -49,7 +49,7 @@ public class TollFeeServiceTests
         var vehicle = Vehicle.Create("ABC123", VehicleType.Car);
         var passedAt = new DateTimeOffset(2026, 10, 24, 7, 15, 0, Offset);
 
-        Assert.Equal(0, _service.CalculateFee(vehicle, passedAt, _schedule, Holidays));
+        Assert.Equal(0, _service.CalculateFee(vehicle, passedAt, _schedule));
     }
 
     [Fact]
@@ -58,7 +58,7 @@ public class TollFeeServiceTests
         var vehicle = Vehicle.Create("ABC123", VehicleType.Car);
         var passedAt = new DateTimeOffset(2026, 1, 1, 7, 15, 0, Offset);
 
-        Assert.Equal(0, _service.CalculateFee(vehicle, passedAt, _schedule, Holidays));
+        Assert.Equal(0, _service.CalculateFee(vehicle, passedAt, _schedule));
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public class TollFeeServiceTests
         var vehicle = Vehicle.Create("ABC123", VehicleType.Car);
         var passedAt = new DateTimeOffset(2026, 10, 23, 3, 0, 0, Offset);
 
-        Assert.Equal(0, _service.CalculateFee(vehicle, passedAt, _schedule, Holidays));
+        Assert.Equal(0, _service.CalculateFee(vehicle, passedAt, _schedule));
     }
 
     [Fact]
@@ -76,7 +76,7 @@ public class TollFeeServiceTests
         var vehicle = Vehicle.Create("ABC123", VehicleType.Car);
         var fridayLateEvening = new DateTimeOffset(2026, 10, 23, 23, 30, 0, Offset);
 
-        Assert.Equal(0, _service.CalculateFee(vehicle, fridayLateEvening, _schedule, Holidays));
+        Assert.Equal(0, _service.CalculateFee(vehicle, fridayLateEvening, _schedule));
     }
 
     [Fact]
@@ -87,8 +87,8 @@ public class TollFeeServiceTests
         var utcNotation = stockholmNotation.ToUniversalTime();
 
         Assert.Equal(
-            _service.CalculateFee(vehicle, stockholmNotation, _schedule, Holidays),
-            _service.CalculateFee(vehicle, utcNotation, _schedule, Holidays));
+            _service.CalculateFee(vehicle, stockholmNotation, _schedule),
+            _service.CalculateFee(vehicle, utcNotation, _schedule));
     }
 
     [Fact]
@@ -97,7 +97,7 @@ public class TollFeeServiceTests
         var vehicle = Vehicle.Create("ABC123", VehicleType.Car);
         var utcNotation = new DateTimeOffset(2026, 10, 23, 5, 15, 0, TimeSpan.Zero);
 
-        Assert.Equal(18, _service.CalculateFee(vehicle, utcNotation, _schedule, Holidays));
+        Assert.Equal(18, _service.CalculateFee(vehicle, utcNotation, _schedule));
     }
 
     [Fact]
@@ -105,7 +105,7 @@ public class TollFeeServiceTests
     {
         var passedAt = new DateTimeOffset(2026, 10, 23, 7, 15, 0, Offset);
 
-        Assert.Throws<ArgumentNullException>(() => _service.CalculateFee(null!, passedAt, _schedule, Holidays));
+        Assert.Throws<ArgumentNullException>(() => _service.CalculateFee(null!, passedAt, _schedule));
     }
 
     [Fact]
@@ -114,6 +114,6 @@ public class TollFeeServiceTests
         var vehicle = Vehicle.Create("ABC123", VehicleType.Car);
         var passedAt = new DateTimeOffset(2026, 10, 23, 7, 15, 0, Offset);
 
-        Assert.Throws<ArgumentNullException>(() => _service.CalculateFee(vehicle, passedAt, null!, Holidays));
+        Assert.Throws<ArgumentNullException>(() => _service.CalculateFee(vehicle, passedAt, null!));
     }
 }

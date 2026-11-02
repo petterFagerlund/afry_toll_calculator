@@ -32,27 +32,6 @@ public class ReferenceRepositoryTests : IDisposable
     }
 
     [Fact]
-    public async Task GetAllAsync_ReturnsEverySeededHoliday()
-    {
-        var repository = new HolidayRepository(_fixture.Context);
-
-        var holidays = await repository.GetAllAsync(CancellationToken.None);
-
-        Assert.Equal(26, holidays.Length);
-    }
-
-    [Fact]
-    public async Task GetByYearAsync_ReturnsOnlyThatYear()
-    {
-        var repository = new HolidayRepository(_fixture.Context);
-
-        var holidays = await repository.GetByYearAsync(2026, CancellationToken.None);
-
-        Assert.Equal(13, holidays.Length);
-        Assert.All(holidays, holiday => Assert.Equal(2026, holiday.Date.Year));
-    }
-
-    [Fact]
     public async Task GetAllAsync_ReturnsEveryVehicleTypeRule()
     {
         var repository = new VehicleTypeRuleRepository(_fixture.Context);

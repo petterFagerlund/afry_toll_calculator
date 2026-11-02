@@ -71,36 +71,6 @@ public class TollSeedDataTests
         Assert.Single(seeded, row => row["VehicleType"]!.Equals(VehicleType.Car) && !(bool)row["IsTollFree"]!);
     }
 
-    [Fact]
-    public void Seed_Holidays_CoverTwoYears()
-    {
-        var seeded = SeedFor(typeof(Holiday));
-        var years = seeded.Select(row => ((DateOnly)row["Date"]!).Year).Distinct().ToArray();
-
-        Assert.Equal(26, seeded.Length);
-        Assert.Equal([2026, 2027], years.Order());
-    }
-
-    [Theory]
-    [InlineData(2026, 4, 3)]
-    [InlineData(2026, 6, 20)]
-    [InlineData(2027, 3, 26)]
-    [InlineData(2027, 6, 26)]
-    public void Seed_Holidays_IncludeTheMovableOnes(int year, int month, int day)
-    {
-        var seeded = SeedFor(typeof(Holiday));
-
-        Assert.Contains(seeded, row => (DateOnly)row["Date"]! == new DateOnly(year, month, day));
-    }
-
-    [Fact]
-    public void Seed_Holidays_HaveNames()
-    {
-        var seeded = SeedFor(typeof(Holiday));
-
-        Assert.All(seeded, row => Assert.False(string.IsNullOrWhiteSpace((string?)row["Name"])));
-    }
-
     private IDictionary<string, object?>[] SeedFor(Type entityType)
     {
         var model = _context.GetService<IDesignTimeModel>().Model;

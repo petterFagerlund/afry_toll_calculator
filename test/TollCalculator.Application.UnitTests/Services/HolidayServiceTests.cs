@@ -2,65 +2,74 @@ using NSubstitute;
 using TollCalculator.Application.Results;
 using TollCalculator.Application.Services.Implementations;
 using TollCalculator.Domain.Models;
-using TollCalculator.Domain.Repositories;
+using TollCalculator.Domain.Services;
 using Xunit;
 
 namespace TollCalculator.Application.UnitTests.Services;
 
 public class HolidayServiceTests
 {
-    private readonly IHolidayRepository _holidayRepository = Substitute.For<IHolidayRepository>();
+    private readonly IHolidayProvider _holidayProvider = Substitute.For<IHolidayProvider>();
     private readonly HolidayService _service;
 
     public HolidayServiceTests()
     {
-        _service = new HolidayService(_holidayRepository);
+        _service = new HolidayService(_holidayProvider);
     }
 
     [Fact]
-    public async Task GetHolidaysAsync_WithYear_ReturnsThatYearFromTheRepository()
+    public void GetHolidays_WithYear_ReturnsThatYearFromTheProvider()
     {
         var holidays = new[] { Holiday.Create(new DateOnly(2026, 12, 25), "Juldagen") };
-        _holidayRepository.GetByYearAsync(2026, Arg.Any<CancellationToken>()).Returns(holidays);
+        _holidayProvider.GetHolidays(2026).Returns(holidays);
 
-        var result = await _service.GetHolidaysAsync(2026, CancellationToken.None);
+        var result = _service.GetHolidays(2026);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(holidays, result.Value);
-
-        await _holidayRepository.DidNotReceiveWithAnyArgs().GetAllAsync(CancellationToken.None);
     }
 
     [Fact]
-    public async Task GetHolidaysAsync_WithoutYear_ReturnsEveryHolidayFromTheRepository()
+    public void GetHolidays_WithoutYear_FallsBackToTheCurrentYear()
     {
-        var holidays = new[]
-        {
-            Holiday.Create(new DateOnly(2026, 12, 25), "Juldagen"),
-            Holiday.Create(new DateOnly(2027, 12, 25), "Juldagen")
-        };
-        _holidayRepository.GetAllAsync(Arg.Any<CancellationToken>()).Returns(holidays);
+        var currentYear = DateTime.UtcNow.Year;
+        var holidays = new[] { Holiday.Create(new DateOnly(currentYear, 12, 25), "Juldagen") };
+        _holidayProvider.GetHolidays(currentYear).Returns(holidays);
 
-        var result = await _service.GetHolidaysAsync(null, CancellationToken.None);
+        var result = _service.GetHolidays(null);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(holidays, result.Value);
+    }
 
-        await _holidayRepository.DidNotReceiveWithAnyArgs().GetByYearAsync(0, CancellationToken.None);
+    [Fact]
+    public void GetHolidays_AnyFutureYear_IsResolvedWithoutASeededTable()
+    {
+        _holidayProvider.GetHolidays(2099).Returns([Holiday.Create(new DateOnly(2099, 12, 25), "Juldagen")]);
+
+        var result = _service.GetHolidays(2099);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(new DateOnly(2099, 12, 25), Assert.Single(result.Value!).Date);
     }
 
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
     [InlineData(10000)]
-    public async Task GetHolidaysAsync_ImpossibleYear_ReturnsInvalidWithoutReading(int year)
+    public void GetHolidays_ImpossibleYear_ReturnsInvalidWithoutReading(int year)
     {
-        var result = await _service.GetHolidaysAsync(year, CancellationToken.None);
+        var result = _service.GetHolidays(year);
 
         Assert.False(result.IsSuccess);
         Assert.Equal(ApplicationResultStatus.ValidationError, result.Status);
 
-        await _holidayRepository.DidNotReceiveWithAnyArgs().GetByYearAsync(0, CancellationToken.None);
-        await _holidayRepository.DidNotReceiveWithAnyArgs().GetAllAsync(CancellationToken.None);
+        _holidayProvider.DidNotReceiveWithAnyArgs().GetHolidays(0);
+    }
+
+    [Fact]
+    public void Constructor_NullHolidayProvider_Throws()
+    {
+        Assert.Throws<ArgumentNullException>(() => new HolidayService(null!));
     }
 }
