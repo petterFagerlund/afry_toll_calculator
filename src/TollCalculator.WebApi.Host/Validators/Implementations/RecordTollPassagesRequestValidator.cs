@@ -52,19 +52,19 @@ internal static class RecordTollPassagesRequestValidator
         DateTimeOffset now,
         ModelStateDictionary modelState)
     {
-        var registrationNumberError = RegistrationNumberRule.Check(passage.RegistrationNumber);
+        var registrationNumberError = RegistrationNumberValidator.Check(passage.RegistrationNumber);
         if (registrationNumberError is not null)
         {
             modelState.AddModelError(MemberAt(index, nameof(TollPassageToRecord.RegistrationNumber)), registrationNumberError);
         }
 
-        var vehicleTypeError = VehicleTypeRule.Check(passage.VehicleType);
+        var vehicleTypeError = VehicleTypeValidator.Check(passage.VehicleType);
         if (vehicleTypeError is not null)
         {
             modelState.AddModelError(MemberAt(index, nameof(TollPassageToRecord.VehicleType)), vehicleTypeError);
         }
 
-        var passedAtError = PassageTimestampRule.Check(passage.PassedAt, now);
+        var passedAtError = PassageTimestampValidator.Check(passage.PassedAt, now);
         if (passedAtError is not null)
         {
             modelState.AddModelError(MemberAt(index, nameof(TollPassageToRecord.PassedAt)), passedAtError);

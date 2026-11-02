@@ -18,7 +18,7 @@ public class DailyTollServiceTests
 
     public DailyTollServiceTests()
     {
-        var tollFeeService = new TollFeeService(new WeekendAndHolidayService(new StubHolidayProvider(Holidays)));
+        var tollFeeService = new TollFeeService(new TollFreeDateService(new StubHolidayProvider(Holidays)));
 
         _tollScheduleRepository.GetTariffAsync(Arg.Any<CancellationToken>())
             .Returns(TollTariff.Create(TestSchedules.Standard(), DailyCap));

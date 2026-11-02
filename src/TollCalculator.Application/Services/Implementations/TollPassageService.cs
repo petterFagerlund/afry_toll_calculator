@@ -22,20 +22,32 @@ internal sealed class TollPassageService : ITollPassageService
     }
 
     public async Task<ApplicationResult<Guid[]>> RecordTollPassagesAsync(
-        TollPassage[] passages,
+        TollPassage[] tollPassages,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(passages);
+        ArgumentNullException.ThrowIfNull(tollPassages);
 
-        var recordedPassages = await _tollPassageRepository.AddRangeAsync(passages, cancellationToken);
-        if (!recordedPassages.IsSuccess)
+        var recordTollPassages = await _tollPassageRepository.AddRangeAsync(tollPassages, cancellationToken);
+        if (!recordTollPassages.IsSuccess)
         {
-            _logger.LogInformation(
-                "A batch of {PassageCount} passages was not recorded: {Reason}",
-                passages.Length,
-                recordedPassages.ErrorMessage);
+            _logger.LogError(
+                "A batch of {PassageCount} toll passages was not recorded: {Reason}",
+                tollPassages.Length,
+                recordTollPassages.ErrorMessage);
+
+            return recordTollPassages;
         }
 
-        return recordedPassages;
+        if (recordTollPassages.Value!.Length != tollPassages.Length)
+        {
+            _logger.LogError(
+                "Recorded {RecordedCount} toll passages but {RequestedCount} were requested.",
+                recordTollPassages.Value!.Length,
+                tollPassages.Length);
+
+            return ApplicationResult<Guid[]>.Error("The recorded toll passages do not match the requested ones.");
+        }
+
+        return recordTollPassages;
     }
 }

@@ -3,11 +3,11 @@ using TollCalculator.Application.Results;
 
 namespace TollCalculator.Application.Services.Implementations;
 
-public sealed class WeekendAndHolidayService : ITollFreeDateService
+public sealed class TollFreeDateService : ITollFreeDateService
 {
     private readonly IHolidayProvider _holidayProvider;
 
-    public WeekendAndHolidayService(IHolidayProvider holidayProvider)
+    public TollFreeDateService(IHolidayProvider holidayProvider)
     {
         ArgumentNullException.ThrowIfNull(holidayProvider);
 

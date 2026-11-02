@@ -14,7 +14,7 @@ public class TollFeeServiceTests
 
     public TollFeeServiceTests()
     {
-        _service = new TollFeeService(new WeekendAndHolidayService(new StubHolidayProvider(Holidays)));
+        _service = new TollFeeService(new TollFreeDateService(new StubHolidayProvider(Holidays)));
 
         _schedule = TollSchedule.Create(
         [

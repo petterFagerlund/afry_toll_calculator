@@ -3,7 +3,7 @@ using TollCalculator.Domain.Enums;
 
 namespace TollCalculator.WebApi.Host.Validators.Implementations;
 
-internal static class VehicleTypeRule
+internal static class VehicleTypeValidator
 {
     public static string? Check(string? vehicleType)
     {

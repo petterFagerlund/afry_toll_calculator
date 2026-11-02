@@ -1,6 +1,6 @@
 namespace TollCalculator.WebApi.Host.Validators.Implementations;
 
-internal static class PassageTimestampRule
+internal static class PassageTimestampValidator
 {
     private static readonly DateTimeOffset EarliestAccepted = new(2000, 1, 1, 0, 0, 0, TimeSpan.Zero);
     private static readonly TimeSpan ClockSkew = TimeSpan.FromMinutes(5);

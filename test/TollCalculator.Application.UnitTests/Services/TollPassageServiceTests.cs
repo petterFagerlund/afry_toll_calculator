@@ -72,6 +72,43 @@ public class TollPassageServiceTests
     }
 
     [Fact]
+    public async Task RecordTollPassagesAsync_FewerIdsThanPassages_ReturnsError()
+    {
+        var passages = new[]
+        {
+            TollPassage.Create("ABC123", VehicleType.Car, PassedAt),
+            TollPassage.Create("XYZ789", VehicleType.Car, PassedAt.AddHours(2)),
+        };
+
+        _tollPassageRepository.AddRangeAsync(Arg.Any<TollPassage[]>(), Arg.Any<CancellationToken>())
+            .Returns(ApplicationResult<Guid[]>.Success([passages[0].Id]));
+
+        var result = await _service.RecordTollPassagesAsync(passages, CancellationToken.None);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(ApplicationResultStatus.Error, result.Status);
+    }
+
+    [Fact]
+    public async Task RecordTollPassagesAsync_AnIdForEveryPassage_Succeeds()
+    {
+        var passages = new[]
+        {
+            TollPassage.Create("ABC123", VehicleType.Car, PassedAt),
+            TollPassage.Create("XYZ789", VehicleType.Car, PassedAt.AddHours(2)),
+        };
+        var expectedIds = Array.ConvertAll(passages, passage => passage.Id);
+
+        _tollPassageRepository.AddRangeAsync(Arg.Any<TollPassage[]>(), Arg.Any<CancellationToken>())
+            .Returns(ApplicationResult<Guid[]>.Success(expectedIds));
+
+        var result = await _service.RecordTollPassagesAsync(passages, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(expectedIds, result.Value);
+    }
+
+    [Fact]
     public async Task RecordTollPassagesAsync_NullPassages_Throws()
     {
         await Assert.ThrowsAsync<ArgumentNullException>(

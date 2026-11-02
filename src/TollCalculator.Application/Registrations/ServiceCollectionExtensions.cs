@@ -10,7 +10,7 @@ public static class ServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.AddSingleton<ITollFreeDateService, WeekendAndHolidayService>();
+        services.AddSingleton<ITollFreeDateService, TollFreeDateService>();
         services.AddSingleton<ITollFeeService, TollFeeService>();
         services.AddScoped<IDailyTollService, DailyTollService>();
         services.AddScoped<ITollPassageService, TollPassageService>();

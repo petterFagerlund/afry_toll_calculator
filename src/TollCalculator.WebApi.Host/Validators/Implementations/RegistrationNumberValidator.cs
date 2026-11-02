@@ -1,6 +1,6 @@
 namespace TollCalculator.WebApi.Host.Validators.Implementations;
 
-internal static class RegistrationNumberRule
+internal static class RegistrationNumberValidator
 {
     private const int MaximumLength = 20;
 

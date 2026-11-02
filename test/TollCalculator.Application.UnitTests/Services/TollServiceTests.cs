@@ -28,7 +28,7 @@ public class TollServiceTests
         _service = new TollService(
             _tollPassageRepository,
             new DailyTollService(
-                new TollFeeService(new WeekendAndHolidayService(_holidayProvider)),
+                new TollFeeService(new TollFreeDateService(_holidayProvider)),
                 _tollScheduleRepository));
     }
 

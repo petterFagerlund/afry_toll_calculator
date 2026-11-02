@@ -6,6 +6,6 @@ namespace TollCalculator.Application.Services;
 public interface ITollPassageService
 {
     Task<ApplicationResult<Guid[]>> RecordTollPassagesAsync(
-        TollPassage[] passages,
+        TollPassage[] tollPassages,
         CancellationToken cancellationToken);
 }

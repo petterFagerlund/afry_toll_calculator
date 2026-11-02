@@ -7,12 +7,12 @@ using TollCalculator.Application.Services.Implementations;
 
 namespace TollCalculator.Application.UnitTests.Services;
 
-public class WeekendAndHolidayServiceTests
+public class TollFreeDateServiceTests
 {
     private readonly IHolidayProvider _holidayProvider = Substitute.For<IHolidayProvider>();
     private readonly ITollFreeDateService _service;
 
-    public WeekendAndHolidayServiceTests()
+    public TollFreeDateServiceTests()
     {
         _holidayProvider.GetHolidays(2026).Returns(ApplicationResult<Holiday[]>.Success([
             Holiday.Create(new DateOnly(2026, 1, 1), "Nyårsdagen"),
@@ -22,7 +22,7 @@ public class WeekendAndHolidayServiceTests
             Holiday.Create(new DateOnly(2027, 1, 1), "Nyårsdagen")
         ]));
 
-        _service = new WeekendAndHolidayService(_holidayProvider);
+        _service = new TollFreeDateService(_holidayProvider);
     }
 
     [Theory]
@@ -78,6 +78,6 @@ public class WeekendAndHolidayServiceTests
     [Fact]
     public void Constructor_NullHolidayProvider_Throws()
     {
-        Assert.Throws<ArgumentNullException>(() => new WeekendAndHolidayService(null!));
+        Assert.Throws<ArgumentNullException>(() => new TollFreeDateService(null!));
     }
 }

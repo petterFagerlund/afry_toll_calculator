@@ -23,7 +23,7 @@ internal static class CalculateDailyTollRequestValidator
             return modelState;
         }
 
-        var registrationNumberError = RegistrationNumberRule.Check(request.RegistrationNumber);
+        var registrationNumberError = RegistrationNumberValidator.Check(request.RegistrationNumber);
 
         if (registrationNumberError is not null)
         {
