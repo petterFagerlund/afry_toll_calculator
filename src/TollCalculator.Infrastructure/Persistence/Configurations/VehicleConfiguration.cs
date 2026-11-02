@@ -19,7 +19,5 @@ internal sealed class VehicleConfiguration : IEntityTypeConfiguration<Vehicle>
         builder.Property(vehicle => vehicle.VehicleType)
             .HasConversion<string>()
             .HasMaxLength(20);
-
-        builder.Ignore(vehicle => vehicle.IsTollFree);
     }
 }

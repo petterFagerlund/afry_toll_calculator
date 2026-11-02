@@ -1,4 +1,5 @@
 using TollCalculator.Domain.Constants;
+using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
 
 namespace TollCalculator.Domain.Services.Implementations;
@@ -6,23 +7,21 @@ namespace TollCalculator.Domain.Services.Implementations;
 public sealed class DailyTollService : IDailyTollService
 {
     private static readonly TimeSpan ChargeWindow = TimeSpan.FromMinutes(60);
-
+    private sealed record TollWindow(DateTimeOffset PassedAt, int Amount, int NextIndex);
     private readonly ITollFeeService _tollFeeService;
 
     public DailyTollService(ITollFeeService tollFeeService)
     {
         ArgumentNullException.ThrowIfNull(tollFeeService);
-
         _tollFeeService = tollFeeService;
     }
 
-    public DailyToll Calculate(Vehicle vehicle, TollPassage[] passages, TollTariff tariff)
+    public DailyToll Calculate(VehicleType vehicleType, DateTimeOffset[] passedAt, TollTariff tariff)
     {
-        ArgumentNullException.ThrowIfNull(vehicle);
-        ArgumentNullException.ThrowIfNull(passages);
+        ArgumentNullException.ThrowIfNull(passedAt);
         ArgumentNullException.ThrowIfNull(tariff);
 
-        var chargeable = ChargeablePassages(vehicle, passages, tariff.Schedule);
+        var chargeable = ChargeablePassages(vehicleType, passedAt, tariff.Schedule);
 
         if (chargeable.Length == 0)
         {
@@ -45,18 +44,17 @@ public sealed class DailyTollService : IDailyTollService
     }
 
     private ChargedTollPassage[] ChargeablePassages(
-        Vehicle vehicle,
-        TollPassage[] passages,
+        VehicleType vehicleType,
+        DateTimeOffset[] passedAt,
         TollSchedule schedule)
     {
         var chargeable = new List<ChargedTollPassage>();
-
-        foreach (var passage in passages)
+        foreach (var moment in passedAt)
         {
-            var fee = _tollFeeService.CalculateFee(vehicle, passage.PassedAt, schedule);
+            var fee = _tollFeeService.CalculateFee(vehicleType, moment, schedule);
             if (fee > 0)
             {
-                chargeable.Add(new ChargedTollPassage(passage.PassedAt, fee));
+                chargeable.Add(new ChargedTollPassage(moment, fee));
             }
         }
 
@@ -120,6 +118,4 @@ public sealed class DailyTollService : IDailyTollService
 
         return new TollWindow(highest.PassedAt, highest.Amount, next);
     }
-
-    private sealed record TollWindow(DateTimeOffset PassedAt, int Amount, int NextIndex);
 }

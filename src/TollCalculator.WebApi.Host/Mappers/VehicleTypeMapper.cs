@@ -11,18 +11,18 @@ internal static class VehicleTypeMapper
     {
         ArgumentNullException.ThrowIfNull(rules);
 
-        var responses = new VehicleTypeResponse[rules.Length];
+        var responses = new List<VehicleTypeResponse>();
 
-        for (var index = 0; index < rules.Length; index++)
+        foreach (var rule in rules)
         {
-            responses[index] = new VehicleTypeResponse
+            responses.Add(new VehicleTypeResponse
             {
-                VehicleType = ToContract(rules[index].VehicleType),
-                IsTollFree = rules[index].IsTollFree,
-            };
+                VehicleType = ToContract(rule.VehicleType),
+                IsTollFree = rule.IsTollFree,
+            });
         }
 
-        return responses;
+        return responses.ToArray();
     }
 
     public static VehicleType ToDomain(ContractVehicleType vehicleType)

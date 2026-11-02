@@ -9,17 +9,17 @@ internal static class HolidayMapper
     {
         ArgumentNullException.ThrowIfNull(holidays);
 
-        var responses = new HolidayResponse[holidays.Length];
+        var responses = new List<HolidayResponse>();
 
-        for (var index = 0; index < holidays.Length; index++)
+        foreach (var holiday in holidays)
         {
-            responses[index] = new HolidayResponse
+            responses.Add(new HolidayResponse
             {
-                Date = holidays[index].Date,
-                Name = holidays[index].Name,
-            };
+                Date = holiday.Date,
+                Name = holiday.Name,
+            });
         }
 
-        return responses;
+        return responses.ToArray();
     }
 }

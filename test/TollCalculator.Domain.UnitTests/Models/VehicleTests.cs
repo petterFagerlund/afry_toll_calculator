@@ -45,30 +45,6 @@ public class VehicleTests
         Assert.NotEqual(car, tractor);
     }
 
-    [Theory]
-    [InlineData(VehicleType.Motorbike)]
-    [InlineData(VehicleType.Tractor)]
-    [InlineData(VehicleType.Emergency)]
-    [InlineData(VehicleType.Diplomat)]
-    [InlineData(VehicleType.Foreign)]
-    [InlineData(VehicleType.Military)]
-    public void IsTollFree_TollFreeVehicleType_ReturnsTrue(VehicleType vehicleType)
-    {
-        var vehicle = Vehicle.Create("ABC123", vehicleType);
-
-        Assert.True(vehicle.IsTollFree);
-    }
-
-    [Theory]
-    [InlineData(VehicleType.Car)]
-    [InlineData(VehicleType.Unknown)]
-    public void IsTollFree_ChargeableVehicleType_ReturnsFalse(VehicleType vehicleType)
-    {
-        var vehicle = Vehicle.Create("ABC123", vehicleType);
-
-        Assert.False(vehicle.IsTollFree);
-    }
-
     [Fact]
     public void All_TollFreeVehicleTypes_ContainsTheSixFreeTypes()
     {

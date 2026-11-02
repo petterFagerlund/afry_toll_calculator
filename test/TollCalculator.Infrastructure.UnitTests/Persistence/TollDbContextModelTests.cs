@@ -50,14 +50,6 @@ public class TollDbContextModelTests
     }
 
     [Fact]
-    public void Model_Vehicle_DoesNotPersistIsTollFree()
-    {
-        var property = _context.Model.FindEntityType(typeof(Vehicle))!.FindProperty(nameof(Vehicle.IsTollFree));
-
-        Assert.Null(property);
-    }
-
-    [Fact]
     public void Model_TollPassage_HasUniqueIndexOnRegistrationNumberAndPassedAt()
     {
         var entity = _context.Model.FindEntityType(typeof(TollPassage))!;

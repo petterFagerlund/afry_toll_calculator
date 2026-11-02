@@ -44,8 +44,14 @@ internal sealed class TollService : ITollService
         }
 
         var passages = await _tollPassageRepository.GetForDayAsync(registrationNumber, date, cancellationToken);
+        var timestamps = new List<DateTimeOffset>();
 
-        return await CalculateTollAsync(vehicle, passages, cancellationToken);
+        foreach (var passage in passages)
+        {
+            timestamps.Add(passage.PassedAt);
+        }
+
+        return await CalculateTollAsync(vehicle.VehicleType, timestamps.ToArray(), cancellationToken);
     }
 
     public async Task<ApplicationResult<DailyToll>> CalculateAsync(
@@ -53,24 +59,15 @@ internal sealed class TollService : ITollService
         DateTimeOffset[] timestamps,
         CancellationToken cancellationToken)
     {
-        var vehicle = Vehicle.Unregistered(vehicleType);
-        var passages = new TollPassage[timestamps.Length];
-
-        for (var i = 0; i < timestamps.Length; i++)
-        {
-            passages[i] = TollPassage.Create(vehicle.RegistrationNumber, timestamps[i]);
-        }
-
-        return await CalculateTollAsync(vehicle, passages, cancellationToken);
+        return await CalculateTollAsync(vehicleType, timestamps, cancellationToken);
     }
 
     private async Task<ApplicationResult<DailyToll>> CalculateTollAsync(
-        Vehicle vehicle,
-        TollPassage[] passages,
+        VehicleType vehicleType,
+        DateTimeOffset[] passedAt,
         CancellationToken cancellationToken)
     {
         var tariff = await _tollScheduleRepository.GetTariffAsync(cancellationToken);
-
-        return ApplicationResult<DailyToll>.Success(_dailyTollService.Calculate(vehicle, passages, tariff));
+        return ApplicationResult<DailyToll>.Success(_dailyTollService.Calculate(vehicleType, passedAt, tariff));
     }
 }

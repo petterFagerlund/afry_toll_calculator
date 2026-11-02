@@ -134,14 +134,14 @@ public class TollServiceTests
 
     private void PassagesOn(DateOnly date, params DateTimeOffset[] timestamps)
     {
-        var passages = new TollPassage[timestamps.Length];
+        var passages = new List<TollPassage>();
 
-        for (var i = 0; i < timestamps.Length; i++)
+        foreach (var timestamp in timestamps)
         {
-            passages[i] = TollPassage.Create("ABC123", timestamps[i]);
+            passages.Add(TollPassage.Create("ABC123", timestamp));
         }
 
-        _tollPassageRepository.GetForDayAsync("ABC123", date, Arg.Any<CancellationToken>()).Returns(passages);
+        _tollPassageRepository.GetForDayAsync("ABC123", date, Arg.Any<CancellationToken>()).Returns(passages.ToArray());
     }
 
     private static DateTimeOffset At(DateOnly date, int hour, int minute)

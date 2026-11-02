@@ -26,7 +26,7 @@ public class DailyTollServiceTests
     [Fact]
     public void Calculate_NoPassages_ReturnsZero()
     {
-        var result = _service.Calculate(Car(), [], _tariff);
+        var result = _service.Calculate(VehicleType.Car, [], _tariff);
 
         Assert.Equal(0, result.TotalFee);
         Assert.Empty(result.ChargedPassages);
@@ -35,32 +35,32 @@ public class DailyTollServiceTests
     [Fact]
     public void Calculate_UnsortedPassages_ChargesTheSameAsSorted()
     {
-        TollPassage[] unsorted = [PassageAt(15, 35), PassageAt(7, 15)];
+        DateTimeOffset[] unsorted = [PassageAt(15, 35), PassageAt(7, 15)];
 
-        var result = _service.Calculate(Car(), unsorted, _tariff);
+        var result = _service.Calculate(VehicleType.Car, unsorted, _tariff);
 
         Assert.Equal(36, result.TotalFee);
-        Assert.Equal(PassageAt(7, 15).PassedAt, result.ChargedPassages[0].PassedAt);
+        Assert.Equal(PassageAt(7, 15), result.ChargedPassages[0].PassedAt);
     }
 
     [Fact]
     public void Calculate_TwoPassagesWithinTheSameHour_ChargesOnlyTheHighest()
     {
-        TollPassage[] passages = [PassageAt(6, 15), PassageAt(6, 35)];
+        DateTimeOffset[] passages = [PassageAt(6, 15), PassageAt(6, 35)];
 
-        var result = _service.Calculate(Car(), passages, _tariff);
+        var result = _service.Calculate(VehicleType.Car, passages, _tariff);
 
         Assert.Equal(13, result.TotalFee);
         Assert.Single(result.ChargedPassages);
-        Assert.Equal(PassageAt(6, 35).PassedAt, result.ChargedPassages[0].PassedAt);
+        Assert.Equal(PassageAt(6, 35), result.ChargedPassages[0].PassedAt);
     }
 
     [Fact]
     public void Calculate_TwoPassagesMoreThanAnHourApart_ChargesBoth()
     {
-        TollPassage[] passages = [PassageAt(6, 15), PassageAt(7, 25)];
+        DateTimeOffset[] passages = [PassageAt(6, 15), PassageAt(7, 25)];
 
-        var result = _service.Calculate(Car(), passages, _tariff);
+        var result = _service.Calculate(VehicleType.Car, passages, _tariff);
 
         Assert.Equal(26, result.TotalFee);
         Assert.Equal(2, result.ChargedPassages.Length);
@@ -69,9 +69,9 @@ public class DailyTollServiceTests
     [Fact]
     public void Calculate_PassagesExactlySixtyMinutesApart_ChargesBoth()
     {
-        TollPassage[] passages = [PassageAt(6, 0), PassageAt(7, 0)];
+        DateTimeOffset[] passages = [PassageAt(6, 0), PassageAt(7, 0)];
 
-        var result = _service.Calculate(Car(), passages, _tariff);
+        var result = _service.Calculate(VehicleType.Car, passages, _tariff);
 
         Assert.Equal(26, result.TotalFee);
         Assert.Equal(2, result.ChargedPassages.Length);
@@ -80,12 +80,12 @@ public class DailyTollServiceTests
     [Fact]
     public void Calculate_DayExceedingTheCap_StopsAtTheCap()
     {
-        TollPassage[] passages =
+        DateTimeOffset[] passages =
         [
             PassageAt(6, 0), PassageAt(7, 5), PassageAt(8, 10), PassageAt(9, 15), PassageAt(15, 35)
         ];
 
-        var result = _service.Calculate(Car(), passages, _tariff);
+        var result = _service.Calculate(VehicleType.Car, passages, _tariff);
 
         Assert.Equal(DailyCap, result.TotalFee);
         Assert.Equal(DailyCap, result.ChargedPassages.Sum(charged => charged.Amount));
@@ -94,9 +94,7 @@ public class DailyTollServiceTests
     [Fact]
     public void Calculate_TollFreeVehicle_ReturnsZero()
     {
-        var motorbike = Vehicle.Create("ABC123", VehicleType.Motorbike);
-
-        var result = _service.Calculate(motorbike, [PassageAt(7, 15)], _tariff);
+        var result = _service.Calculate(VehicleType.Motorbike, [PassageAt(7, 15)], _tariff);
 
         Assert.Equal(0, result.TotalFee);
         Assert.Empty(result.ChargedPassages);
@@ -105,9 +103,9 @@ public class DailyTollServiceTests
     [Fact]
     public void Calculate_Holiday_ReturnsZero()
     {
-        var onNewYearsDay = TollPassage.Create("ABC123", new DateTimeOffset(2026, 1, 1, 7, 15, 0, Offset));
+        var onNewYearsDay = new DateTimeOffset(2026, 1, 1, 7, 15, 0, Offset);
 
-        var result = _service.Calculate(Car(), [onNewYearsDay], _tariff);
+        var result = _service.Calculate(VehicleType.Car, [onNewYearsDay], _tariff);
 
         Assert.Equal(0, result.TotalFee);
         Assert.Empty(result.ChargedPassages);
@@ -116,9 +114,9 @@ public class DailyTollServiceTests
     [Fact]
     public void Calculate_PassagesOutsideChargedHours_AreNotCharged()
     {
-        TollPassage[] passages = [PassageAt(3, 0), PassageAt(22, 0)];
+        DateTimeOffset[] passages = [PassageAt(3, 0), PassageAt(22, 0)];
 
-        var result = _service.Calculate(Car(), passages, _tariff);
+        var result = _service.Calculate(VehicleType.Car, passages, _tariff);
 
         Assert.Equal(0, result.TotalFee);
         Assert.Empty(result.ChargedPassages);
@@ -127,9 +125,9 @@ public class DailyTollServiceTests
     [Fact]
     public void Calculate_FreePassageBeforeACharged_DoesNotOpenTheWindow()
     {
-        TollPassage[] passages = [PassageAt(5, 30), PassageAt(6, 15), PassageAt(6, 45)];
+        DateTimeOffset[] passages = [PassageAt(5, 30), PassageAt(6, 15), PassageAt(6, 45)];
 
-        var result = _service.Calculate(Car(), passages, _tariff);
+        var result = _service.Calculate(VehicleType.Car, passages, _tariff);
 
         Assert.Equal(13, result.TotalFee);
         Assert.Single(result.ChargedPassages);
@@ -138,14 +136,14 @@ public class DailyTollServiceTests
     [Fact]
     public void Calculate_PassagesOnTwoDays_AppliesTheCapPerDay()
     {
-        TollPassage[] passages =
+        DateTimeOffset[] passages =
         [
             PassageAt(6, 0), PassageAt(7, 5), PassageAt(8, 10), PassageAt(9, 15), PassageAt(15, 35),
             PassageOnNextDayAt(6, 0), PassageOnNextDayAt(7, 5), PassageOnNextDayAt(8, 10),
             PassageOnNextDayAt(9, 15), PassageOnNextDayAt(15, 35)
         ];
 
-        var result = _service.Calculate(Car(), passages, _tariff);
+        var result = _service.Calculate(VehicleType.Car, passages, _tariff);
 
         Assert.Equal(DailyCap * 2, result.TotalFee);
     }
@@ -153,9 +151,9 @@ public class DailyTollServiceTests
     [Fact]
     public void Calculate_OnePassageOnEachOfTwoDays_ChargesBoth()
     {
-        TollPassage[] passages = [PassageAt(7, 15), PassageOnNextDayAt(7, 15)];
+        DateTimeOffset[] passages = [PassageAt(7, 15), PassageOnNextDayAt(7, 15)];
 
-        var result = _service.Calculate(Car(), passages, _tariff);
+        var result = _service.Calculate(VehicleType.Car, passages, _tariff);
 
         Assert.Equal(36, result.TotalFee);
         Assert.Equal(2, result.ChargedPassages.Length);
@@ -164,26 +162,21 @@ public class DailyTollServiceTests
     [Fact]
     public void Calculate_NullPassages_Throws()
     {
-        Assert.Throws<ArgumentNullException>(() => _service.Calculate(Car(), null!, _tariff));
+        Assert.Throws<ArgumentNullException>(() => _service.Calculate(VehicleType.Car, null!, _tariff));
     }
 
-    private static Vehicle Car()
-    {
-        return Vehicle.Create("ABC123", VehicleType.Car);
-    }
-
-    private static TollPassage PassageAt(int hour, int minute)
+    private static DateTimeOffset PassageAt(int hour, int minute)
     {
         return PassageOn(Weekday, hour, minute);
     }
 
-    private static TollPassage PassageOnNextDayAt(int hour, int minute)
+    private static DateTimeOffset PassageOnNextDayAt(int hour, int minute)
     {
         return PassageOn(Weekday.AddDays(1), hour, minute);
     }
 
-    private static TollPassage PassageOn(DateOnly date, int hour, int minute)
+    private static DateTimeOffset PassageOn(DateOnly date, int hour, int minute)
     {
-        return TollPassage.Create("ABC123", new DateTimeOffset(date.Year, date.Month, date.Day, hour, minute, 0, Offset));
+        return new DateTimeOffset(date.Year, date.Month, date.Day, hour, minute, 0, Offset);
     }
 }

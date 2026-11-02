@@ -12,19 +12,19 @@ internal static class TollRateMapper
     {
         ArgumentNullException.ThrowIfNull(intervals);
 
-        var responses = new TollRateResponse[intervals.Length];
+        var responses = new List<TollRateResponse>();
 
-        for (var index = 0; index < intervals.Length; index++)
+        foreach (var interval in intervals)
         {
-            responses[index] = new TollRateResponse
+            responses.Add(new TollRateResponse
             {
-                Start = Format(intervals[index].Start),
-                End = Format(intervals[index].End),
-                Amount = intervals[index].Amount,
-            };
+                Start = Format(interval.Start),
+                End = Format(interval.End),
+                Amount = interval.Amount,
+            });
         }
 
-        return responses;
+        return responses.ToArray();
     }
 
     private static string Format(TimeOnly timeOfDay)

@@ -55,10 +55,11 @@ Domain knows that EF Core exists — the repository *interfaces* live in `Domain
 window, the daily cap, toll-free dates, toll-free vehicle types. In the original they were tangled into
 one method together with the data they operate on, which is why four of the six bugs are arithmetic or
 operator-precedence mistakes hiding inside an if-chain. Putting the rules in `Domain` with no dependencies
-means they can be tested directly, exhaustively and without a database: `DailyTollService` takes a vehicle,
-its passages and a tariff (the schedule plus the daily cap), and returns the total plus which
-passages were charged. It holds no state, so it is a singleton. Everything else — SQL, HTTP, JSON, auth — is
-arranged around that and can be changed without touching it.
+means they can be tested directly, exhaustively and without a database: `DailyTollService` takes a vehicle
+type, the instants it passed and a tariff (the schedule plus the daily cap), and returns the total plus
+which passages were charged — it asks for nothing it does not read, so no entity and no registration
+number. It holds no state, so it is a singleton. Everything else — SQL, HTTP, JSON, auth — is arranged
+around that and can be changed without touching it.
 
 Passages are grouped by Stockholm day before the hourly window and the daily cap are applied, so a set of
 timestamps spanning several days is charged correctly rather than stopping at the first day's cap.
@@ -266,3 +267,61 @@ reported why.
 *Fixed:* a `VehicleType` enum in the domain, `TollFreeVehicleTypes` naming the free ones in one place, and
 `VehicleTypeRules` rows carrying the flag. The API contract has its own `VehicleType` enum, so an
 unrecognised value is a 400 from the deserializer and never reaches the domain.
+
+## TODO
+
+Things deliberately left out of scope, with the reasoning, so the next person does not have to rediscover it.
+
+**Separate the auth services depending on how the API is exposed.**
+Right now there is one bearer scheme and one fallback policy for everything: anonymous in Development,
+authenticated everywhere else. That is the right shape for a single internal consumer and the wrong shape
+the moment the API is exposed more than one way. A machine-to-machine caller, a user-facing client and an
+internal service each want different issuers, lifetimes and scopes, and `/health` already has to be carved
+out by hand. Split the policies per audience — named policies with scope or role requirements per endpoint
+group — rather than letting one fallback policy carry every case.
+
+**Validate registration numbers against Trafikverket or another external source.**
+`RegistrationNumberRule` only checks non-empty and at most 20 characters, so any string is accepted as a
+vehicle key. No NuGet package validates Swedish plates — the Swedish ecosystem covers identity numbers
+(personnummer, organisationsnummer, bankgiro), not vehicles — so the options are a format regex or a real
+lookup. A format regex is the weaker of the two and actively harmful here: `VehicleType.Foreign` and
+`VehicleType.Diplomat` are first-class toll-free types whose plates do not follow the Swedish format, and
+the validator runs before the vehicle lookup, so it cannot know which it is dealing with. An external
+lookup against Trafikverket's vehicle register would confirm the plate *and* its vehicle type from the
+authoritative source, replacing the locally seeded `Vehicles` table. That brings a network call, an API
+key, caching and a failure policy for when the register is unreachable — which is exactly why it is a TODO
+and not a regex.
+
+**Revisit the holiday source — the current data is only reachable over HTTP.**
+Holidays come from `Nager.Date` pinned at **1.33.0** (Nov 2022), the last release that runs without a
+licence key: 1.34.0 and everything after, including 2.x, throw `NoLicenseKeyException` unless you sponsor
+the author on GitHub. So the in-process package is frozen at a 2022 snapshot, and the only free route to
+current Nager data is the public HTTP API at `https://date.nager.at/api/v3/PublicHolidays/{year}/SE`.
+Putting that on the toll-calculation path means a network dependency with its own outage, latency and
+rate-limit modes, plus a cache and a stub for tests. Low risk in practice — the Swedish holiday rules have
+not changed since 2005 — but it is a pinned, unmaintainable dependency. Three ways out: pay for the licence
+and track the current package, call the HTTP API behind a cache, or drop the dependency and compute the
+dates directly (six fixed dates, five Easter offsets via the Anonymous Gregorian algorithm, and two
+"Saturday within a given week" rules). `IHolidayProvider` exists precisely so this swap touches one class.
+
+**Deployment files — there are none yet, and their shape depends on the supplier.**
+The repository has no `Dockerfile`, no `.dockerignore`, no compose file, no CI/CD pipeline and no
+infrastructure definitions. Today the API runs from `dotnet run` against a SQL Server on `localhost`, and
+that is the only way it runs. Three things need deciding before any of that can be written, and all three
+depend on who hosts it and how:
+
+- **Connection string and secrets.** `appsettings.Development.json` uses `Trusted_Connection=True`, which
+  is Windows integrated auth and does not work from a Linux container. A deployed instance needs a
+  credentialed connection string, and `Jwt:SigningKey` — intentionally empty in `appsettings.json` — has to
+  come from the platform's secret store rather than a config file.
+- **Migrations.** `Program.cs` only calls `MigrateDatabaseAsync` in Development, so outside Development
+  nothing applies migrations at all. That is deliberate — auto-migrating on startup is a bad idea when
+  several instances start at once — but it means a deployment needs its own step: an init container, a
+  pipeline stage, or a one-shot job that runs before the new version takes traffic.
+- **Image and probes.** Base image, registry, tagging and whether the API runs behind a reverse proxy are
+  all supplier decisions. `/health` is already mapped and anonymous, so it is ready to wire to a liveness
+  or readiness probe once there is something to wire it to.
+
+Note that Docker *is* already required to run the tests — the integration suite uses Testcontainers to
+start SQL Server — but that is a development dependency and says nothing about how the service itself
+should be packaged.

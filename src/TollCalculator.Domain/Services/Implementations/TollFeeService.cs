@@ -1,4 +1,5 @@
 using TollCalculator.Domain.Constants;
+using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
 
 namespace TollCalculator.Domain.Services.Implementations;
@@ -14,12 +15,11 @@ public sealed class TollFeeService : ITollFeeService
         _tollFreeDateService = tollFreeDateService;
     }
 
-    public int CalculateFee(Vehicle vehicle, DateTimeOffset passedAt, TollSchedule schedule)
+    public int CalculateFee(VehicleType vehicleType, DateTimeOffset passedAt, TollSchedule schedule)
     {
-        ArgumentNullException.ThrowIfNull(vehicle);
         ArgumentNullException.ThrowIfNull(schedule);
 
-        if (vehicle.IsTollFree)
+        if (TollFreeVehicleTypes.Contains(vehicleType))
         {
             return 0;
         }
