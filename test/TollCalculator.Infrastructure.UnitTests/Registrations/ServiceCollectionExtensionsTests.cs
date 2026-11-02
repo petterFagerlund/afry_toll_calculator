@@ -23,7 +23,6 @@ public class ServiceCollectionExtensionsTests
     [InlineData(typeof(ITollPassageRepository))]
     [InlineData(typeof(ITollScheduleRepository))]
     [InlineData(typeof(IHolidayProvider))]
-    [InlineData(typeof(IVehicleTypeRuleRepository))]
     public void AddInfrastructure_ResolvesRegisteredService(Type serviceType)
     {
         using var provider = BuildProvider(ConnectionString);

@@ -75,58 +75,6 @@ public class TollServiceTests
     }
 
 
-    [Fact]
-    public async Task CalculateAsync_KnownVehicleType_ChargesTheHighestFeeWithinTheHourlyWindow()
-    {
-        var result = await _service.CalculateAsync(
-            VehicleType.Car,
-            [At(Monday, 7, 15), At(Monday, 7, 45)],
-            CancellationToken.None);
-
-        Assert.True(result.IsSuccess);
-        Assert.Equal(18, result.Value!.TotalFee);
-        Assert.Single(result.Value.ChargedPassages);
-    }
-
-    [Fact]
-    public async Task CalculateAsync_TollFreeVehicleType_ReturnsZero()
-    {
-        var result = await _service.CalculateAsync(VehicleType.Emergency, [At(Monday, 7, 15)], CancellationToken.None);
-
-        Assert.True(result.IsSuccess);
-        Assert.Equal(0, result.Value!.TotalFee);
-    }
-
-    [Fact]
-    public async Task CalculateAsync_EmptyTimestamps_ReturnsZeroAndAnEmptyBreakdown()
-    {
-        var result = await _service.CalculateAsync(VehicleType.Car, [], CancellationToken.None);
-
-        Assert.True(result.IsSuccess);
-        Assert.Equal(0, result.Value!.TotalFee);
-        Assert.Empty(result.Value.ChargedPassages);
-    }
-
-    [Fact]
-    public async Task CalculateAsync_HolidayTimestamps_AreNotCharged()
-    {
-        var goodFriday = new DateOnly(2026, 4, 3);
-        _holidayProvider.GetHolidays(2026).Returns([Holiday.Create(goodFriday, "Långfredagen")]);
-
-        var result = await _service.CalculateAsync(VehicleType.Car, [At(goodFriday, 7, 15)], CancellationToken.None);
-
-        Assert.True(result.IsSuccess);
-        Assert.Equal(0, result.Value!.TotalFee);
-    }
-
-    [Fact]
-    public async Task CalculateAsync_PersistsNothing()
-    {
-        await _service.CalculateAsync(VehicleType.Car, [At(Monday, 7, 15)], CancellationToken.None);
-
-        await _tollPassageRepository.DidNotReceiveWithAnyArgs().AddAsync(null!, CancellationToken.None);
-    }
-
     private void KnownVehicle(string registrationNumber, VehicleType vehicleType)
     {
         var vehicle = Vehicle.Create(registrationNumber, vehicleType);

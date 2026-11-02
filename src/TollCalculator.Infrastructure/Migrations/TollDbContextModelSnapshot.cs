@@ -173,57 +173,6 @@ namespace TollCalculator.Infrastructure.Migrations
                     b.ToTable("Vehicles", (string)null);
                 });
 
-            modelBuilder.Entity("TollCalculator.Domain.Models.VehicleTypeRule", b =>
-                {
-                    b.Property<string>("VehicleType")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<bool>("IsTollFree")
-                        .HasColumnType("bit");
-
-                    b.HasKey("VehicleType");
-
-                    b.ToTable("VehicleTypeRules", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            VehicleType = "Car",
-                            IsTollFree = false
-                        },
-                        new
-                        {
-                            VehicleType = "Motorbike",
-                            IsTollFree = true
-                        },
-                        new
-                        {
-                            VehicleType = "Tractor",
-                            IsTollFree = true
-                        },
-                        new
-                        {
-                            VehicleType = "Emergency",
-                            IsTollFree = true
-                        },
-                        new
-                        {
-                            VehicleType = "Diplomat",
-                            IsTollFree = true
-                        },
-                        new
-                        {
-                            VehicleType = "Foreign",
-                            IsTollFree = true
-                        },
-                        new
-                        {
-                            VehicleType = "Military",
-                            IsTollFree = true
-                        });
-                });
-
             modelBuilder.Entity("TollCalculator.Domain.Models.TollPassage", b =>
                 {
                     b.HasOne("TollCalculator.Domain.Models.Vehicle", null)

@@ -16,9 +16,6 @@ public class ServiceCollectionExtensionsTests
     [Theory]
     [InlineData(typeof(ITollPassageService))]
     [InlineData(typeof(ITollService))]
-    [InlineData(typeof(ITollRateService))]
-    [InlineData(typeof(IHolidayService))]
-    [InlineData(typeof(IVehicleTypeService))]
     [InlineData(typeof(IDailyTollService))]
     public void AddApplication_ResolvesRegisteredService(Type serviceType)
     {
@@ -82,7 +79,6 @@ public class ServiceCollectionExtensionsTests
         services.AddSingleton(Substitute.For<ITollPassageRepository>());
         services.AddSingleton(Substitute.For<ITollScheduleRepository>());
         services.AddSingleton(Substitute.For<IHolidayProvider>());
-        services.AddSingleton(Substitute.For<IVehicleTypeRuleRepository>());
 
         services.AddApplication();
 

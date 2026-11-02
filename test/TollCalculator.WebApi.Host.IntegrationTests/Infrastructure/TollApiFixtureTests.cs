@@ -59,7 +59,6 @@ public class TollApiFixtureTests
 
         Assert.Equal(0, await CountAsync(connection, "[Vehicles]"));
         Assert.Equal(9, await CountAsync(connection, "[TollRateIntervals]"));
-        Assert.Equal(7, await CountAsync(connection, "[VehicleTypeRules]"));
     }
 
     private static async Task ExecuteAsync(SqlConnection connection, string sql)

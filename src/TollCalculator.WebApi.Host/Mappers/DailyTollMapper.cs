@@ -1,5 +1,4 @@
 using TollCalculator.Domain.Models;
-using TollCalculator.WebApi.Models.V1;
 using TollCalculator.WebApi.Models.V1.Responses;
 using ChargedTollPassageResponse = TollCalculator.WebApi.Models.V1.Responses.ChargedTollPassage;
 using DomainChargedTollPassage = TollCalculator.Domain.Models.ChargedTollPassage;
@@ -16,18 +15,6 @@ internal static class DailyTollMapper
         {
             RegistrationNumber = registrationNumber,
             Date = date,
-            TotalFee = dailyToll.TotalFee,
-            ChargedPassages = ToChargedPassages(dailyToll.ChargedPassages),
-        };
-    }
-
-    public static CalculateTollResponse ToCalculateTollResponse(VehicleType vehicleType, DailyToll dailyToll)
-    {
-        ArgumentNullException.ThrowIfNull(dailyToll);
-
-        return new CalculateTollResponse
-        {
-            VehicleType = vehicleType,
             TotalFee = dailyToll.TotalFee,
             ChargedPassages = ToChargedPassages(dailyToll.ChargedPassages),
         };

@@ -32,17 +32,6 @@ public class ReferenceRepositoryTests : IDisposable
     }
 
     [Fact]
-    public async Task GetAllAsync_ReturnsEveryVehicleTypeRule()
-    {
-        var repository = new VehicleTypeRuleRepository(_fixture.Context);
-
-        var rules = await repository.GetAllAsync(CancellationToken.None);
-
-        Assert.Equal(7, rules.Length);
-        Assert.Equal(6, rules.Count(rule => rule.IsTollFree));
-    }
-
-    [Fact]
     public async Task GetAsync_KnownVehicle_IsReturned()
     {
         _fixture.Context.Vehicles.Add(Vehicle.Create("ABC123", VehicleType.Car));

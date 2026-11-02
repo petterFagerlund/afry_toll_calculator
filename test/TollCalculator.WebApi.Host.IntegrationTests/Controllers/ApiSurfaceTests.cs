@@ -12,20 +12,12 @@ public class ApiSurfaceTests
 {
     private const string RecordTollPassageRoute = "api/v1/toll-passages";
     private const string DailyTollRoute = "api/v1/vehicles/{registrationNumber}/toll";
-    private const string CalculateTollRoute = "api/v1/toll/calculate";
-    private const string TollRatesRoute = "api/v1/toll-rates";
-    private const string HolidaysRoute = "api/v1/holidays";
-    private const string VehicleTypesRoute = "api/v1/vehicle-types";
 
     private static readonly ApiDescription[] Descriptions = DescribeApi();
 
     [Theory]
     [InlineData("POST", RecordTollPassageRoute)]
     [InlineData("GET", DailyTollRoute)]
-    [InlineData("POST", CalculateTollRoute)]
-    [InlineData("GET", TollRatesRoute)]
-    [InlineData("GET", HolidaysRoute)]
-    [InlineData("GET", VehicleTypesRoute)]
     public void TheApiDescription_IncludesTheRoute(string httpMethod, string relativePath)
     {
         Assert.Single(Descriptions, description =>
@@ -50,36 +42,6 @@ public class ApiSurfaceTests
         AssertDeclaresResponse("GET", DailyTollRoute, statusCode, responseType);
     }
 
-    [Theory]
-    [InlineData(200, typeof(CalculateTollResponse))]
-    [InlineData(400, null)]
-    public void Calculate_DeclaresItsResponseType(int statusCode, Type? responseType)
-    {
-        AssertDeclaresResponse("POST", CalculateTollRoute, statusCode, responseType);
-    }
-
-    [Theory]
-    [InlineData(200, typeof(TollRateResponse[]))]
-    public void GetTollRates_DeclaresItsResponseType(int statusCode, Type? responseType)
-    {
-        AssertDeclaresResponse("GET", TollRatesRoute, statusCode, responseType);
-    }
-
-    [Theory]
-    [InlineData(200, typeof(HolidayResponse[]))]
-    [InlineData(400, null)]
-    public void GetHolidays_DeclaresItsResponseType(int statusCode, Type? responseType)
-    {
-        AssertDeclaresResponse("GET", HolidaysRoute, statusCode, responseType);
-    }
-
-    [Theory]
-    [InlineData(200, typeof(VehicleTypeResponse[]))]
-    public void GetVehicleTypes_DeclaresItsResponseType(int statusCode, Type? responseType)
-    {
-        AssertDeclaresResponse("GET", VehicleTypesRoute, statusCode, responseType);
-    }
-
     private static void AssertDeclaresResponse(string httpMethod, string relativePath, int statusCode, Type? responseType)
     {
         var description = Descriptions.Single(candidate =>
@@ -98,7 +60,7 @@ public class ApiSurfaceTests
     {
         var builder = WebApplication.CreateSlimBuilder();
 
-        builder.Services.AddControllers().AddApplicationPart(typeof(TollPassagesController).Assembly);
+        builder.Services.AddControllers().AddApplicationPart(typeof(TollController).Assembly);
         builder.Services.AddVersionedApi();
 
         using var application = builder.Build();

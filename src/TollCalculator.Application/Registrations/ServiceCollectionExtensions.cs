@@ -18,9 +18,6 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<ITollPassageService, TollPassageService>();
         services.AddScoped<ITollService, TollService>();
-        services.AddScoped<ITollRateService, TollRateService>();
-        services.AddScoped<IHolidayService, HolidayService>();
-        services.AddScoped<IVehicleTypeService, VehicleTypeService>();
 
         return services;
     }

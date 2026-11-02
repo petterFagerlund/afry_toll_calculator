@@ -53,24 +53,6 @@ public class TollSeedDataTests
         Assert.Equal(60, settings["DailyCap"]);
     }
 
-    [Fact]
-    public void Seed_VehicleTypeRules_CoverEveryTypeExceptUnknown()
-    {
-        var seeded = SeedFor(typeof(VehicleTypeRule));
-
-        Assert.Equal(Enum.GetValues<VehicleType>().Length - 1, seeded.Length);
-        Assert.DoesNotContain(seeded, row => row["VehicleType"]!.Equals(VehicleType.Unknown));
-    }
-
-    [Fact]
-    public void Seed_VehicleTypeRules_MarkSixTypesTollFree()
-    {
-        var seeded = SeedFor(typeof(VehicleTypeRule));
-
-        Assert.Equal(6, seeded.Count(row => (bool)row["IsTollFree"]!));
-        Assert.Single(seeded, row => row["VehicleType"]!.Equals(VehicleType.Car) && !(bool)row["IsTollFree"]!);
-    }
-
     private IDictionary<string, object?>[] SeedFor(Type entityType)
     {
         var model = _context.GetService<IDesignTimeModel>().Model;

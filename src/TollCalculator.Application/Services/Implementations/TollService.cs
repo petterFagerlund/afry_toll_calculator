@@ -63,14 +63,6 @@ internal sealed class TollService : ITollService
         return await CalculateTollAsync(vehicle.VehicleType, timestamps.ToArray(), cancellationToken);
     }
 
-    public async Task<ApplicationResult<DailyToll>> CalculateAsync(
-        VehicleType vehicleType,
-        DateTimeOffset[] timestamps,
-        CancellationToken cancellationToken)
-    {
-        return await CalculateTollAsync(vehicleType, timestamps, cancellationToken);
-    }
-
     private async Task<ApplicationResult<DailyToll>> CalculateTollAsync(
         VehicleType vehicleType,
         DateTimeOffset[] passedAt,

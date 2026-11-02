@@ -27,9 +27,10 @@ Diplomat, Foreign and Military vehicles. Every timestamp is converted to Europe/
 schedule and the holiday calendar are consulted, so the same instant costs the same whether it arrives
 as `07:15+01:00` or as `06:15Z`.
 
-None of this is configuration. The rates, the cap and the toll-free vehicle types are rows in the
-database, seeded by the initial migration. Holidays are not stored at all — they are resolved for any
-year through `IHolidayProvider`, backed by the Nager.Date library.
+None of this is configuration. The rates and the daily cap are rows in the database, seeded by the initial
+migration. The toll-free vehicle types are a domain constant, `TollFreeVehicleTypes`, so there is exactly
+one source of truth for them. Holidays are not stored at all — they are resolved for any year through
+`IHolidayProvider`, backed by the Nager.Date library.
 
 ## Architecture
 
@@ -88,7 +89,7 @@ dotnet run
 
 The host listens on **https://localhost:7077** and http://localhost:5075; plain HTTP redirects to HTTPS.
 In Development the database is created and migrated automatically on startup, including the seeded rates
-and vehicle types — there is no separate migration step to run.
+— there is no separate migration step to run.
 
 Check it is up:
 
@@ -107,36 +108,13 @@ In Development every endpoint is open, so the examples below need no token.
 
 | Method | Route | |
 |---|---|---|
-| POST | `/api/v1/toll/calculate` | Fee for a set of timestamps; stateless, stores nothing |
 | POST | `/api/v1/toll-passages` | Record that a vehicle passed a toll station |
 | GET | `/api/v1/vehicles/{registrationNumber}/toll?date=yyyy-MM-dd` | A vehicle's toll for one day |
-| GET | `/api/v1/toll-rates` | The seeded rate intervals |
-| GET | `/api/v1/holidays?year=` | Public holidays for a year, defaulting to the current one |
-| GET | `/api/v1/vehicle-types` | Every vehicle type and whether it is toll free |
 
-Start with `calculate`, which needs nothing in the database:
-
-```bash
-curl -k -X POST https://localhost:7077/api/v1/toll/calculate \
-  -H "Content-Type: application/json" \
-  -d '{"vehicleType":"Car","timestamps":["2026-03-16T07:15:00+01:00"]}'
-```
-
-```json
-{"vehicleType":"Car","totalFee":18,"chargedPassages":[{"passedAt":"2026-03-16T07:15:00+01:00","amount":18}]}
-```
-
-A busy day shows the cap trimming the last charge so the total lands exactly on 60:
-
-```bash
-curl -k -X POST https://localhost:7077/api/v1/toll/calculate \
-  -H "Content-Type: application/json" \
-  -d '{"vehicleType":"Car","timestamps":[
-        "2026-03-16T06:45:00+01:00","2026-03-16T07:50:00+01:00","2026-03-16T09:00:00+01:00",
-        "2026-03-16T15:40:00+01:00","2026-03-16T17:10:00+01:00"]}'
-```
-
-returns `totalFee: 60` with the breakdown `13, 18, 8, 18, 3`.
+Two endpoints, because a toll system has two consumers: the roadside equipment that reports passages, and
+billing that asks what a vehicle owes. Anything else — a stateless fee calculator, a published rate list,
+the holiday calendar, the vehicle-type table — had no caller in production and was removed rather than
+maintained.
 
 ### Recording passages needs a vehicle first
 

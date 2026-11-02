@@ -7,86 +7,156 @@ using TollCalculator.Domain.Models;
 using TollCalculator.WebApi.Host.Controllers.V1;
 using TollCalculator.WebApi.Host.Mappers;
 using TollCalculator.WebApi.Host.Validators.Implementations;
-using TollCalculator.WebApi.Models.V1;
 using TollCalculator.WebApi.Models.V1.Requests;
 using TollCalculator.WebApi.Models.V1.Responses;
 using Xunit;
-using DomainVehicleType = TollCalculator.Domain.Enums.VehicleType;
 
 namespace TollCalculator.WebApi.Host.IntegrationTests.Controllers;
 
-public class TollControllerTests
+public class TollPassagesControllerTests
 {
-    private static readonly DateTimeOffset Morning = new(2026, 3, 16, 7, 15, 0, TimeSpan.FromHours(1));
+    private const string RegistrationNumber = "ABC123";
 
+    private static readonly DateOnly Date = new(2026, 3, 16);
+    private static readonly DateTimeOffset PassedAt = new(2026, 3, 16, 7, 15, 0, TimeSpan.FromHours(1));
+
+    private readonly ITollPassageService _tollPassageService = Substitute.For<ITollPassageService>();
     private readonly ITollService _tollService = Substitute.For<ITollService>();
     private readonly TollController _controller;
 
-    public TollControllerTests()
+    public TollPassagesControllerTests()
     {
-        _controller = new TollController(_tollService);
+        _controller = new TollController(_tollPassageService, _tollService);
     }
 
     [Fact]
-    public async Task Calculate_ReturnsTheTotalAndChargedPassages()
+    public async Task RecordTollPassage_ReturnsCreatedWithTheNewPassageId()
     {
-        var dailyToll = new DailyToll(18, [new Domain.Models.ChargedTollPassage(Morning, 18)]);
-        _tollService
-            .CalculateAsync(DomainVehicleType.Car, Arg.Is<DateTimeOffset[]>(timestamps => timestamps.Length == 1),
-                Arg.Any<CancellationToken>())
-            .Returns(ApplicationResult<DailyToll>.Success(dailyToll));
+        var passageId = Guid.CreateVersion7();
+        _tollPassageService
+            .RecordTollPassageAsync(RegistrationNumber, PassedAt, Arg.Any<CancellationToken>())
+            .Returns(ApplicationResult<Guid>.Success(passageId));
 
-        var result = await _controller.Calculate(NewRequest(VehicleType.Car), CancellationToken.None);
+        var result = await _controller.RecordTollPassage(NewRequest(), CancellationToken.None);
 
-        var response = Assert.IsType<CalculateTollResponse>(Assert.IsType<OkObjectResult>(result.Result).Value);
-        Assert.Equal(VehicleType.Car, response.VehicleType);
-        Assert.Equal(18, response.TotalFee);
-        Assert.Equal(18, Assert.Single(response.ChargedPassages).Amount);
+        var created = Assert.IsType<CreatedAtActionResult>(result.Result);
+        Assert.Equal(StatusCodes.Status201Created, created.StatusCode);
+        Assert.Equal(passageId, Assert.IsType<RecordTollPassageResponse>(created.Value).TollPassageId);
     }
 
     [Fact]
-    public async Task Calculate_ReturnsBadRequestWhenTheRequestFailsValidation()
+    public async Task RecordTollPassage_PointsTheLocationAtTheDailyTollForThatDay()
     {
-        var result = await _controller.Calculate(new CalculateTollRequest(), CancellationToken.None);
+        _tollPassageService
+            .RecordTollPassageAsync(RegistrationNumber, PassedAt, Arg.Any<CancellationToken>())
+            .Returns(ApplicationResult<Guid>.Success(Guid.CreateVersion7()));
+
+        var result = await _controller.RecordTollPassage(NewRequest(), CancellationToken.None);
+
+        var created = Assert.IsType<CreatedAtActionResult>(result.Result);
+        Assert.Equal(nameof(TollController.GetDailyToll), created.ActionName);
+        Assert.Equal(RegistrationNumber, created.RouteValues!["registrationNumber"]);
+        Assert.Equal(Date, created.RouteValues["date"]);
+    }
+
+    [Fact]
+    public async Task RecordTollPassage_ReturnsBadRequestWhenTheRequestFailsValidation()
+    {
+        var result = await _controller.RecordTollPassage(new RecordTollPassageRequest(), CancellationToken.None);
 
         var problem = Assert.IsType<BadRequestObjectResult>(result.Result);
         Assert.Equal(StatusCodes.Status400BadRequest, problem.StatusCode);
         Assert.IsType<ValidationProblemDetails>(problem.Value);
 
-        await _tollService.DidNotReceiveWithAnyArgs().CalculateAsync(default!, default!, default);
+        await _tollPassageService.DidNotReceiveWithAnyArgs()
+            .RecordTollPassageAsync(default!, default, default);
     }
 
     [Fact]
-    public async Task Calculate_ReturnsBadRequestWhenTheServiceRejectsTheRequest()
+    public async Task RecordTollPassage_ReturnsBadRequestWhenTheServiceRejectsTheInput()
     {
-        _tollService
-            .CalculateAsync(DomainVehicleType.Car, Arg.Any<DateTimeOffset[]>(), Arg.Any<CancellationToken>())
-            .Returns(ApplicationResult<DailyToll>.Invalid("The request could not be calculated."));
+        _tollPassageService
+            .RecordTollPassageAsync(RegistrationNumber, PassedAt, Arg.Any<CancellationToken>())
+            .Returns(ApplicationResult<Guid>.Invalid("A registration number is required."));
 
-        var result = await _controller.Calculate(NewRequest(VehicleType.Car), CancellationToken.None);
+        var result = await _controller.RecordTollPassage(NewRequest(), CancellationToken.None);
+
+        AssertValidationProblem(result.Result, "A registration number is required.");
+    }
+
+    [Fact]
+    public async Task RecordTollPassage_ReturnsNotFoundForAnUnknownVehicle()
+    {
+        _tollPassageService
+            .RecordTollPassageAsync(RegistrationNumber, PassedAt, Arg.Any<CancellationToken>())
+            .Returns(ApplicationResult<Guid>.NotFound("No vehicle is registered with the number 'ABC123'."));
+
+        var result = await _controller.RecordTollPassage(NewRequest(), CancellationToken.None);
+
+        AssertProblem(result.Result, StatusCodes.Status404NotFound, "No vehicle is registered with the number 'ABC123'.");
+    }
+
+    [Fact]
+    public async Task GetDailyToll_ReturnsTheDayTotalAndItsChargedPassages()
+    {
+        var dailyToll = new DailyToll(18, [new Domain.Models.ChargedTollPassage(PassedAt, 18)]);
+        _tollService
+            .GetDailyTollAsync(RegistrationNumber, Date, Arg.Any<CancellationToken>())
+            .Returns(ApplicationResult<DailyToll>.Success(dailyToll));
+
+        var result = await _controller.GetDailyToll(RegistrationNumber, Date, CancellationToken.None);
+
+        var response = Assert.IsType<DailyTollResponse>(Assert.IsType<OkObjectResult>(result.Result).Value);
+        Assert.Equal(RegistrationNumber, response.RegistrationNumber);
+        Assert.Equal(Date, response.Date);
+        Assert.Equal(18, response.TotalFee);
+        Assert.Equal(18, Assert.Single(response.ChargedPassages).Amount);
+    }
+
+    [Fact]
+    public async Task GetDailyToll_ReturnsBadRequestWhenTheDateIsMissing()
+    {
+        var result = await _controller.GetDailyToll(RegistrationNumber, null, CancellationToken.None);
 
         var problem = Assert.IsType<BadRequestObjectResult>(result.Result);
         Assert.Equal(StatusCodes.Status400BadRequest, problem.StatusCode);
-        var validationProblem = Assert.IsType<ValidationProblemDetails>(problem.Value);
-        Assert.Equal("The request could not be calculated.", Assert.Single(validationProblem.Errors["request"]));
+        Assert.IsType<ValidationProblemDetails>(problem.Value);
+
+        await _tollService.DidNotReceiveWithAnyArgs().GetDailyTollAsync(default!, default, default);
     }
 
     [Fact]
-    public async Task Calculate_ReturnsZeroForATollFreeVehicle()
+    public async Task GetDailyToll_ReturnsNotFoundForAnUnknownVehicle()
     {
         _tollService
-            .CalculateAsync(DomainVehicleType.Motorbike, Arg.Any<DateTimeOffset[]>(), Arg.Any<CancellationToken>())
-            .Returns(ApplicationResult<DailyToll>.Success(DailyToll.None()));
+            .GetDailyTollAsync(RegistrationNumber, Date, Arg.Any<CancellationToken>())
+            .Returns(ApplicationResult<DailyToll>.NotFound("No vehicle is registered with the number 'ABC123'."));
 
-        var result = await _controller.Calculate(NewRequest(VehicleType.Motorbike), CancellationToken.None);
+        var result = await _controller.GetDailyToll(RegistrationNumber, Date, CancellationToken.None);
 
-        var response = Assert.IsType<CalculateTollResponse>(Assert.IsType<OkObjectResult>(result.Result).Value);
-        Assert.Equal(0, response.TotalFee);
-        Assert.Empty(response.ChargedPassages);
+        AssertProblem(result.Result, StatusCodes.Status404NotFound, "No vehicle is registered with the number 'ABC123'.");
     }
 
-    private static CalculateTollRequest NewRequest(VehicleType vehicleType)
+    private static RecordTollPassageRequest NewRequest()
     {
-        return new CalculateTollRequest { VehicleType = vehicleType, Timestamps = [Morning] };
+        return new RecordTollPassageRequest { RegistrationNumber = RegistrationNumber, PassedAt = PassedAt };
+    }
+
+    private static void AssertValidationProblem(IActionResult? result, string expectedMessage)
+    {
+        var problem = Assert.IsType<BadRequestObjectResult>(result);
+
+        Assert.Equal(StatusCodes.Status400BadRequest, problem.StatusCode);
+
+        var validationProblem = Assert.IsType<ValidationProblemDetails>(problem.Value);
+        Assert.Equal(expectedMessage, Assert.Single(validationProblem.Errors["request"]));
+    }
+
+    private static void AssertProblem(IActionResult? result, int expectedStatus, string expectedDetail)
+    {
+        var problem = Assert.IsType<ObjectResult>(result);
+
+        Assert.Equal(expectedStatus, problem.StatusCode);
+        Assert.Equal(expectedDetail, Assert.IsType<ProblemDetails>(problem.Value).Detail);
     }
 }

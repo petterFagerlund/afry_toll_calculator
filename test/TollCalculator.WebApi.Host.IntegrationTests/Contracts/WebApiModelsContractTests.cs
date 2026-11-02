@@ -1,7 +1,6 @@
 using System.Reflection;
 using TollCalculator.WebApi.Models.V1.Requests;
 using Xunit;
-using ContractVehicleType = TollCalculator.WebApi.Models.V1.VehicleType;
 
 namespace TollCalculator.WebApi.Host.IntegrationTests.Contracts;
 
@@ -19,23 +18,10 @@ public class WebApiModelsContractTests
     }
 
     [Fact]
-    public void TheContractAssembly_DeclaresVehicleTypeAsItsOnlyEnum()
+    public void TheContractAssembly_DeclaresNoEnums()
     {
-        var enums = ContractAssembly.GetTypes().Where(type => type.IsEnum);
+        var enums = ContractAssembly.GetTypes().Where(type => type.IsEnum).Select(type => type.FullName);
 
-        Assert.Equal(typeof(ContractVehicleType), Assert.Single(enums));
-    }
-
-    [Fact]
-    public void ContractVehicleType_DeclaresNoUnknownMember()
-    {
-        Assert.DoesNotContain("Unknown", Enum.GetNames<ContractVehicleType>());
-    }
-
-    [Fact]
-    public void ContractVehicleType_LeavesItsDefaultValueUndefined()
-    {
-        Assert.DoesNotContain(0, Enum.GetValues<ContractVehicleType>().Select(value => (int)value));
-        Assert.False(Enum.IsDefined(new ContractVehicleType()));
+        Assert.Empty(enums);
     }
 }

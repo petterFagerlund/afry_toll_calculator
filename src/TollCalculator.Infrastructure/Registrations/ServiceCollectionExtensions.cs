@@ -31,7 +31,6 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IVehicleRepository, VehicleRepository>();
         services.AddScoped<ITollPassageRepository, TollPassageRepository>();
         services.AddScoped<ITollScheduleRepository, TollScheduleRepository>();
-        services.AddScoped<IVehicleTypeRuleRepository, VehicleTypeRuleRepository>();
         services.AddSingleton<IHolidayProvider, NagerHolidayProvider>();
 
         return services;
