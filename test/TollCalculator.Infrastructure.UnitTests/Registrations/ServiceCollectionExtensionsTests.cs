@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using TollCalculator.Infrastructure.Persistence;
 using TollCalculator.Infrastructure.Registrations;
 using TollCalculator.Domain.Repositories;
@@ -72,6 +73,7 @@ public class ServiceCollectionExtensionsTests
     {
         var services = new ServiceCollection();
 
+        services.AddLogging();
         services.AddInfrastructure(BuildConfiguration(connectionString));
 
         return services.BuildServiceProvider();

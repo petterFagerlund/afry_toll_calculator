@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using TollCalculator.Domain.Models;
 using NSubstitute;
 using TollCalculator.Application.Registrations;
@@ -74,6 +75,8 @@ public class ServiceCollectionExtensionsTests
     private static ServiceProvider BuildProvider()
     {
         var services = new ServiceCollection();
+
+        services.AddLogging();
 
         services.AddSingleton(Substitute.For<IVehicleRepository>());
         services.AddSingleton(Substitute.For<ITollPassageRepository>());

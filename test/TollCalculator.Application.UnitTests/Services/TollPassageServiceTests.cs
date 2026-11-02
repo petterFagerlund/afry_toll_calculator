@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using TollCalculator.Application.Results;
 using TollCalculator.Application.Services.Implementations;
@@ -18,7 +19,10 @@ public class TollPassageServiceTests
 
     public TollPassageServiceTests()
     {
-        _service = new TollPassageService(_vehicleRepository, _tollPassageRepository);
+        _service = new TollPassageService(
+            _vehicleRepository,
+            _tollPassageRepository,
+            NullLogger<TollPassageService>.Instance);
     }
 
     [Fact]

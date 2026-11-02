@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using TollCalculator.Application.Results;
 using TollCalculator.Domain.Models;
 using TollCalculator.Domain.Repositories;
@@ -8,14 +9,20 @@ internal sealed class TollPassageService : ITollPassageService
 {
     private readonly IVehicleRepository _vehicleRepository;
     private readonly ITollPassageRepository _tollPassageRepository;
+    private readonly ILogger<TollPassageService> _logger;
 
-    public TollPassageService(IVehicleRepository vehicleRepository, ITollPassageRepository tollPassageRepository)
+    public TollPassageService(
+        IVehicleRepository vehicleRepository,
+        ITollPassageRepository tollPassageRepository,
+        ILogger<TollPassageService> logger)
     {
         ArgumentNullException.ThrowIfNull(vehicleRepository);
         ArgumentNullException.ThrowIfNull(tollPassageRepository);
+        ArgumentNullException.ThrowIfNull(logger);
 
         _vehicleRepository = vehicleRepository;
         _tollPassageRepository = tollPassageRepository;
+        _logger = logger;
     }
 
     public async Task<ApplicationResult<Guid>> RecordTollPassageAsync(
@@ -27,6 +34,10 @@ internal sealed class TollPassageService : ITollPassageService
 
         if (vehicle is null)
         {
+            _logger.LogInformation(
+                "No vehicle is registered with {RegistrationNumber}; the passage was not recorded.",
+                registrationNumber);
+
             return ApplicationResult<Guid>.NotFound(
                 $"No vehicle is registered with the number '{registrationNumber.Trim().ToUpperInvariant()}'.");
         }
@@ -34,6 +45,12 @@ internal sealed class TollPassageService : ITollPassageService
         var passage = TollPassage.Create(vehicle.RegistrationNumber, passedAt);
 
         var id = await _tollPassageRepository.AddAsync(passage, cancellationToken);
+
+        _logger.LogInformation(
+            "Recorded passage {TollPassageId} for {RegistrationNumber} at {PassedAt}.",
+            id,
+            vehicle.RegistrationNumber,
+            passedAt);
 
         return ApplicationResult<Guid>.Success(id);
     }

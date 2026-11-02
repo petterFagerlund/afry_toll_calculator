@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using TollCalculator.Application.Results;
 using TollCalculator.Application.Services.Implementations;
@@ -29,7 +30,8 @@ public class TollServiceTests
             _vehicleRepository,
             _tollPassageRepository,
             _tollScheduleRepository,
-            new DailyTollService(new TollFeeService(new WeekendAndHolidayService(_holidayProvider))));
+            new DailyTollService(new TollFeeService(new WeekendAndHolidayService(_holidayProvider))),
+            NullLogger<TollService>.Instance);
     }
 
     [Fact]

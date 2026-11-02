@@ -325,3 +325,26 @@ depend on who hosts it and how:
 Note that Docker *is* already required to run the tests — the integration suite uses Testcontainers to
 start SQL Server — but that is a development dependency and says nothing about how the service itself
 should be packaged.
+
+**Choose a logging provider and ship the logs somewhere.**
+The code now logs at the seams — unknown registration numbers, recorded passages, holiday cache misses,
+migrations applied — through `ILogger<T>` with structured message templates, and `appsettings.json` sets
+levels per namespace. But the only provider configured is the default console writer, so in a deployed
+environment those logs go to stdout and nowhere else. `ILogger<T>` is the abstraction precisely so the sink
+is a composition-root decision; nothing in `Application`, `Domain` or `Infrastructure` has to change.
+
+What still needs deciding, and it travels with the hosting decision in the TODO above:
+
+- **Sink.** Elastic (via Serilog's `Elasticsearch` sink or the OpenTelemetry exporter) and Datadog (via
+  `Serilog.Sinks.Datadog.Logs`, the agent, or OTLP) are the obvious candidates; the honest default is
+  OpenTelemetry's OTLP exporter, which keeps the vendor swappable. Picking a provider before knowing who
+  operates the service is how you end up locked to the wrong one.
+- **Structured, not formatted.** The templates already use named placeholders (`{RegistrationNumber}`,
+  `{TollPassageId}`), so they arrive as queryable fields rather than interpolated prose — but only if the
+  sink preserves structure. A plain-text file sink throws that away.
+- **Correlation.** Unhandled errors carry a `traceId` in their ProblemDetails response and nothing else
+  does. Trace context across the request, the database call and the response is what makes the logs usable
+  during an incident, which argues for wiring OpenTelemetry tracing at the same time rather than later.
+- **What must never be logged.** The JWT signing key, bearer tokens and connection strings. Registration
+  numbers are personal data under GDPR when they identify a vehicle owner, so retention and whether they
+  should be masked in logs is a question for whoever owns the deployment, not a coding decision.

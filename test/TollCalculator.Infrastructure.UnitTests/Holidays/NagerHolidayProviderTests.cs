@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging.Abstractions;
+using NSubstitute;
 using TollCalculator.Domain.Services;
 using TollCalculator.Infrastructure.Holidays;
 using Xunit;
@@ -6,7 +8,8 @@ namespace TollCalculator.Infrastructure.UnitTests.Holidays;
 
 public class NagerHolidayProviderTests
 {
-    private readonly IHolidayProvider _provider = new NagerHolidayProvider();
+    private readonly IHolidayProvider _provider =
+        new NagerHolidayProvider(NullLogger<NagerHolidayProvider>.Instance);
 
     [Theory]
     [InlineData(2026, 1, 1, "Nyårsdagen")]

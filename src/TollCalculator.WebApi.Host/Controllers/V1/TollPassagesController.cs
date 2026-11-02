@@ -45,7 +45,7 @@ public sealed class TollPassagesController : ApiControllerBase
 
         if (!result.IsSuccess)
         {
-            return MapErrorResponse(result);
+            return  (result);
         }
 
         var routeValues = new
