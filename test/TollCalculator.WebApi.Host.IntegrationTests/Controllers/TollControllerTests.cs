@@ -47,7 +47,7 @@ public class TollControllerTests
     {
         var result = await _controller.Calculate(new CalculateTollRequest(), CancellationToken.None);
 
-        var problem = Assert.IsType<ObjectResult>(result.Result);
+        var problem = Assert.IsType<BadRequestObjectResult>(result.Result);
         Assert.Equal(StatusCodes.Status400BadRequest, problem.StatusCode);
         Assert.IsType<ValidationProblemDetails>(problem.Value);
 
@@ -63,10 +63,10 @@ public class TollControllerTests
 
         var result = await _controller.Calculate(NewRequest("Hovercraft"), CancellationToken.None);
 
-        var problem = Assert.IsType<ObjectResult>(result.Result);
+        var problem = Assert.IsType<BadRequestObjectResult>(result.Result);
         Assert.Equal(StatusCodes.Status400BadRequest, problem.StatusCode);
-        Assert.Equal("'Hovercraft' is not a known vehicle type.",
-            Assert.IsType<ProblemDetails>(problem.Value).Detail);
+        var validationProblem = Assert.IsType<ValidationProblemDetails>(problem.Value);
+        Assert.Equal("'Hovercraft' is not a known vehicle type.", Assert.Single(validationProblem.Errors["request"]));
     }
 
     [Fact]

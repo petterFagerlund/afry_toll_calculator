@@ -1,4 +1,5 @@
 using NSubstitute;
+using TollCalculator.Application.Results;
 using TollCalculator.Application.Services.Implementations;
 using TollCalculator.Domain.Models;
 using TollCalculator.Domain.Repositories;
@@ -57,7 +58,7 @@ public class HolidayServiceTests
         var result = await _service.GetHolidaysAsync(year, CancellationToken.None);
 
         Assert.False(result.IsSuccess);
-        Assert.False(result.IsNotFound);
+        Assert.Equal(ApplicationResultStatus.ValidationError, result.Status);
 
         await _holidayRepository.DidNotReceiveWithAnyArgs().GetByYearAsync(0, CancellationToken.None);
         await _holidayRepository.DidNotReceiveWithAnyArgs().GetAllAsync(CancellationToken.None);

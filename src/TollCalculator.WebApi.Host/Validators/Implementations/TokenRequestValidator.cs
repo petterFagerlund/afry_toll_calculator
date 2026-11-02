@@ -1,28 +1,31 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using TollCalculator.WebApi.Models.V1.Requests;
 
 namespace TollCalculator.WebApi.Host.Validators.Implementations;
 
 internal static class TokenRequestValidator
 {
-    public static ValidationResult Validate(TokenRequest? request)
+    public static ModelStateDictionary Validate(TokenRequest? request)
     {
-        var errors = new ValidationErrors();
+        var modelState = new ModelStateDictionary();
 
         if (request is null)
         {
-            return errors.Add(nameof(TokenRequest), "A request body is required.").ToResult();
+            modelState.AddModelError(nameof(TokenRequest), "A request body is required.");
+
+            return modelState;
         }
 
         if (string.IsNullOrWhiteSpace(request.ClientId))
         {
-            errors.Add(nameof(TokenRequest.ClientId), "A client id is required.");
+            modelState.AddModelError(nameof(TokenRequest.ClientId), "A client id is required.");
         }
 
         if (string.IsNullOrWhiteSpace(request.ClientSecret))
         {
-            errors.Add(nameof(TokenRequest.ClientSecret), "A client secret is required.");
+            modelState.AddModelError(nameof(TokenRequest.ClientSecret), "A client secret is required.");
         }
 
-        return errors.ToResult();
+        return modelState;
     }
 }

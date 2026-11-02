@@ -82,10 +82,10 @@ public class HolidaysControllerTests
 
         var result = await _controller.GetHolidays(0, CancellationToken.None);
 
-        var problem = Assert.IsType<ObjectResult>(result.Result);
+        var problem = Assert.IsType<BadRequestObjectResult>(result.Result);
         Assert.Equal(StatusCodes.Status400BadRequest, problem.StatusCode);
-        Assert.Equal("The year 0 is outside the supported range 1-9999.",
-            Assert.IsType<ProblemDetails>(problem.Value).Detail);
+        var validationProblem = Assert.IsType<ValidationProblemDetails>(problem.Value);
+        Assert.Equal("The year 0 is outside the supported range 1-9999.", Assert.Single(validationProblem.Errors["request"]));
     }
 }
 

@@ -1,28 +1,33 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using TollCalculator.WebApi.Models.V1.Requests;
 
 namespace TollCalculator.WebApi.Host.Validators.Implementations;
 
 internal static class CalculateTollRequestValidator
 {
-    public static ValidationResult Validate(CalculateTollRequest? request)
+    public static ModelStateDictionary Validate(CalculateTollRequest? request)
     {
-        var errors = new ValidationErrors();
+        var modelState = new ModelStateDictionary();
 
         if (request is null)
         {
-            return errors.Add(nameof(CalculateTollRequest), "A request body is required.").ToResult();
+            modelState.AddModelError(nameof(CalculateTollRequest), "A request body is required.");
+
+            return modelState;
         }
 
         if (string.IsNullOrWhiteSpace(request.VehicleType))
         {
-            errors.Add(nameof(CalculateTollRequest.VehicleType), "A vehicle type is required.");
+            modelState.AddModelError(nameof(CalculateTollRequest.VehicleType), "A vehicle type is required.");
         }
 
         if (request.Timestamps is null || request.Timestamps.Length == 0)
         {
-            errors.Add(nameof(CalculateTollRequest.Timestamps), "At least one passage timestamp is required.");
+            modelState.AddModelError(
+                nameof(CalculateTollRequest.Timestamps),
+                "At least one passage timestamp is required.");
         }
 
-        return errors.ToResult();
+        return modelState;
     }
 }

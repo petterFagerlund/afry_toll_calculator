@@ -9,19 +9,20 @@ public class TokenRequestValidatorTests
     [Fact]
     public void Validate_AcceptsACompleteRequest()
     {
-        var result = TokenRequestValidator.Validate(new TokenRequest { ClientId = "toll-client", ClientSecret = "a-secret" });
+        var modelState = TokenRequestValidator.Validate(
+            new TokenRequest { ClientId = "toll-client", ClientSecret = "a-secret" });
 
-        Assert.True(result.IsValid);
-        Assert.Empty(result.Errors);
+        Assert.True(modelState.IsValid);
+        Assert.Empty(modelState);
     }
 
     [Fact]
     public void Validate_RejectsAMissingRequest()
     {
-        var result = TokenRequestValidator.Validate(null);
+        var modelState = TokenRequestValidator.Validate(null);
 
-        Assert.False(result.IsValid);
-        Assert.Contains(nameof(TokenRequest), result.Errors.Keys);
+        Assert.False(modelState.IsValid);
+        Assert.Contains(nameof(TokenRequest), modelState.Keys);
     }
 
     [Theory]
@@ -30,10 +31,11 @@ public class TokenRequestValidatorTests
     [InlineData("   ")]
     public void Validate_RejectsAMissingClientId(string? clientId)
     {
-        var result = TokenRequestValidator.Validate(new TokenRequest { ClientId = clientId, ClientSecret = "a-secret" });
+        var modelState = TokenRequestValidator.Validate(
+            new TokenRequest { ClientId = clientId, ClientSecret = "a-secret" });
 
-        Assert.False(result.IsValid);
-        Assert.Contains(nameof(TokenRequest.ClientId), result.Errors.Keys);
+        Assert.False(modelState.IsValid);
+        Assert.Contains(nameof(TokenRequest.ClientId), modelState.Keys);
     }
 
     [Theory]
@@ -42,18 +44,19 @@ public class TokenRequestValidatorTests
     [InlineData("   ")]
     public void Validate_RejectsAMissingClientSecret(string? clientSecret)
     {
-        var result = TokenRequestValidator.Validate(new TokenRequest { ClientId = "toll-client", ClientSecret = clientSecret });
+        var modelState = TokenRequestValidator.Validate(
+            new TokenRequest { ClientId = "toll-client", ClientSecret = clientSecret });
 
-        Assert.False(result.IsValid);
-        Assert.Contains(nameof(TokenRequest.ClientSecret), result.Errors.Keys);
+        Assert.False(modelState.IsValid);
+        Assert.Contains(nameof(TokenRequest.ClientSecret), modelState.Keys);
     }
 
     [Fact]
     public void Validate_ReportsEveryBrokenRuleAtOnce()
     {
-        var result = TokenRequestValidator.Validate(new TokenRequest());
+        var modelState = TokenRequestValidator.Validate(new TokenRequest());
 
-        Assert.False(result.IsValid);
-        Assert.Equal(2, result.Errors.Count);
+        Assert.False(modelState.IsValid);
+        Assert.Equal(2, modelState.Count);
     }
 }

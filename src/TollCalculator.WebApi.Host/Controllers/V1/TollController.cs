@@ -16,7 +16,6 @@ public sealed class TollController : ApiControllerBase
     public TollController(ITollService tollService)
     {
         ArgumentNullException.ThrowIfNull(tollService);
-
         _tollService = tollService;
     }
 
@@ -28,18 +27,18 @@ public sealed class TollController : ApiControllerBase
         [FromBody] CalculateTollRequest request,
         CancellationToken cancellationToken)
     {
-        var validationResult = CalculateTollRequestValidator.Validate(request);
+        var modelState = CalculateTollRequestValidator.Validate(request);
 
-        if (!validationResult.IsValid)
+        if (!modelState.IsValid)
         {
-            return InvalidRequest(validationResult);
+            return MapValidationProblem(modelState);
         }
 
         var result = await _tollService.CalculateAsync(request.VehicleType!, request.Timestamps, cancellationToken);
 
         if (!result.IsSuccess)
         {
-            return Failure(result);
+            return MapErrorResponse(result);
         }
 
         return Ok(DailyTollMapper.ToCalculateTollResponse(request.VehicleType!, result.Value!));

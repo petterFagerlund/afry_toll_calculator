@@ -74,7 +74,7 @@ public class AuthControllerTests
     {
         var result = _controller.IssueToken(new TokenRequest());
 
-        var problem = Assert.IsType<ObjectResult>(result.Result);
+        var problem = Assert.IsType<BadRequestObjectResult>(result.Result);
         Assert.Equal(StatusCodes.Status400BadRequest, problem.StatusCode);
         Assert.IsType<ValidationProblemDetails>(problem.Value);
 

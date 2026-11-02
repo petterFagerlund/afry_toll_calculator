@@ -11,23 +11,23 @@ public class RecordTollPassageRequestValidatorTests
     [Fact]
     public void Validate_AcceptsACompleteRequest()
     {
-        var result = RecordTollPassageRequestValidator.Validate(new RecordTollPassageRequest
+        var modelState = RecordTollPassageRequestValidator.Validate(new RecordTollPassageRequest
         {
             RegistrationNumber = "ABC123",
             PassedAt = PassedAt,
         });
 
-        Assert.True(result.IsValid);
-        Assert.Empty(result.Errors);
+        Assert.True(modelState.IsValid);
+        Assert.Empty(modelState);
     }
 
     [Fact]
     public void Validate_RejectsAMissingRequest()
     {
-        var result = RecordTollPassageRequestValidator.Validate(null);
+        var modelState = RecordTollPassageRequestValidator.Validate(null);
 
-        Assert.False(result.IsValid);
-        Assert.Contains(nameof(RecordTollPassageRequest), result.Errors.Keys);
+        Assert.False(modelState.IsValid);
+        Assert.Contains(nameof(RecordTollPassageRequest), modelState.Keys);
     }
 
     [Theory]
@@ -36,56 +36,57 @@ public class RecordTollPassageRequestValidatorTests
     [InlineData("   ")]
     public void Validate_RejectsAMissingRegistrationNumber(string? registrationNumber)
     {
-        var result = RecordTollPassageRequestValidator.Validate(new RecordTollPassageRequest
+        var modelState = RecordTollPassageRequestValidator.Validate(new RecordTollPassageRequest
         {
             RegistrationNumber = registrationNumber,
             PassedAt = PassedAt,
         });
 
-        Assert.False(result.IsValid);
-        Assert.Contains(nameof(RecordTollPassageRequest.RegistrationNumber), result.Errors.Keys);
+        Assert.False(modelState.IsValid);
+        Assert.Contains(nameof(RecordTollPassageRequest.RegistrationNumber), modelState.Keys);
     }
 
     [Fact]
     public void Validate_RejectsARegistrationNumberLongerThanTheStoredColumn()
     {
-        var result = RecordTollPassageRequestValidator.Validate(new RecordTollPassageRequest
+        var modelState = RecordTollPassageRequestValidator.Validate(new RecordTollPassageRequest
         {
             RegistrationNumber = new string('A', 21),
             PassedAt = PassedAt,
         });
 
-        Assert.False(result.IsValid);
-        Assert.Contains(nameof(RecordTollPassageRequest.RegistrationNumber), result.Errors.Keys);
+        Assert.False(modelState.IsValid);
+        Assert.Contains(nameof(RecordTollPassageRequest.RegistrationNumber), modelState.Keys);
     }
 
     [Fact]
     public void Validate_AcceptsARegistrationNumberAtTheMaximumLength()
     {
-        var result = RecordTollPassageRequestValidator.Validate(new RecordTollPassageRequest
+        var modelState = RecordTollPassageRequestValidator.Validate(new RecordTollPassageRequest
         {
             RegistrationNumber = new string('A', 20),
             PassedAt = PassedAt,
         });
 
-        Assert.True(result.IsValid);
+        Assert.True(modelState.IsValid);
     }
 
     [Fact]
     public void Validate_RejectsAnUnsetTimestamp()
     {
-        var result = RecordTollPassageRequestValidator.Validate(new RecordTollPassageRequest { RegistrationNumber = "ABC123" });
+        var modelState = RecordTollPassageRequestValidator.Validate(
+            new RecordTollPassageRequest { RegistrationNumber = "ABC123" });
 
-        Assert.False(result.IsValid);
-        Assert.Contains(nameof(RecordTollPassageRequest.PassedAt), result.Errors.Keys);
+        Assert.False(modelState.IsValid);
+        Assert.Contains(nameof(RecordTollPassageRequest.PassedAt), modelState.Keys);
     }
 
     [Fact]
     public void Validate_ReportsEveryBrokenRuleAtOnce()
     {
-        var result = RecordTollPassageRequestValidator.Validate(new RecordTollPassageRequest());
+        var modelState = RecordTollPassageRequestValidator.Validate(new RecordTollPassageRequest());
 
-        Assert.False(result.IsValid);
-        Assert.Equal(2, result.Errors.Count);
+        Assert.False(modelState.IsValid);
+        Assert.Equal(2, modelState.Count);
     }
 }

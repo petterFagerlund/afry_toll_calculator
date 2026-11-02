@@ -64,7 +64,7 @@ public class TollPassagesControllerTests
     {
         var result = await _controller.RecordTollPassage(new RecordTollPassageRequest(), CancellationToken.None);
 
-        var problem = Assert.IsType<ObjectResult>(result.Result);
+        var problem = Assert.IsType<BadRequestObjectResult>(result.Result);
         Assert.Equal(StatusCodes.Status400BadRequest, problem.StatusCode);
         Assert.IsType<ValidationProblemDetails>(problem.Value);
 
@@ -81,7 +81,7 @@ public class TollPassagesControllerTests
 
         var result = await _controller.RecordTollPassage(NewRequest(), CancellationToken.None);
 
-        AssertProblem(result.Result, StatusCodes.Status400BadRequest, "A registration number is required.");
+        AssertValidationProblem(result.Result, "A registration number is required.");
     }
 
     [Fact]
@@ -118,7 +118,7 @@ public class TollPassagesControllerTests
     {
         var result = await _controller.GetDailyToll(RegistrationNumber, null, CancellationToken.None);
 
-        var problem = Assert.IsType<ObjectResult>(result.Result);
+        var problem = Assert.IsType<BadRequestObjectResult>(result.Result);
         Assert.Equal(StatusCodes.Status400BadRequest, problem.StatusCode);
         Assert.IsType<ValidationProblemDetails>(problem.Value);
 
@@ -140,6 +140,16 @@ public class TollPassagesControllerTests
     private static RecordTollPassageRequest NewRequest()
     {
         return new RecordTollPassageRequest { RegistrationNumber = RegistrationNumber, PassedAt = PassedAt };
+    }
+
+    private static void AssertValidationProblem(IActionResult? result, string expectedMessage)
+    {
+        var problem = Assert.IsType<BadRequestObjectResult>(result);
+
+        Assert.Equal(StatusCodes.Status400BadRequest, problem.StatusCode);
+
+        var validationProblem = Assert.IsType<ValidationProblemDetails>(problem.Value);
+        Assert.Equal(expectedMessage, Assert.Single(validationProblem.Errors["request"]));
     }
 
     private static void AssertProblem(IActionResult? result, int expectedStatus, string expectedDetail)

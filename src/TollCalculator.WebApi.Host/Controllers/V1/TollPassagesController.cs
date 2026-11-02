@@ -33,11 +33,11 @@ public sealed class TollPassagesController : ApiControllerBase
         [FromBody] RecordTollPassageRequest request,
         CancellationToken cancellationToken)
     {
-        var validationResult = RecordTollPassageRequestValidator.Validate(request);
+        var modelState = RecordTollPassageRequestValidator.Validate(request);
 
-        if (!validationResult.IsValid)
+        if (!modelState.IsValid)
         {
-            return InvalidRequest(validationResult);
+            return MapValidationProblem(modelState);
         }
 
         var result = await _tollPassageService.RecordTollPassageAsync(
@@ -45,7 +45,7 @@ public sealed class TollPassagesController : ApiControllerBase
 
         if (!result.IsSuccess)
         {
-            return Failure(result);
+            return MapErrorResponse(result);
         }
 
         var routeValues = new
@@ -70,18 +70,18 @@ public sealed class TollPassagesController : ApiControllerBase
         [FromQuery] DateOnly? date,
         CancellationToken cancellationToken)
     {
-        var validationResult = DailyTollQueryValidator.Validate(registrationNumber, date);
+        var modelState = DailyTollQueryValidator.Validate(registrationNumber, date);
 
-        if (!validationResult.IsValid)
+        if (!modelState.IsValid)
         {
-            return InvalidRequest(validationResult);
+            return MapValidationProblem(modelState);
         }
 
         var result = await _tollService.GetDailyTollAsync(registrationNumber, date!.Value, cancellationToken);
 
         if (!result.IsSuccess)
         {
-            return Failure(result);
+            return MapErrorResponse(result);
         }
 
         return Ok(DailyTollMapper.ToDailyTollResponse(registrationNumber, date.Value, result.Value!));

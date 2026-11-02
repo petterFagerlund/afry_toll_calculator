@@ -1,4 +1,5 @@
 using NSubstitute;
+using TollCalculator.Application.Results;
 using TollCalculator.Application.Services.Implementations;
 using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
@@ -31,7 +32,7 @@ public class TollPassageServiceTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal(expectedId, result.Value);
-        Assert.False(result.IsNotFound);
+        Assert.Equal(ApplicationResultStatus.Success, result.Status);
     }
 
     [Fact]
@@ -54,7 +55,7 @@ public class TollPassageServiceTests
         var result = await _service.RecordTollPassageAsync("XYZ789", PassedAt, CancellationToken.None);
 
         Assert.False(result.IsSuccess);
-        Assert.True(result.IsNotFound);
+        Assert.Equal(ApplicationResultStatus.NotFound, result.Status);
         Assert.Contains("XYZ789", result.ErrorMessage);
 
         await _tollPassageRepository.DidNotReceiveWithAnyArgs().AddAsync(null!, CancellationToken.None);

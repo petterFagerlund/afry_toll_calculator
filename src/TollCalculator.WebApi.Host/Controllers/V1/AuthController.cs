@@ -30,11 +30,11 @@ public sealed class AuthController : ApiControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     public ActionResult<TokenResponse> IssueToken([FromBody] TokenRequest request)
     {
-        var validationResult = TokenRequestValidator.Validate(request);
+        var modelState = TokenRequestValidator.Validate(request);
 
-        if (!validationResult.IsValid)
+        if (!modelState.IsValid)
         {
-            return InvalidRequest(validationResult);
+            return MapValidationProblem(modelState);
         }
 
         var issued = _tokenIssuer.Issue(request.ClientId!, request.ClientSecret!);

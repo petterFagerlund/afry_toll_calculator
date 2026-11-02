@@ -11,9 +11,9 @@ public class DailyTollQueryValidatorTests
     [Fact]
     public void Validate_AcceptsARegistrationNumberAndDate()
     {
-        var result = DailyTollQueryValidator.Validate(RegistrationNumber, new DateOnly(2026, 3, 16));
+        var modelState = DailyTollQueryValidator.Validate(RegistrationNumber, new DateOnly(2026, 3, 16));
 
-        Assert.True(result.IsValid);
+        Assert.True(modelState.IsValid);
     }
 
     [Theory]
@@ -22,27 +22,27 @@ public class DailyTollQueryValidatorTests
     [InlineData("   ")]
     public void Validate_RejectsAMissingRegistrationNumber(string? registrationNumber)
     {
-        var result = DailyTollQueryValidator.Validate(registrationNumber, new DateOnly(2026, 3, 16));
+        var modelState = DailyTollQueryValidator.Validate(registrationNumber, new DateOnly(2026, 3, 16));
 
-        Assert.False(result.IsValid);
-        Assert.Contains("registrationNumber", result.Errors.Keys);
+        Assert.False(modelState.IsValid);
+        Assert.Contains("registrationNumber", modelState.Keys);
     }
 
     [Fact]
     public void Validate_RejectsARegistrationNumberLongerThanTheStoredColumn()
     {
-        var result = DailyTollQueryValidator.Validate(new string('A', 21), new DateOnly(2026, 3, 16));
+        var modelState = DailyTollQueryValidator.Validate(new string('A', 21), new DateOnly(2026, 3, 16));
 
-        Assert.False(result.IsValid);
-        Assert.Contains("registrationNumber", result.Errors.Keys);
+        Assert.False(modelState.IsValid);
+        Assert.Contains("registrationNumber", modelState.Keys);
     }
 
     [Fact]
     public void Validate_RejectsAMissingDate()
     {
-        var result = DailyTollQueryValidator.Validate(RegistrationNumber, null);
+        var modelState = DailyTollQueryValidator.Validate(RegistrationNumber, null);
 
-        Assert.False(result.IsValid);
-        Assert.Contains(DateMember, result.Errors.Keys);
+        Assert.False(modelState.IsValid);
+        Assert.Contains(DateMember, modelState.Keys);
     }
 }

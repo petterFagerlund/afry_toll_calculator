@@ -1,4 +1,5 @@
 using NSubstitute;
+using TollCalculator.Application.Results;
 using TollCalculator.Application.Services.Implementations;
 using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
@@ -69,7 +70,7 @@ public class TollServiceTests
         var result = await _service.GetDailyTollAsync("XYZ789", Monday, CancellationToken.None);
 
         Assert.False(result.IsSuccess);
-        Assert.True(result.IsNotFound);
+        Assert.Equal(ApplicationResultStatus.NotFound, result.Status);
         Assert.Contains("XYZ789", result.ErrorMessage);
     }
 
@@ -106,7 +107,7 @@ public class TollServiceTests
         var result = await _service.CalculateAsync(vehicleType!, [At(Monday, 7, 15)], CancellationToken.None);
 
         Assert.False(result.IsSuccess);
-        Assert.False(result.IsNotFound);
+        Assert.Equal(ApplicationResultStatus.ValidationError, result.Status);
     }
 
     [Fact]

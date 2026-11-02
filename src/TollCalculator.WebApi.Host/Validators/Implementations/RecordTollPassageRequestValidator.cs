@@ -1,30 +1,33 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using TollCalculator.WebApi.Models.V1.Requests;
 
 namespace TollCalculator.WebApi.Host.Validators.Implementations;
 
 internal static class RecordTollPassageRequestValidator
 {
-    public static ValidationResult Validate(RecordTollPassageRequest? request)
+    public static ModelStateDictionary Validate(RecordTollPassageRequest? request)
     {
-        var errors = new ValidationErrors();
+        var modelState = new ModelStateDictionary();
 
         if (request is null)
         {
-            return errors.Add(nameof(RecordTollPassageRequest), "A request body is required.").ToResult();
+            modelState.AddModelError(nameof(RecordTollPassageRequest), "A request body is required.");
+
+            return modelState;
         }
 
         var registrationNumberError = RegistrationNumberRule.Check(request.RegistrationNumber);
 
         if (registrationNumberError is not null)
         {
-            errors.Add(nameof(RecordTollPassageRequest.RegistrationNumber), registrationNumberError);
+            modelState.AddModelError(nameof(RecordTollPassageRequest.RegistrationNumber), registrationNumberError);
         }
 
         if (request.PassedAt == DateTimeOffset.MinValue)
         {
-            errors.Add(nameof(RecordTollPassageRequest.PassedAt), "A passage timestamp is required.");
+            modelState.AddModelError(nameof(RecordTollPassageRequest.PassedAt), "A passage timestamp is required.");
         }
 
-        return errors.ToResult();
+        return modelState;
     }
 }

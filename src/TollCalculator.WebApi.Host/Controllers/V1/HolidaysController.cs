@@ -30,7 +30,7 @@ public sealed class HolidaysController : ApiControllerBase
 
         if (!result.IsSuccess)
         {
-            return Failure(result);
+            return MapErrorResponse(result);
         }
 
         return Ok(HolidayMapper.ToResponses(result.Value!));

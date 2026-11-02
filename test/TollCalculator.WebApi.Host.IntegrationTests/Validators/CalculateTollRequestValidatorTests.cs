@@ -11,23 +11,23 @@ public class CalculateTollRequestValidatorTests
     [Fact]
     public void Validate_AcceptsACompleteRequest()
     {
-        var result = CalculateTollRequestValidator.Validate(new CalculateTollRequest
+        var modelState = CalculateTollRequestValidator.Validate(new CalculateTollRequest
         {
             VehicleType = "Car",
             Timestamps = [Morning],
         });
 
-        Assert.True(result.IsValid);
-        Assert.Empty(result.Errors);
+        Assert.True(modelState.IsValid);
+        Assert.Empty(modelState);
     }
 
     [Fact]
     public void Validate_RejectsAMissingRequest()
     {
-        var result = CalculateTollRequestValidator.Validate(null);
+        var modelState = CalculateTollRequestValidator.Validate(null);
 
-        Assert.False(result.IsValid);
-        Assert.Contains(nameof(CalculateTollRequest), result.Errors.Keys);
+        Assert.False(modelState.IsValid);
+        Assert.Contains(nameof(CalculateTollRequest), modelState.Keys);
     }
 
     [Theory]
@@ -36,52 +36,54 @@ public class CalculateTollRequestValidatorTests
     [InlineData("   ")]
     public void Validate_RejectsAMissingVehicleType(string? vehicleType)
     {
-        var result = CalculateTollRequestValidator.Validate(new CalculateTollRequest
+        var modelState = CalculateTollRequestValidator.Validate(new CalculateTollRequest
         {
             VehicleType = vehicleType,
             Timestamps = [Morning],
         });
 
-        Assert.False(result.IsValid);
-        Assert.Contains(nameof(CalculateTollRequest.VehicleType), result.Errors.Keys);
+        Assert.False(modelState.IsValid);
+        Assert.Contains(nameof(CalculateTollRequest.VehicleType), modelState.Keys);
     }
 
     [Fact]
     public void Validate_AcceptsAnUnknownVehicleTypeAndLeavesItToTheService()
     {
-        var result = CalculateTollRequestValidator.Validate(new CalculateTollRequest
+        var modelState = CalculateTollRequestValidator.Validate(new CalculateTollRequest
         {
             VehicleType = "Hovercraft",
             Timestamps = [Morning],
         });
 
-        Assert.True(result.IsValid);
+        Assert.True(modelState.IsValid);
     }
 
     [Fact]
     public void Validate_RejectsAnEmptyTimestampList()
     {
-        var result = CalculateTollRequestValidator.Validate(new CalculateTollRequest { VehicleType = "Car", Timestamps = [] });
+        var modelState = CalculateTollRequestValidator.Validate(
+            new CalculateTollRequest { VehicleType = "Car", Timestamps = [] });
 
-        Assert.False(result.IsValid);
-        Assert.Contains(nameof(CalculateTollRequest.Timestamps), result.Errors.Keys);
+        Assert.False(modelState.IsValid);
+        Assert.Contains(nameof(CalculateTollRequest.Timestamps), modelState.Keys);
     }
 
     [Fact]
     public void Validate_RejectsANullTimestampList()
     {
-        var result = CalculateTollRequestValidator.Validate(new CalculateTollRequest { VehicleType = "Car", Timestamps = null! });
+        var modelState = CalculateTollRequestValidator.Validate(
+            new CalculateTollRequest { VehicleType = "Car", Timestamps = null! });
 
-        Assert.False(result.IsValid);
-        Assert.Contains(nameof(CalculateTollRequest.Timestamps), result.Errors.Keys);
+        Assert.False(modelState.IsValid);
+        Assert.Contains(nameof(CalculateTollRequest.Timestamps), modelState.Keys);
     }
 
     [Fact]
     public void Validate_ReportsEveryBrokenRuleAtOnce()
     {
-        var result = CalculateTollRequestValidator.Validate(new CalculateTollRequest());
+        var modelState = CalculateTollRequestValidator.Validate(new CalculateTollRequest());
 
-        Assert.False(result.IsValid);
-        Assert.Equal(2, result.Errors.Count);
+        Assert.False(modelState.IsValid);
+        Assert.Equal(2, modelState.Count);
     }
 }
