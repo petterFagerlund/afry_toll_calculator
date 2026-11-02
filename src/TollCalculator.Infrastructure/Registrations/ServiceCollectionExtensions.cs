@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TollCalculator.Application.Providers;
 using TollCalculator.Application.Repositories;
+using TollCalculator.Infrastructure.Configuration;
 using TollCalculator.Infrastructure.Persistence;
 using TollCalculator.Infrastructure.Providers;
 using TollCalculator.Infrastructure.Repositories.Implementations;
@@ -27,6 +28,11 @@ public static class ServiceCollectionExtensions
         }
 
         services.AddDbContext<TollDbContext>(options => options.UseSqlServer(connectionString));
+
+        services.AddOptions<TollOptions>()
+            .Bind(configuration.GetSection(TollOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
 
         services.AddScoped<IVehicleRepository, VehicleRepository>();
         services.AddScoped<ITollPassageRepository, TollPassageRepository>();

@@ -1,11 +1,11 @@
-using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using TollCalculator.Application.Providers;
+using TollCalculator.Application.Repositories;
 using TollCalculator.Application.Results;
 using TollCalculator.Application.Services.Implementations;
+using TollCalculator.Domain.Constants;
 using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
-using TollCalculator.Application.Repositories;
 
 namespace TollCalculator.Application.UnitTests.Services;
 
@@ -13,7 +13,6 @@ public class TollServiceTests
 {
     private static readonly DateOnly Monday = new(2026, 3, 16);
 
-    private readonly IVehicleRepository _vehicleRepository = Substitute.For<IVehicleRepository>();
     private readonly ITollPassageRepository _tollPassageRepository = Substitute.For<ITollPassageRepository>();
     private readonly ITollScheduleRepository _tollScheduleRepository = Substitute.For<ITollScheduleRepository>();
     private readonly IHolidayProvider _holidayProvider = Substitute.For<IHolidayProvider>();
@@ -27,18 +26,15 @@ public class TollServiceTests
         _holidayProvider.GetHolidays(Arg.Any<int>()).Returns(ApplicationResult<Holiday[]>.Success([]));
 
         _service = new TollService(
-            _vehicleRepository,
             _tollPassageRepository,
             _tollScheduleRepository,
-            new DailyTollService(new TollFeeService(new WeekendAndHolidayService(_holidayProvider))),
-            NullLogger<TollService>.Instance);
+            new DailyTollService(new TollFeeService(new WeekendAndHolidayService(_holidayProvider))));
     }
 
     [Fact]
     public async Task GetDailyTollAsync_DayWithPassages_ReturnsTheTotalAndBreakdown()
     {
-        KnownVehicle("ABC123", VehicleType.Car);
-        PassagesOn(Monday, At(Monday, 7, 15), At(Monday, 15, 10));
+        PassagesOn(Monday, VehicleType.Car, At(Monday, 7, 15), At(Monday, 15, 10));
 
         var result = await _service.GetDailyTollAsync("ABC123", Monday, CancellationToken.None);
 
@@ -52,8 +48,7 @@ public class TollServiceTests
     [Fact]
     public async Task GetDailyTollAsync_DayWithNoPassages_ReturnsZeroAndAnEmptyBreakdown()
     {
-        KnownVehicle("ABC123", VehicleType.Car);
-        PassagesOn(Monday);
+        PassagesOn(Monday, VehicleType.Car);
 
         var result = await _service.GetDailyTollAsync("ABC123", Monday, CancellationToken.None);
 
@@ -63,42 +58,50 @@ public class TollServiceTests
     }
 
     [Fact]
-    public async Task GetDailyTollAsync_UnknownVehicle_ReturnsNotFound()
+    public async Task GetDailyTollAsync_ARegistrationNumberWithNoPassages_ReturnsZeroRatherThanNotFound()
     {
-        _vehicleRepository.GetAsync("XYZ789", Arg.Any<CancellationToken>()).Returns((Vehicle?)null);
+        _tollPassageRepository.GetForDayAsync("XYZ789", Monday, Arg.Any<CancellationToken>()).Returns([]);
 
         var result = await _service.GetDailyTollAsync("XYZ789", Monday, CancellationToken.None);
 
-        Assert.False(result.IsSuccess);
-        Assert.Equal(ApplicationResultStatus.NotFound, result.Status);
-        Assert.Contains("XYZ789", result.ErrorMessage);
+        Assert.True(result.IsSuccess);
+        Assert.Equal(0, result.Value!.TotalFee);
     }
 
-
-    private void KnownVehicle(string registrationNumber, VehicleType vehicleType)
+    [Fact]
+    public async Task GetDailyTollAsync_APassageReportingAnUnknownVehicleType_IsCharged()
     {
-        var vehicle = Vehicle.Create(registrationNumber, vehicleType);
+        PassagesOn(Monday, VehicleType.Unknown, At(Monday, 7, 15));
 
-        _vehicleRepository.GetAsync(registrationNumber, Arg.Any<CancellationToken>()).Returns(vehicle);
+        var result = await _service.GetDailyTollAsync("ABC123", Monday, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(18, result.Value!.TotalFee);
     }
 
-    private void PassagesOn(DateOnly date, params DateTimeOffset[] timestamps)
+    [Fact]
+    public async Task GetDailyTollAsync_APassageReportingATollFreeVehicleType_IsNotCharged()
     {
-        var passages = new List<TollPassage>();
+        PassagesOn(Monday, VehicleType.Motorbike, At(Monday, 7, 15));
 
-        foreach (var timestamp in timestamps)
-        {
-            passages.Add(TollPassage.Create("ABC123", timestamp));
-        }
+        var result = await _service.GetDailyTollAsync("ABC123", Monday, CancellationToken.None);
 
-        _tollPassageRepository.GetForDayAsync("ABC123", date, Arg.Any<CancellationToken>()).Returns(passages.ToArray());
+        Assert.True(result.IsSuccess);
+        Assert.Equal(0, result.Value!.TotalFee);
+    }
+
+    private void PassagesOn(DateOnly date, VehicleType vehicleType, params DateTimeOffset[] timestamps)
+    {
+        var passages = Array.ConvertAll(
+            timestamps, timestamp => TollPassage.Create("ABC123", vehicleType, timestamp));
+
+        _tollPassageRepository.GetForDayAsync("ABC123", date, Arg.Any<CancellationToken>()).Returns(passages);
     }
 
     private static DateTimeOffset At(DateOnly date, int hour, int minute)
     {
         var local = date.ToDateTime(new TimeOnly(hour, minute));
 
-        return new DateTimeOffset(local, TollCalculator.Domain.Constants.TollTimeZone.Instance.GetUtcOffset(local));
+        return new DateTimeOffset(local, TollTimeZone.Instance.GetUtcOffset(local));
     }
-
 }

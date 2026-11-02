@@ -1,5 +1,7 @@
+using Microsoft.Extensions.Options;
 using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
+using TollCalculator.Infrastructure.Configuration;
 using TollCalculator.Infrastructure.Repositories.Implementations;
 
 namespace TollCalculator.Infrastructure.UnitTests.Repositories;
@@ -11,7 +13,7 @@ public class ReferenceRepositoryTests : IDisposable
     [Fact]
     public async Task GetTariffAsync_ReturnsTheSeededSchedule()
     {
-        var repository = new TollScheduleRepository(_fixture.Context);
+        var repository = ScheduleRepositoryWithCap(60);
 
         var tariff = await repository.GetTariffAsync(CancellationToken.None);
 
@@ -21,13 +23,13 @@ public class ReferenceRepositoryTests : IDisposable
     }
 
     [Fact]
-    public async Task GetTariffAsync_ReturnsTheSeededCap()
+    public async Task GetTariffAsync_TakesTheDailyCapFromConfiguration()
     {
-        var repository = new TollScheduleRepository(_fixture.Context);
+        var repository = ScheduleRepositoryWithCap(45);
 
         var tariff = await repository.GetTariffAsync(CancellationToken.None);
 
-        Assert.Equal(60, tariff.DailyCap);
+        Assert.Equal(45, tariff.DailyCap);
     }
 
     [Fact]
@@ -56,5 +58,11 @@ public class ReferenceRepositoryTests : IDisposable
     public void Dispose()
     {
         _fixture.Dispose();
+    }
+
+    private TollScheduleRepository ScheduleRepositoryWithCap(int dailyCap)
+    {
+        return new TollScheduleRepository(
+            _fixture.Context, Options.Create(new TollOptions { DailyCap = dailyCap }));
     }
 }

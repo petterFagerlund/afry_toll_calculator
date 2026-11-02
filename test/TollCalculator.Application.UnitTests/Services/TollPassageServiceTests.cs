@@ -1,10 +1,11 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
+using TollCalculator.Application.Repositories;
 using TollCalculator.Application.Results;
 using TollCalculator.Application.Services.Implementations;
 using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
-using TollCalculator.Application.Repositories;
+using Xunit;
 
 namespace TollCalculator.Application.UnitTests.Services;
 
@@ -12,80 +13,68 @@ public class TollPassageServiceTests
 {
     private static readonly DateTimeOffset PassedAt = new(2026, 3, 16, 7, 15, 0, TimeSpan.FromHours(1));
 
-    private readonly IVehicleRepository _vehicleRepository = Substitute.For<IVehicleRepository>();
     private readonly ITollPassageRepository _tollPassageRepository = Substitute.For<ITollPassageRepository>();
     private readonly TollPassageService _service;
 
     public TollPassageServiceTests()
     {
-        _service = new TollPassageService(
-            _vehicleRepository,
-            _tollPassageRepository,
-            NullLogger<TollPassageService>.Instance);
+        _service = new TollPassageService(_tollPassageRepository, NullLogger<TollPassageService>.Instance);
     }
 
     [Fact]
-    public async Task RecordTollPassageAsync_KnownVehicle_ReturnsThePersistedPassageId()
+    public async Task RecordTollPassagesAsync_ABatch_ReturnsThePersistedPassageIds()
     {
-        var expectedId = Guid.CreateVersion7();
-        KnownVehicle("ABC123");
-        _tollPassageRepository.AddAsync(Arg.Any<TollPassage>(), Arg.Any<CancellationToken>())
-            .Returns(ApplicationResult<Guid>.Success(expectedId));
+        var passages = new[]
+        {
+            TollPassage.Create("ABC123", VehicleType.Car, PassedAt),
+            TollPassage.Create("XYZ789", VehicleType.Motorbike, PassedAt),
+        };
+        var expectedIds = Array.ConvertAll(passages, passage => passage.Id);
 
-        var result = await _service.RecordTollPassageAsync("ABC123", PassedAt, CancellationToken.None);
+        _tollPassageRepository.AddRangeAsync(Arg.Any<TollPassage[]>(), Arg.Any<CancellationToken>())
+            .Returns(ApplicationResult<Guid[]>.Success(expectedIds));
+
+        var result = await _service.RecordTollPassagesAsync(passages, CancellationToken.None);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(expectedId, result.Value);
-        Assert.Equal(ApplicationResultStatus.Success, result.Status);
+        Assert.Equal(expectedIds, result.Value);
     }
 
     [Fact]
-    public async Task RecordTollPassageAsync_KnownVehicle_PersistsTheNormalizedRegistrationNumberAndTimestamp()
+    public async Task RecordTollPassagesAsync_AnUnregisteredVehicle_IsStillRecorded()
     {
-        KnownVehicle(" abc123 ");
-        _tollPassageRepository.AddAsync(Arg.Any<TollPassage>(), Arg.Any<CancellationToken>())
-            .Returns(ApplicationResult<Guid>.Success(Guid.CreateVersion7()));
+        var passages = new[] { TollPassage.Create("NOPE01", VehicleType.Car, PassedAt) };
 
-        await _service.RecordTollPassageAsync(" abc123 ", PassedAt, CancellationToken.None);
+        _tollPassageRepository.AddRangeAsync(Arg.Any<TollPassage[]>(), Arg.Any<CancellationToken>())
+            .Returns(ApplicationResult<Guid[]>.Success([passages[0].Id]));
 
-        await _tollPassageRepository.Received(1).AddAsync(
-            Arg.Is<TollPassage>(passage => passage.RegistrationNumber == "ABC123" && passage.PassedAt == PassedAt),
+        var result = await _service.RecordTollPassagesAsync(passages, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+
+        await _tollPassageRepository.Received(1).AddRangeAsync(
+            Arg.Is<TollPassage[]>(recorded => recorded[0].RegistrationNumber == "NOPE01"),
             Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task RecordTollPassageAsync_UnknownVehicle_ReturnsNotFoundWithoutPersisting()
+    public async Task RecordTollPassagesAsync_APassageAlreadyRecorded_ReturnsConflict()
     {
-        _vehicleRepository.GetAsync("XYZ789", Arg.Any<CancellationToken>()).Returns((Vehicle?)null);
+        var passages = new[] { TollPassage.Create("ABC123", VehicleType.Car, PassedAt) };
 
-        var result = await _service.RecordTollPassageAsync("XYZ789", PassedAt, CancellationToken.None);
+        _tollPassageRepository.AddRangeAsync(Arg.Any<TollPassage[]>(), Arg.Any<CancellationToken>())
+            .Returns(ApplicationResult<Guid[]>.Conflict("One or more of the passages is already recorded."));
 
-        Assert.False(result.IsSuccess);
-        Assert.Equal(ApplicationResultStatus.NotFound, result.Status);
-        Assert.Contains("XYZ789", result.ErrorMessage);
-
-        await _tollPassageRepository.DidNotReceiveWithAnyArgs().AddAsync(null!, CancellationToken.None);
-    }
-
-    [Fact]
-    public async Task RecordTollPassageAsync_PassageAlreadyRecorded_ReturnsConflict()
-    {
-        KnownVehicle("ABC123");
-        _tollPassageRepository.AddAsync(Arg.Any<TollPassage>(), Arg.Any<CancellationToken>())
-            .Returns(ApplicationResult<Guid>.Conflict("A passage for 'ABC123' is already recorded."));
-
-        var result = await _service.RecordTollPassageAsync("ABC123", PassedAt, CancellationToken.None);
+        var result = await _service.RecordTollPassagesAsync(passages, CancellationToken.None);
 
         Assert.False(result.IsSuccess);
         Assert.Equal(ApplicationResultStatus.Conflict, result.Status);
-        Assert.Contains("ABC123", result.ErrorMessage);
     }
 
-
-    private void KnownVehicle(string lookupValue)
+    [Fact]
+    public async Task RecordTollPassagesAsync_NullPassages_Throws()
     {
-        var vehicle = Vehicle.Create(lookupValue, VehicleType.Car);
-
-        _vehicleRepository.GetAsync(lookupValue, Arg.Any<CancellationToken>()).Returns(vehicle);
+        await Assert.ThrowsAsync<ArgumentNullException>(
+            () => _service.RecordTollPassagesAsync(null!, CancellationToken.None));
     }
 }

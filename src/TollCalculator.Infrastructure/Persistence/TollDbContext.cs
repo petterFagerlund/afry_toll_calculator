@@ -15,8 +15,6 @@ public sealed class TollDbContext : DbContext
 
     public DbSet<TollRateInterval> TollRateIntervals { get; init; } = null!;
 
-    public DbSet<TollSettings> TollSettings { get; init; } = null!;
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(TollDbContext).Assembly);

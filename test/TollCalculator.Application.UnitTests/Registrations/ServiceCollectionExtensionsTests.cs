@@ -44,7 +44,7 @@ public class ServiceCollectionExtensionsTests
         var dailyTollService = provider.GetRequiredService<IDailyTollService>();
         var tariff = TollTariff.Create(TollSchedule.Create([]), 60);
 
-        Assert.Equal(0, dailyTollService.Calculate(Domain.Enums.VehicleType.Car, [], tariff).Value!.TotalFee);
+        Assert.Equal(0, dailyTollService.Calculate([], tariff).Value!.TotalFee);
     }
 
     [Fact]

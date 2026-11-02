@@ -2,9 +2,6 @@ namespace TollCalculator.Infrastructure.Persistence.Seed;
 
 internal static class TollSeedData
 {
-    public const int SettingsId = 1;
-    public const int DailyCap = 60;
-
     public static RateIntervalSeed[] RateIntervals { get; } =
     [
         new(1, new TimeOnly(6, 0), new TimeOnly(6, 30), 8),

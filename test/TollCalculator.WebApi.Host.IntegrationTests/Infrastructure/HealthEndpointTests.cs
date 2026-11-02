@@ -30,7 +30,15 @@ public class HealthEndpointTests
     public async Task TheMigrationCreatedTheSeededReferenceData()
     {
         Assert.Equal(9, await CountAsync("SELECT COUNT(*) FROM [TollRateIntervals];"));
-        Assert.Equal(60, await CountAsync("SELECT [DailyCap] FROM [TollSettings];"));
+    }
+
+    [Fact]
+    public async Task TheMigrationRemovedTheTollSettingsTable()
+    {
+        var tables = await CountAsync(
+            "SELECT COUNT(*) FROM sys.tables WHERE [name] = 'TollSettings';");
+
+        Assert.Equal(0, tables);
     }
 
     [Fact]
@@ -53,7 +61,6 @@ public class HealthEndpointTests
         await _fixture.ResetTestDataAsync();
 
         Assert.Equal(9, await CountAsync("SELECT COUNT(*) FROM [TollRateIntervals];"));
-        Assert.Equal(60, await CountAsync("SELECT [DailyCap] FROM [TollSettings];"));
     }
 
     private async Task<(TimeOnly Start, TimeOnly End)[]> RateIntervalsAsync()

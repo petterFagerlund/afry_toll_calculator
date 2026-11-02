@@ -1,3 +1,4 @@
+using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
 
 namespace TollCalculator.Domain.UnitTests.Models;
@@ -9,7 +10,7 @@ public class TollPassageTests
     [Fact]
     public void Create_ValidInput_SetsProperties()
     {
-        var passage = TollPassage.Create("ABC123", PassedAt);
+        var passage = TollPassage.Create("ABC123", VehicleType.Car, PassedAt);
 
         Assert.Equal("ABC123", passage.RegistrationNumber);
         Assert.Equal(PassedAt, passage.PassedAt);
@@ -18,7 +19,7 @@ public class TollPassageTests
     [Fact]
     public void Create_ValidInput_GeneratesId()
     {
-        var passage = TollPassage.Create("ABC123", PassedAt);
+        var passage = TollPassage.Create("ABC123", VehicleType.Car, PassedAt);
 
         Assert.NotEqual(Guid.Empty, passage.Id);
     }
@@ -26,8 +27,8 @@ public class TollPassageTests
     [Fact]
     public void Create_TwoPassages_HaveDifferentIds()
     {
-        var first = TollPassage.Create("ABC123", PassedAt);
-        var second = TollPassage.Create("ABC123", PassedAt);
+        var first = TollPassage.Create("ABC123", VehicleType.Car, PassedAt);
+        var second = TollPassage.Create("ABC123", VehicleType.Car, PassedAt);
 
         Assert.NotEqual(first.Id, second.Id);
     }
@@ -37,7 +38,7 @@ public class TollPassageTests
     [InlineData("  abc123  ", "ABC123")]
     public void Create_RegistrationNumberNeedsNormalising_TrimsAndUppercases(string input, string expected)
     {
-        var passage = TollPassage.Create(input, PassedAt);
+        var passage = TollPassage.Create(input, VehicleType.Car, PassedAt);
 
         Assert.Equal(expected, passage.RegistrationNumber);
     }
@@ -48,6 +49,6 @@ public class TollPassageTests
     [InlineData(null)]
     public void Create_MissingRegistrationNumber_Throws(string? registrationNumber)
     {
-        Assert.Throws<ArgumentException>(() => TollPassage.Create(registrationNumber!, PassedAt));
+        Assert.Throws<ArgumentException>(() => TollPassage.Create(registrationNumber!, VehicleType.Car, PassedAt));
     }
 }

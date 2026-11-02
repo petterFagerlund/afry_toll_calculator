@@ -42,6 +42,7 @@ internal static class ServiceCollectionExtensions
                 options.Document.AddDocumentTransformer(
                     new ApiVersionInfoDocumentTransformer(options.Description.GroupName));
                 options.Document.AddDocumentTransformer(new BearerSecuritySchemeDocumentTransformer());
+                options.Document.AddSchemaTransformer(new VehicleTypeSchemaTransformer());
             });
 
         return services;

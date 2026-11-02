@@ -5,7 +5,7 @@ namespace TollCalculator.Application.Repositories;
 
 public interface ITollPassageRepository
 {
-    Task<ApplicationResult<Guid>> AddAsync(TollPassage passage, CancellationToken cancellationToken);
+    Task<ApplicationResult<Guid[]>> AddRangeAsync(TollPassage[] passages, CancellationToken cancellationToken);
 
     Task<TollPassage[]> GetForDayAsync(string registrationNumber, DateOnly date, CancellationToken cancellationToken);
 }

@@ -21,7 +21,6 @@ public class TollDbContextModelTests
     [InlineData(typeof(Vehicle), "Vehicles")]
     [InlineData(typeof(TollPassage), "TollPassages")]
     [InlineData(typeof(TollRateInterval), "TollRateIntervals")]
-    [InlineData(typeof(TollSettings), "TollSettings")]
     public void Model_Entity_MapsToExpectedTable(Type entityType, string expectedTable)
     {
         var entity = _context.Model.FindEntityType(entityType);
@@ -61,12 +60,21 @@ public class TollDbContextModelTests
     }
 
     [Fact]
-    public void Model_TollPassage_ReferencesVehicle()
+    public void Model_TollPassage_DoesNotRequireARegisteredVehicle()
     {
-        var foreignKey = Assert.Single(_context.Model.FindEntityType(typeof(TollPassage))!.GetForeignKeys());
+        var foreignKeys = _context.Model.FindEntityType(typeof(TollPassage))!.GetForeignKeys();
 
-        Assert.Equal(typeof(Vehicle), foreignKey.PrincipalEntityType.ClrType);
-        Assert.Equal(nameof(TollPassage.RegistrationNumber), Assert.Single(foreignKey.Properties).Name);
+        Assert.Empty(foreignKeys);
+    }
+
+    [Fact]
+    public void Model_TollPassage_StoresTheReportedVehicleTypeByName()
+    {
+        var property = _context.Model.FindEntityType(typeof(TollPassage))!
+            .FindProperty(nameof(TollPassage.VehicleType))!;
+
+        Assert.Equal(typeof(string), property.GetProviderClrType());
+        Assert.Equal(20, property.GetMaxLength());
     }
 
     [Fact]

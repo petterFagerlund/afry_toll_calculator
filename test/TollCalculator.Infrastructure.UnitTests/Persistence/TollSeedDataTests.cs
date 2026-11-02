@@ -46,14 +46,6 @@ public class TollSeedDataTests
         Assert.Equal(expected, match["Amount"]);
     }
 
-    [Fact]
-    public void Seed_TollSettings_HasTheDailyCap()
-    {
-        var settings = Assert.Single(SeedFor(typeof(TollSettings)));
-
-        Assert.Equal(60, settings["DailyCap"]);
-    }
-
     private IDictionary<string, object?>[] SeedFor(Type entityType)
     {
         var model = _context.GetService<IDesignTimeModel>().Model;

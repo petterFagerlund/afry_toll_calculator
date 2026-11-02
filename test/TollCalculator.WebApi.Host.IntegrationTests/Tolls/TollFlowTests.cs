@@ -1,6 +1,7 @@
 using System.Net;
 using TollCalculator.Domain.Enums;
 using TollCalculator.WebApi.Host.IntegrationTests.Infrastructure;
+using TollCalculator.WebApi.Models.V1.Requests;
 
 namespace TollCalculator.WebApi.Host.IntegrationTests.Tolls;
 
@@ -13,7 +14,6 @@ public class TollFlowTests : IAsyncLifetime
     private static readonly DateOnly NewYearsDay = new(2026, 1, 1);
 
     private readonly TollApiFixture _fixture;
-    private readonly TestVehicleSeeder _vehicles;
     private readonly TollApiClient _api;
     private readonly HttpClient _client;
 
@@ -22,7 +22,6 @@ public class TollFlowTests : IAsyncLifetime
         ArgumentNullException.ThrowIfNull(fixture);
 
         _fixture = fixture;
-        _vehicles = new TestVehicleSeeder(fixture.ConnectionString);
         _client = fixture.Development.CreateClient();
         _api = new TollApiClient(_client);
     }
@@ -42,15 +41,13 @@ public class TollFlowTests : IAsyncLifetime
     [Fact]
     public async Task ARecordedPassage_IsChargedAtTheRateForItsTimeOfDay()
     {
-        var registrationNumber = await _vehicles.AddAsync("ABC123", VehicleType.Car);
-
-        using var recorded = await _api.RecordPassageAsync(registrationNumber, At(Weekday, 7, 15));
+        using var recorded = await _api.RecordPassageAsync("ABC123", VehicleType.Car, At(Weekday, 7, 15));
 
         Assert.Equal(HttpStatusCode.Created, recorded.StatusCode);
 
-        var dailyToll = await _api.GetDailyTollAsync(registrationNumber, Weekday);
+        var dailyToll = await _api.GetDailyTollAsync("ABC123", Weekday);
 
-        Assert.Equal(registrationNumber, dailyToll.RegistrationNumber);
+        Assert.Equal("ABC123", dailyToll.RegistrationNumber);
         Assert.Equal(Weekday, dailyToll.Date);
         Assert.Equal(18, dailyToll.TotalFee);
 
@@ -60,11 +57,83 @@ public class TollFlowTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task ANeverSeenRegistrationNumber_IsRecordedAndCharged()
+    {
+        using var recorded = await _api.RecordPassageAsync("NEW001", VehicleType.Car, At(Weekday, 7, 15));
+
+        Assert.Equal(HttpStatusCode.Created, recorded.StatusCode);
+
+        var dailyToll = await _api.GetDailyTollAsync("NEW001", Weekday);
+
+        Assert.Equal(18, dailyToll.TotalFee);
+    }
+
+    [Fact]
+    public async Task OnePostRecordingSeveralVehicles_ChargesEachOnItsOwnType()
+    {
+        var response = await _api.PostAsync(new RecordTollPassagesRequest
+        {
+            Passages =
+            [
+                NewPassage("CAR001", VehicleType.Car, At(Weekday, 7, 15)),
+                NewPassage("MC0001", VehicleType.Motorbike, At(Weekday, 7, 15)),
+                NewPassage("CAR002", VehicleType.Car, At(Weekday, 15, 40)),
+            ],
+        });
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        Assert.Equal(18, (await _api.GetDailyTollAsync("CAR001", Weekday)).TotalFee);
+        Assert.Equal(0, (await _api.GetDailyTollAsync("MC0001", Weekday)).TotalFee);
+        Assert.Equal(18, (await _api.GetDailyTollAsync("CAR002", Weekday)).TotalFee);
+    }
+
+    [Fact]
+    public async Task ABatchWithOneDuplicate_RecordsNothingAtAll()
+    {
+        var passedAt = At(Weekday, 7, 15);
+
+        using var first = await _api.RecordPassageAsync("DUP123", VehicleType.Car, passedAt);
+        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+
+        var response = await _api.PostAsync(new RecordTollPassagesRequest
+        {
+            Passages =
+            [
+                NewPassage("FRESH1", VehicleType.Car, At(Weekday, 9, 0)),
+                NewPassage("DUP123", VehicleType.Car, passedAt),
+            ],
+        });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Equal(0, (await _api.GetDailyTollAsync("FRESH1", Weekday)).TotalFee);
+    }
+
+    [Fact]
+    public async Task ABatchWithAPassageMissingItsVehicleType_IsRejectedBeforeAnythingIsRecorded()
+    {
+        var response = await _api.PostAsync(new RecordTollPassagesRequest
+        {
+            Passages =
+            [
+                NewPassage("OK0001", VehicleType.Car, At(Weekday, 7, 15)),
+                new TollPassageToRecord
+                {
+                    RegistrationNumber = "BAD001",
+                    VehicleType = "",
+                    PassedAt = At(Weekday, 8, 15),
+                },
+            ],
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(0, (await _api.GetDailyTollAsync("OK0001", Weekday)).TotalFee);
+    }
+
+    [Fact]
     public async Task ABusyDay_IsCappedAtSixtyKronorWithTheLastChargeTrimmed()
     {
-        var registrationNumber = await _vehicles.AddAsync("CAP001", VehicleType.Car);
-
-        await _api.RecordPassagesAsync(registrationNumber,
+        await _api.RecordAndEnsureSuccessAsync("CAP001", VehicleType.Car,
         [
             At(Weekday, 6, 45),
             At(Weekday, 7, 50),
@@ -73,7 +142,7 @@ public class TollFlowTests : IAsyncLifetime
             At(Weekday, 17, 10),
         ]);
 
-        var dailyToll = await _api.GetDailyTollAsync(registrationNumber, Weekday);
+        var dailyToll = await _api.GetDailyTollAsync("CAP001", Weekday);
 
         Assert.Equal(60, dailyToll.TotalFee);
         Assert.Equal([13, 18, 8, 18, 3], dailyToll.ChargedPassages.Select(passage => passage.Amount));
@@ -83,11 +152,10 @@ public class TollFlowTests : IAsyncLifetime
     [Fact]
     public async Task ATollFreeVehicle_IsNeverCharged()
     {
-        var registrationNumber = await _vehicles.AddAsync("MC0001", VehicleType.Motorbike);
+        await _api.RecordAndEnsureSuccessAsync(
+            "MC0001", VehicleType.Motorbike, [At(Weekday, 7, 15), At(Weekday, 15, 40)]);
 
-        await _api.RecordPassagesAsync(registrationNumber, [At(Weekday, 7, 15), At(Weekday, 15, 40)]);
-
-        var dailyToll = await _api.GetDailyTollAsync(registrationNumber, Weekday);
+        var dailyToll = await _api.GetDailyTollAsync("MC0001", Weekday);
 
         Assert.Equal(0, dailyToll.TotalFee);
         Assert.Empty(dailyToll.ChargedPassages);
@@ -96,11 +164,9 @@ public class TollFlowTests : IAsyncLifetime
     [Fact]
     public async Task APassageOnAPublicHoliday_IsFree()
     {
-        var registrationNumber = await _vehicles.AddAsync("HOL001", VehicleType.Car);
+        await _api.RecordAndEnsureSuccessAsync("HOL001", VehicleType.Car, [At(NewYearsDay, 7, 15)]);
 
-        await _api.RecordPassagesAsync(registrationNumber, [At(NewYearsDay, 7, 15)]);
-
-        var dailyToll = await _api.GetDailyTollAsync(registrationNumber, NewYearsDay);
+        var dailyToll = await _api.GetDailyTollAsync("HOL001", NewYearsDay);
 
         Assert.Equal(0, dailyToll.TotalFee);
         Assert.Empty(dailyToll.ChargedPassages);
@@ -109,11 +175,10 @@ public class TollFlowTests : IAsyncLifetime
     [Fact]
     public async Task TwoPassagesInsideOneHour_AreChargedOnceAtTheHigherRate()
     {
-        var registrationNumber = await _vehicles.AddAsync("WIN001", VehicleType.Car);
+        await _api.RecordAndEnsureSuccessAsync(
+            "WIN001", VehicleType.Car, [At(Weekday, 6, 20), At(Weekday, 6, 40)]);
 
-        await _api.RecordPassagesAsync(registrationNumber, [At(Weekday, 6, 20), At(Weekday, 6, 40)]);
-
-        var dailyToll = await _api.GetDailyTollAsync(registrationNumber, Weekday);
+        var dailyToll = await _api.GetDailyTollAsync("WIN001", Weekday);
 
         Assert.Equal(13, dailyToll.TotalFee);
 
@@ -125,37 +190,26 @@ public class TollFlowTests : IAsyncLifetime
     [Fact]
     public async Task APassageOnASaturday_IsFree()
     {
-        var registrationNumber = await _vehicles.AddAsync("SAT001", VehicleType.Car);
+        await _api.RecordAndEnsureSuccessAsync("SAT001", VehicleType.Car, [At(Saturday, 7, 15)]);
 
-        await _api.RecordPassagesAsync(registrationNumber, [At(Saturday, 7, 15)]);
-
-        var dailyToll = await _api.GetDailyTollAsync(registrationNumber, Saturday);
+        var dailyToll = await _api.GetDailyTollAsync("SAT001", Saturday);
 
         Assert.Equal(0, dailyToll.TotalFee);
         Assert.Empty(dailyToll.ChargedPassages);
     }
 
     [Fact]
-    public async Task APassageForAnUnregisteredVehicle_IsRejected()
-    {
-        using var response = await _api.RecordPassageAsync("NOPE01", At(Weekday, 7, 15));
-
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-    }
-
-    [Fact]
     public async Task TheSamePassageRecordedTwice_IsRejectedAsAConflict()
     {
-        var registrationNumber = await _vehicles.AddAsync("DUP123", VehicleType.Car);
         var passedAt = At(Weekday, 7, 15);
 
-        using var first = await _api.RecordPassageAsync(registrationNumber, passedAt);
-        using var second = await _api.RecordPassageAsync(registrationNumber, passedAt);
+        using var first = await _api.RecordPassageAsync("TWC123", VehicleType.Car, passedAt);
+        using var second = await _api.RecordPassageAsync("TWC123", VehicleType.Car, passedAt);
 
         Assert.Equal(HttpStatusCode.Created, first.StatusCode);
         Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
 
-        var dailyToll = await _api.GetDailyTollAsync(registrationNumber, Weekday);
+        var dailyToll = await _api.GetDailyTollAsync("TWC123", Weekday);
 
         Assert.Equal(18, dailyToll.TotalFee);
     }
@@ -163,10 +217,8 @@ public class TollFlowTests : IAsyncLifetime
     [Fact]
     public async Task APassageInTheFuture_IsRejected()
     {
-        var registrationNumber = await _vehicles.AddAsync("FUT123", VehicleType.Car);
-
         using var response = await _api.RecordPassageAsync(
-            registrationNumber, DateTimeOffset.UtcNow.AddDays(1));
+            "FUT123", VehicleType.Car, DateTimeOffset.UtcNow.AddDays(1));
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -174,26 +226,26 @@ public class TollFlowTests : IAsyncLifetime
     [Fact]
     public async Task APassageInTheHalfMinuteBetweenTwoRates_IsChargedAtTheEarlierRate()
     {
-        var registrationNumber = await _vehicles.AddAsync("SEC123", VehicleType.Car);
         var passedAt = At(Weekday, 6, 29).AddSeconds(30);
 
-        using var recorded = await _api.RecordPassageAsync(registrationNumber, passedAt);
+        using var recorded = await _api.RecordPassageAsync("SEC123", VehicleType.Car, passedAt);
 
         Assert.Equal(HttpStatusCode.Created, recorded.StatusCode);
 
-        var dailyToll = await _api.GetDailyTollAsync(registrationNumber, Weekday);
+        var dailyToll = await _api.GetDailyTollAsync("SEC123", Weekday);
 
         Assert.Equal(8, dailyToll.TotalFee);
     }
 
     [Theory]
-    [InlineData("/api/v1/vehicles/ABC123/toll")]
-    [InlineData("/api/v1/vehicles/ABC123/toll?date=")]
-    [InlineData("/api/v1/vehicles/ABC123/toll?date=not-a-date")]
-    [InlineData("/api/v1/vehicles/ABC123/toll?date=2026-13-45")]
-    public async Task ADailyTollWithoutAUsableDate_IsRejected(string route)
+    [InlineData("{}")]
+    [InlineData("{\"registrationNumber\":\"ABC123\"}")]
+    [InlineData("{\"registrationNumber\":\"ABC123\",\"date\":\"not-a-date\"}")]
+    [InlineData("{\"registrationNumber\":\"ABC123\",\"date\":\"2026-13-45\"}")]
+    [InlineData("{\"date\":\"2026-03-16\"}")]
+    public async Task ATollCalculationWithoutEveryRequiredField_IsRejected(string json)
     {
-        using var response = await _client.GetAsync(route);
+        using var response = await _api.CalculateRawAsync(json);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -201,12 +253,23 @@ public class TollFlowTests : IAsyncLifetime
     [Fact]
     public async Task ADayWithoutPassages_CostsNothing()
     {
-        var registrationNumber = await _vehicles.AddAsync("QUIET1", VehicleType.Car);
-
-        var dailyToll = await _api.GetDailyTollAsync(registrationNumber, Weekday);
+        var dailyToll = await _api.GetDailyTollAsync("QUIET1", Weekday);
 
         Assert.Equal(0, dailyToll.TotalFee);
         Assert.Empty(dailyToll.ChargedPassages);
+    }
+
+    private static TollPassageToRecord NewPassage(
+        string registrationNumber,
+        VehicleType vehicleType,
+        DateTimeOffset passedAt)
+    {
+        return new TollPassageToRecord
+        {
+            RegistrationNumber = registrationNumber,
+            VehicleType = vehicleType.ToString(),
+            PassedAt = passedAt,
+        };
     }
 
     private static DateTimeOffset At(DateOnly date, int hour, int minute)

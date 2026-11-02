@@ -31,10 +31,12 @@ Diplomat, Foreign and Military vehicles. Every timestamp is converted to Europe/
 schedule and the holiday calendar are consulted, so the same instant costs the same whether it arrives
 as `07:15+01:00` or as `06:15Z`.
 
-None of this is configuration. The rates and the daily cap are rows in the database, seeded by the initial
-migration. The toll-free vehicle types are a domain constant, `TollFreeVehicleTypes`, so there is exactly
-one source of truth for them. Holidays are not stored at all — they are resolved for any year through
-`IHolidayProvider`, backed by the Nager.Date library.
+The rates are rows in the database, seeded by the initial migration, because a rate table is reference data
+with a start and an end per row. The **daily cap is a single number**, so it lives in configuration —
+`Toll:DailyCap` in `appsettings.json`, bound to `TollOptions` and validated on start-up — rather than in a
+one-row table. The toll-free vehicle types are a domain constant, `TollFreeVehicleTypes`, so there is
+exactly one source of truth for them. Holidays are not stored at all — they are resolved for any year
+through `IHolidayProvider`, backed by the Nager.Date library.
 
 ## Architecture
 
@@ -122,42 +124,73 @@ In Development every endpoint is open, so the examples below need no token.
 
 | Method | Route | |
 |---|---|---|
-| POST | `/api/v1/toll-passages` | Record that a vehicle passed a toll station |
-| GET | `/api/v1/vehicles/{registrationNumber}/toll?date=yyyy-MM-dd` | A vehicle's toll for one day |
+| POST | `/api/v1/toll-passages` | Record that one or more vehicles passed a toll station |
+| POST | `/api/v1/toll-calculations` | A vehicle's toll for one day |
 
-A passage is rejected with 400 when its timestamp is in the future or before the year 2000, with 404 when
-no vehicle carries that registration number, and with 409 when the same vehicle is already recorded at that
-exact instant — the `(RegistrationNumber, PassedAt)` index makes recording idempotent to retry.
+Both take a JSON body and **every field is `required`**, so a missing one is rejected rather than quietly
+defaulting — no `0001-01-01` dates and no blank registration numbers reaching the calculation. The toll
+calculation is a POST rather than a GET because it takes a body, and a body on a GET is outside what the
+HTTP spec guarantees: `HttpClient.GetAsync` cannot send one and proxies may strip it.
+
+A passage is an **observation**, not a billing decision: a camera read a plate at a gantry, and that
+happened whether or not the authority knows anything about the vehicle. So any registration number is
+accepted, and **one POST can carry passages for several vehicles**. Each passage reports the vehicle type
+the roadside equipment saw, and that reported type is what the day is priced from.
+
+A passage is rejected with 400 when any passage in the batch is missing its registration number, its
+vehicle type or a usable timestamp (in the future, or before the year 2000), and with 409 when any passage
+repeats one that is already recorded. The batch is written in one transaction, so a 409 means **nothing**
+was recorded — the `(RegistrationNumber, PassedAt)` unique index makes the whole request safe to retry.
 
 The daily toll lists only the passages that were *charged*. A passage sharing its 60-minute window with a
 dearer one, and every passage after the 60 SEK cap is reached, costs nothing and is left out of the list.
+A registration number with no passages that day owes nothing, so the answer is 200 with a zero fee rather
+than 404.
 
 Two endpoints, because a toll system has two consumers: the roadside equipment that reports passages, and
 billing that asks what a vehicle owes. Anything else — a stateless fee calculator, a published rate list,
 the holiday calendar, the vehicle-type table — had no caller in production and was removed rather than
 maintained.
 
-### Recording passages needs a vehicle first
+### Vehicle types come from the caller, and the API does not define them
 
-`POST /api/v1/toll-passages` only accepts a passage for a vehicle that already exists, and **there is no
-endpoint that creates vehicles** — registering a vehicle is outside the scope of the assignment. Without a
-row you get a 404. Insert one directly:
+`vehicleType` is **required** on every passage and must be one of `Car`, `Motorbike`, `Tractor`,
+`Emergency`, `Diplomat`, `Foreign` or `Military` — matched case-insensitively against the domain's
+`VehicleType`, which is also exactly what the database stores as a string. The contract assembly
+deliberately declares **no enum of its own** (`WebApiModelsContractTests` enforces this), so the list of
+types has one source and a client cannot drift from it. `VehicleTypeSchemaTransformer` publishes that same
+list onto the OpenAPI schema at start-up, so **Scalar renders a dropdown** of the accepted values without
+the contract declaring an enum of its own. An unrecognised value is a 400 naming the offending passage by
+index, e.g. `passages[1].VehicleType`.
 
-```sql
-INSERT INTO [Vehicles] ([RegistrationNumber], [VehicleType]) VALUES ('ABC123', 'Car');
-```
+A plate that is not in `Vehicles` is still recorded and still charged: `VehicleType.Unknown` is not in
+`TollFreeVehicleTypes`, so **unknown pays**. That is the safe direction — the failure mode is billing
+someone who should have been exempt, which is visible and appealable, rather than silent free-riding.
 
-`RegistrationNumber` is the primary key, `nvarchar(20)`, stored trimmed and uppercased. `VehicleType` is
-stored as the enum *name*, so `'Car'`, `'Motorbike'`, `'Tractor'`, `'Emergency'`, `'Diplomat'`, `'Foreign'`
-or `'Military'`. Then:
+**The trade-off this accepts:** the caller classifies its own vehicle, so a caller that reports
+`Diplomat` rides free. That is tolerable when the only caller is trusted roadside equipment, and it is the
+reason the TODO below wants the plate *and* its type resolved against Trafikverket instead.
 
 ```bash
 curl -k -X POST https://localhost:7077/api/v1/toll-passages \
   -H "Content-Type: application/json" \
-  -d '{"registrationNumber":"ABC123","passedAt":"2026-03-16T07:15:00+01:00"}'
+  -d '{"passages":[
+        {"registrationNumber":"ABC123","vehicleType":"Car","passedAt":"2026-03-16T07:15:00+01:00"},
+        {"registrationNumber":"MC0001","vehicleType":"Motorbike","passedAt":"2026-03-16T07:15:00+01:00"}
+      ]}'
 
-curl -k "https://localhost:7077/api/v1/vehicles/ABC123/toll?date=2026-03-16"
+# 18 SEK
+curl -k -X POST https://localhost:7077/api/v1/toll-calculations \
+  -H "Content-Type: application/json" \
+  -d '{"registrationNumber":"ABC123","date":"2026-03-16"}'
+
+# 0 SEK, toll free
+curl -k -X POST https://localhost:7077/api/v1/toll-calculations \
+  -H "Content-Type: application/json" \
+  -d '{"registrationNumber":"MC0001","date":"2026-03-16"}'
 ```
+
+No SQL and no setup: clone, run, POST, POST.
 
 ### Authentication
 
@@ -265,9 +298,10 @@ return vehicleType.Equals(TollFreeVehicles.Motorbike.ToString()) || ...
 Six `ToString()` comparisons against a private enum that nothing else could see or reuse. Any typo or
 casing difference in the vehicle type silently meant "not toll free" — the vehicle got charged and nothing
 reported why.
-*Fixed:* a `VehicleType` enum in the domain, `TollFreeVehicleTypes` naming the free ones in one place, and
-`VehicleTypeRules` rows carrying the flag. The API contract has its own `VehicleType` enum, so an
-unrecognised value is a 400 from the deserializer and never reaches the domain.
+*Fixed:* a `VehicleType` enum in the domain and `TollFreeVehicleTypes` naming the free ones in one place —
+one source of truth, matched by value rather than by string. The API contract declares no enum of its own;
+it takes the type as a string and validates it against the domain, so an unrecognised value is a 400 that
+names the offending passage and never reaches the fee calculation.
 
 ## TODO
 

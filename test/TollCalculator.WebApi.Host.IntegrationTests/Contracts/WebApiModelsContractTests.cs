@@ -5,7 +5,7 @@ namespace TollCalculator.WebApi.Host.IntegrationTests.Contracts;
 
 public class WebApiModelsContractTests
 {
-    private static readonly Assembly ContractAssembly = typeof(RecordTollPassageRequest).Assembly;
+    private static readonly Assembly ContractAssembly = typeof(RecordTollPassagesRequest).Assembly;
 
     [Fact]
     public void TheContractAssembly_ReferencesNoProjectAssembly()

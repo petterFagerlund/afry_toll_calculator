@@ -25,7 +25,7 @@ public class DailyTollServiceTests
     [Fact]
     public void Calculate_NoPassages_ReturnsZero()
     {
-        var result = _service.Calculate(VehicleType.Car, [], _tariff);
+        var result = _service.Calculate(PassagesOf(VehicleType.Car, []), _tariff);
 
         Assert.Equal(0, result.Value!.TotalFee);
         Assert.Empty(result.Value!.ChargedPassages);
@@ -36,7 +36,7 @@ public class DailyTollServiceTests
     {
         DateTimeOffset[] unsorted = [PassageAt(15, 35), PassageAt(7, 15)];
 
-        var result = _service.Calculate(VehicleType.Car, unsorted, _tariff);
+        var result = _service.Calculate(PassagesOf(VehicleType.Car, unsorted), _tariff);
 
         Assert.Equal(36, result.Value!.TotalFee);
         Assert.Equal(PassageAt(7, 15), result.Value!.ChargedPassages[0].PassedAt);
@@ -47,7 +47,7 @@ public class DailyTollServiceTests
     {
         DateTimeOffset[] passages = [PassageAt(6, 15), PassageAt(6, 35)];
 
-        var result = _service.Calculate(VehicleType.Car, passages, _tariff);
+        var result = _service.Calculate(PassagesOf(VehicleType.Car, passages), _tariff);
 
         Assert.Equal(13, result.Value!.TotalFee);
         Assert.Single(result.Value!.ChargedPassages);
@@ -59,7 +59,7 @@ public class DailyTollServiceTests
     {
         DateTimeOffset[] passages = [PassageAt(6, 15), PassageAt(7, 25)];
 
-        var result = _service.Calculate(VehicleType.Car, passages, _tariff);
+        var result = _service.Calculate(PassagesOf(VehicleType.Car, passages), _tariff);
 
         Assert.Equal(26, result.Value!.TotalFee);
         Assert.Equal(2, result.Value!.ChargedPassages.Length);
@@ -70,7 +70,7 @@ public class DailyTollServiceTests
     {
         DateTimeOffset[] passages = [PassageAt(6, 0), PassageAt(7, 0)];
 
-        var result = _service.Calculate(VehicleType.Car, passages, _tariff);
+        var result = _service.Calculate(PassagesOf(VehicleType.Car, passages), _tariff);
 
         Assert.Equal(26, result.Value!.TotalFee);
         Assert.Equal(2, result.Value!.ChargedPassages.Length);
@@ -84,7 +84,7 @@ public class DailyTollServiceTests
             PassageAt(6, 0), PassageAt(7, 5), PassageAt(8, 10), PassageAt(9, 15), PassageAt(15, 35)
         ];
 
-        var result = _service.Calculate(VehicleType.Car, passages, _tariff);
+        var result = _service.Calculate(PassagesOf(VehicleType.Car, passages), _tariff);
 
         Assert.Equal(DailyCap, result.Value!.TotalFee);
         Assert.Equal(DailyCap, result.Value!.ChargedPassages.Sum(charged => charged.Amount));
@@ -93,7 +93,7 @@ public class DailyTollServiceTests
     [Fact]
     public void Calculate_TollFreeVehicle_ReturnsZero()
     {
-        var result = _service.Calculate(VehicleType.Motorbike, [PassageAt(7, 15)], _tariff);
+        var result = _service.Calculate(PassagesOf(VehicleType.Motorbike, [PassageAt(7, 15)]), _tariff);
 
         Assert.Equal(0, result.Value!.TotalFee);
         Assert.Empty(result.Value!.ChargedPassages);
@@ -104,7 +104,7 @@ public class DailyTollServiceTests
     {
         var onNewYearsDay = new DateTimeOffset(2026, 1, 1, 7, 15, 0, Offset);
 
-        var result = _service.Calculate(VehicleType.Car, [onNewYearsDay], _tariff);
+        var result = _service.Calculate(PassagesOf(VehicleType.Car, [onNewYearsDay]), _tariff);
 
         Assert.Equal(0, result.Value!.TotalFee);
         Assert.Empty(result.Value!.ChargedPassages);
@@ -115,7 +115,7 @@ public class DailyTollServiceTests
     {
         DateTimeOffset[] passages = [PassageAt(3, 0), PassageAt(22, 0)];
 
-        var result = _service.Calculate(VehicleType.Car, passages, _tariff);
+        var result = _service.Calculate(PassagesOf(VehicleType.Car, passages), _tariff);
 
         Assert.Equal(0, result.Value!.TotalFee);
         Assert.Empty(result.Value!.ChargedPassages);
@@ -126,7 +126,7 @@ public class DailyTollServiceTests
     {
         DateTimeOffset[] passages = [PassageAt(5, 30), PassageAt(6, 15), PassageAt(6, 45)];
 
-        var result = _service.Calculate(VehicleType.Car, passages, _tariff);
+        var result = _service.Calculate(PassagesOf(VehicleType.Car, passages), _tariff);
 
         Assert.Equal(13, result.Value!.TotalFee);
         Assert.Single(result.Value!.ChargedPassages);
@@ -142,7 +142,7 @@ public class DailyTollServiceTests
             PassageOnNextDayAt(9, 15), PassageOnNextDayAt(15, 35)
         ];
 
-        var result = _service.Calculate(VehicleType.Car, passages, _tariff);
+        var result = _service.Calculate(PassagesOf(VehicleType.Car, passages), _tariff);
 
         Assert.Equal(DailyCap * 2, result.Value!.TotalFee);
     }
@@ -152,7 +152,7 @@ public class DailyTollServiceTests
     {
         DateTimeOffset[] passages = [PassageAt(7, 15), PassageOnNextDayAt(7, 15)];
 
-        var result = _service.Calculate(VehicleType.Car, passages, _tariff);
+        var result = _service.Calculate(PassagesOf(VehicleType.Car, passages), _tariff);
 
         Assert.Equal(36, result.Value!.TotalFee);
         Assert.Equal(2, result.Value!.ChargedPassages.Length);
@@ -161,7 +161,27 @@ public class DailyTollServiceTests
     [Fact]
     public void Calculate_NullPassages_Throws()
     {
-        Assert.Throws<ArgumentNullException>(() => _service.Calculate(VehicleType.Car, null!, _tariff));
+        Assert.Throws<ArgumentNullException>(() => _service.Calculate(null!, _tariff));
+    }
+
+    [Fact]
+    public void Calculate_PassagesReportingDifferentVehicleTypes_ChargesEachOnItsOwnType()
+    {
+        TollPassage[] passages =
+        [
+            TollPassage.Create("ABC123", VehicleType.Car, PassageAt(7, 15)),
+            TollPassage.Create("ABC123", VehicleType.Motorbike, PassageAt(9, 15)),
+        ];
+
+        var result = _service.Calculate(passages, _tariff);
+
+        Assert.Equal(18, result.Value!.TotalFee);
+        Assert.Single(result.Value!.ChargedPassages);
+    }
+
+    private static TollPassage[] PassagesOf(VehicleType vehicleType, DateTimeOffset[] passedAt)
+    {
+        return Array.ConvertAll(passedAt, moment => TollPassage.Create("ABC123", vehicleType, moment));
     }
 
     private static DateTimeOffset PassageAt(int hour, int minute)

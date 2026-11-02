@@ -23,12 +23,12 @@ public class TollPassageRepositoryTests : IDisposable
     [Fact]
     public async Task AddAsync_NewPassage_IsPersisted()
     {
-        var passage = TollPassage.Create("ABC123", new DateTimeOffset(2026, 10, 23, 7, 15, 0, Offset));
+        var passage = TollPassage.Create("ABC123", VehicleType.Car, new DateTimeOffset(2026, 10, 23, 7, 15, 0, Offset));
 
-        var added = await _repository.AddAsync(passage, CancellationToken.None);
+        var added = await _repository.AddRangeAsync([passage], CancellationToken.None);
 
         Assert.True(added.IsSuccess);
-        Assert.Equal(passage.Id, added.Value);
+        Assert.Equal(passage.Id, Assert.Single(added.Value!));
         Assert.Single(_fixture.Context.TollPassages);
     }
 
@@ -96,8 +96,8 @@ public class TollPassageRepositoryTests : IDisposable
 
     private async Task AddPassage(string registrationNumber, DateTimeOffset passedAt)
     {
-        var passage = TollPassage.Create(registrationNumber, passedAt);
+        var passage = TollPassage.Create(registrationNumber, VehicleType.Car, passedAt);
 
-        await _repository.AddAsync(passage, CancellationToken.None);
+        await _repository.AddRangeAsync([passage], CancellationToken.None);
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using TollCalculator.Application.Results;
 using TollCalculator.Application.Services;
+using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
 using TollCalculator.WebApi.Host.Controllers.V1;
 using TollCalculator.WebApi.Models.V1.Requests;
@@ -27,81 +28,119 @@ public class TollPassagesControllerTests
     }
 
     [Fact]
-    public async Task RecordTollPassage_ReturnsCreatedWithTheNewPassageId()
+    public async Task RecordTollPassages_ReturnsCreatedWithTheNewPassageIds()
     {
-        var passageId = Guid.CreateVersion7();
-        _tollPassageService
-            .RecordTollPassageAsync(RegistrationNumber, PassedAt, Arg.Any<CancellationToken>())
-            .Returns(ApplicationResult<Guid>.Success(passageId));
+        var passageIds = new[] { Guid.CreateVersion7(), Guid.CreateVersion7() };
+        RecordingReturns(ApplicationResult<Guid[]>.Success(passageIds));
 
-        var result = await _controller.RecordTollPassage(NewRequest(), CancellationToken.None);
+        var result = await _controller.RecordTollPassages(NewRequest(), CancellationToken.None);
 
-        var created = Assert.IsType<CreatedAtActionResult>(result.Result);
+        var created = Assert.IsType<ObjectResult>(result.Result);
         Assert.Equal(StatusCodes.Status201Created, created.StatusCode);
-        Assert.Equal(passageId, Assert.IsType<RecordTollPassageResponse>(created.Value).TollPassageId);
+        Assert.Equal(passageIds, Assert.IsType<RecordTollPassagesResponse>(created.Value).TollPassageIds);
     }
 
     [Fact]
-    public async Task RecordTollPassage_PointsTheLocationAtTheDailyTollForThatDay()
+    public async Task RecordTollPassages_PassesEveryPassageToTheServiceWithItsReportedType()
     {
-        _tollPassageService
-            .RecordTollPassageAsync(RegistrationNumber, PassedAt, Arg.Any<CancellationToken>())
-            .Returns(ApplicationResult<Guid>.Success(Guid.CreateVersion7()));
+        RecordingReturns(ApplicationResult<Guid[]>.Success([Guid.CreateVersion7(), Guid.CreateVersion7()]));
 
-        var result = await _controller.RecordTollPassage(NewRequest(), CancellationToken.None);
+        await _controller.RecordTollPassages(NewRequest(), CancellationToken.None);
 
-        var created = Assert.IsType<CreatedAtActionResult>(result.Result);
-        Assert.Equal(nameof(TollController.GetDailyToll), created.ActionName);
-        Assert.Equal(RegistrationNumber, created.RouteValues!["registrationNumber"]);
-        Assert.Equal(Date, created.RouteValues["date"]);
+        await _tollPassageService.Received(1).RecordTollPassagesAsync(
+            Arg.Is<TollPassage[]>(passages =>
+                passages.Length == 2
+                && passages[0].RegistrationNumber == RegistrationNumber
+                && passages[0].VehicleType == VehicleType.Car
+                && passages[1].VehicleType == VehicleType.Motorbike),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task RecordTollPassage_ReturnsBadRequestWhenTheRequestFailsValidation()
+    public async Task RecordTollPassages_ReturnsBadRequestWhenAPassageHasABlankVehicleType()
     {
-        var result = await _controller.RecordTollPassage(new RecordTollPassageRequest(), CancellationToken.None);
+        var request = new RecordTollPassagesRequest
+        {
+            Passages =
+            [
+                new TollPassageToRecord
+                {
+                    RegistrationNumber = RegistrationNumber,
+                    VehicleType = "",
+                    PassedAt = PassedAt,
+                },
+            ],
+        };
+
+        var result = await _controller.RecordTollPassages(request, CancellationToken.None);
+
+        var problem = Assert.IsType<BadRequestObjectResult>(result.Result);
+        Assert.Equal(StatusCodes.Status400BadRequest, problem.StatusCode);
+        Assert.Contains(
+            "passages[0].VehicleType",
+            Assert.IsType<ValidationProblemDetails>(problem.Value).Errors.Keys);
+
+        await _tollPassageService.DidNotReceiveWithAnyArgs()
+            .RecordTollPassagesAsync(null!, CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task RecordTollPassages_ReturnsBadRequestWhenAPassageHasAnUnknownVehicleType()
+    {
+        var request = new RecordTollPassagesRequest
+        {
+            Passages =
+            [
+                new TollPassageToRecord
+                {
+                    RegistrationNumber = RegistrationNumber,
+                    VehicleType = "Submarine",
+                    PassedAt = PassedAt,
+                },
+            ],
+        };
+
+        var result = await _controller.RecordTollPassages(request, CancellationToken.None);
+
+        var problem = Assert.IsType<BadRequestObjectResult>(result.Result);
+        Assert.Contains(
+            "passages[0].VehicleType",
+            Assert.IsType<ValidationProblemDetails>(problem.Value).Errors.Keys);
+    }
+
+    [Fact]
+    public async Task RecordTollPassages_ReturnsBadRequestWhenNoPassagesAreSupplied()
+    {
+        var result = await _controller.RecordTollPassages(
+            new RecordTollPassagesRequest { Passages = [] }, CancellationToken.None);
 
         var problem = Assert.IsType<BadRequestObjectResult>(result.Result);
         Assert.Equal(StatusCodes.Status400BadRequest, problem.StatusCode);
         Assert.IsType<ValidationProblemDetails>(problem.Value);
-
-        await _tollPassageService.DidNotReceiveWithAnyArgs()
-            .RecordTollPassageAsync(default!, default, default);
     }
 
     [Fact]
-    public async Task RecordTollPassage_ReturnsBadRequestWhenTheServiceRejectsTheInput()
+    public async Task RecordTollPassages_ReturnsConflictWhenAPassageIsAlreadyRecorded()
     {
-        _tollPassageService
-            .RecordTollPassageAsync(RegistrationNumber, PassedAt, Arg.Any<CancellationToken>())
-            .Returns(ApplicationResult<Guid>.Invalid("A registration number is required."));
+        RecordingReturns(ApplicationResult<Guid[]>.Conflict("One or more of the passages is already recorded."));
 
-        var result = await _controller.RecordTollPassage(NewRequest(), CancellationToken.None);
+        var result = await _controller.RecordTollPassages(NewRequest(), CancellationToken.None);
 
-        AssertValidationProblem(result.Result, "A registration number is required.");
+        AssertProblem(
+            result.Result,
+            StatusCodes.Status409Conflict,
+            "One or more of the passages is already recorded.");
     }
 
     [Fact]
-    public async Task RecordTollPassage_ReturnsNotFoundForAnUnknownVehicle()
-    {
-        _tollPassageService
-            .RecordTollPassageAsync(RegistrationNumber, PassedAt, Arg.Any<CancellationToken>())
-            .Returns(ApplicationResult<Guid>.NotFound("No vehicle is registered with the number 'ABC123'."));
-
-        var result = await _controller.RecordTollPassage(NewRequest(), CancellationToken.None);
-
-        AssertProblem(result.Result, StatusCodes.Status404NotFound, "No vehicle is registered with the number 'ABC123'.");
-    }
-
-    [Fact]
-    public async Task GetDailyToll_ReturnsTheDayTotalAndItsChargedPassages()
+    public async Task CalculateDailyToll_ReturnsTheDayTotalAndItsChargedPassages()
     {
         var dailyToll = new DailyToll(18, [new Domain.Models.ChargedTollPassage(PassedAt, 18)]);
         _tollService
             .GetDailyTollAsync(RegistrationNumber, Date, Arg.Any<CancellationToken>())
             .Returns(ApplicationResult<DailyToll>.Success(dailyToll));
 
-        var result = await _controller.GetDailyToll(RegistrationNumber, Date, CancellationToken.None);
+        var result = await _controller.CalculateDailyToll(NewCalculationRequest(), CancellationToken.None);
 
         var response = Assert.IsType<DailyTollResponse>(Assert.IsType<OkObjectResult>(result.Result).Value);
         Assert.Equal(RegistrationNumber, response.RegistrationNumber);
@@ -111,30 +150,51 @@ public class TollPassagesControllerTests
     }
 
     [Fact]
-    public async Task GetDailyToll_ReturnsNotFoundForAnUnknownVehicle()
+    public async Task CalculateDailyToll_ReturnsZeroForARegistrationNumberWithNoPassages()
     {
         _tollService
             .GetDailyTollAsync(RegistrationNumber, Date, Arg.Any<CancellationToken>())
-            .Returns(ApplicationResult<DailyToll>.NotFound("No vehicle is registered with the number 'ABC123'."));
+            .Returns(ApplicationResult<DailyToll>.Success(DailyToll.None()));
 
-        var result = await _controller.GetDailyToll(RegistrationNumber, Date, CancellationToken.None);
+        var result = await _controller.CalculateDailyToll(NewCalculationRequest(), CancellationToken.None);
 
-        AssertProblem(result.Result, StatusCodes.Status404NotFound, "No vehicle is registered with the number 'ABC123'.");
+        var response = Assert.IsType<DailyTollResponse>(Assert.IsType<OkObjectResult>(result.Result).Value);
+        Assert.Equal(0, response.TotalFee);
+        Assert.Empty(response.ChargedPassages);
     }
 
-    private static RecordTollPassageRequest NewRequest()
+    private static CalculateDailyTollRequest NewCalculationRequest()
     {
-        return new RecordTollPassageRequest { RegistrationNumber = RegistrationNumber, PassedAt = PassedAt };
+        return new CalculateDailyTollRequest { RegistrationNumber = RegistrationNumber, Date = Date };
     }
 
-    private static void AssertValidationProblem(IActionResult? result, string expectedMessage)
+    private void RecordingReturns(ApplicationResult<Guid[]> result)
     {
-        var problem = Assert.IsType<BadRequestObjectResult>(result);
+        _tollPassageService
+            .RecordTollPassagesAsync(Arg.Any<TollPassage[]>(), Arg.Any<CancellationToken>())
+            .Returns(result);
+    }
 
-        Assert.Equal(StatusCodes.Status400BadRequest, problem.StatusCode);
-
-        var validationProblem = Assert.IsType<ValidationProblemDetails>(problem.Value);
-        Assert.Equal(expectedMessage, Assert.Single(validationProblem.Errors["request"]));
+    private static RecordTollPassagesRequest NewRequest()
+    {
+        return new RecordTollPassagesRequest
+        {
+            Passages =
+            [
+                new TollPassageToRecord
+                {
+                    RegistrationNumber = RegistrationNumber,
+                    VehicleType = nameof(VehicleType.Car),
+                    PassedAt = PassedAt,
+                },
+                new TollPassageToRecord
+                {
+                    RegistrationNumber = "XYZ789",
+                    VehicleType = nameof(VehicleType.Motorbike),
+                    PassedAt = PassedAt,
+                },
+            ],
+        };
     }
 
     private static void AssertProblem(IActionResult? result, int expectedStatus, string expectedDetail)

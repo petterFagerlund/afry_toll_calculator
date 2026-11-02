@@ -36,6 +36,11 @@ namespace TollCalculator.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<string>("VehicleType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("RegistrationNumber", "PassedAt")
@@ -134,29 +139,6 @@ namespace TollCalculator.Infrastructure.Migrations
                         });
                 });
 
-            modelBuilder.Entity("TollCalculator.Domain.Models.TollSettings", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("DailyCap")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("TollSettings", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            DailyCap = 60
-                        });
-                });
-
             modelBuilder.Entity("TollCalculator.Domain.Models.Vehicle", b =>
                 {
                     b.Property<string>("RegistrationNumber")
@@ -171,15 +153,6 @@ namespace TollCalculator.Infrastructure.Migrations
                     b.HasKey("RegistrationNumber");
 
                     b.ToTable("Vehicles", (string)null);
-                });
-
-            modelBuilder.Entity("TollCalculator.Domain.Models.TollPassage", b =>
-                {
-                    b.HasOne("TollCalculator.Domain.Models.Vehicle", null)
-                        .WithMany()
-                        .HasForeignKey("RegistrationNumber")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

@@ -1,6 +1,5 @@
 using TollCalculator.Application.Results;
 using TollCalculator.Domain.Constants;
-using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
 
 namespace TollCalculator.Application.Services.Implementations;
@@ -17,15 +16,12 @@ public sealed class DailyTollService : IDailyTollService
         _tollFeeService = tollFeeService;
     }
 
-    public ApplicationResult<DailyToll> Calculate(
-        VehicleType vehicleType,
-        DateTimeOffset[] timeStamps,
-        TollTariff tariff)
+    public ApplicationResult<DailyToll> Calculate(TollPassage[] passages, TollTariff tariff)
     {
-        ArgumentNullException.ThrowIfNull(timeStamps);
+        ArgumentNullException.ThrowIfNull(passages);
         ArgumentNullException.ThrowIfNull(tariff);
 
-        var chargeablePassagesResult = ChargeablePassagesInTimeOrder(vehicleType, timeStamps, tariff.Schedule);
+        var chargeablePassagesResult = ChargeablePassagesInTimeOrder(passages, tariff.Schedule);
         if (!chargeablePassagesResult.IsSuccess)
         {
             return ApplicationResult<DailyToll>.Error(chargeablePassagesResult.ErrorMessage!);
@@ -49,15 +45,14 @@ public sealed class DailyTollService : IDailyTollService
     }
 
     private ApplicationResult<ChargedTollPassage[]> ChargeablePassagesInTimeOrder(
-        VehicleType vehicleType,
-        DateTimeOffset[] timeStamps,
+        TollPassage[] passages,
         TollSchedule schedule)
     {
         var chargeablePassages = new List<ChargedTollPassage>();
 
-        foreach (var passedAt in timeStamps)
+        foreach (var passage in passages)
         {
-            var tollFee = _tollFeeService.CalculateFee(vehicleType, passedAt, schedule);
+            var tollFee = _tollFeeService.CalculateFee(passage.VehicleType, passage.PassedAt, schedule);
             if (!tollFee.IsSuccess)
             {
                 return ApplicationResult<ChargedTollPassage[]>.Error(tollFee.ErrorMessage!);
@@ -65,7 +60,7 @@ public sealed class DailyTollService : IDailyTollService
 
             if (tollFee.Value > 0)
             {
-                chargeablePassages.Add(new ChargedTollPassage(passedAt, tollFee.Value));
+                chargeablePassages.Add(new ChargedTollPassage(passage.PassedAt, tollFee.Value));
             }
         }
 

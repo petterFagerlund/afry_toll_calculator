@@ -15,12 +15,11 @@ internal sealed class TollPassageConfiguration : IEntityTypeConfiguration<TollPa
         builder.Property(passage => passage.RegistrationNumber)
             .HasMaxLength(20);
 
+        builder.Property(passage => passage.VehicleType)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
         builder.HasIndex(passage => new { passage.RegistrationNumber, passage.PassedAt })
             .IsUnique();
-
-        builder.HasOne<Vehicle>()
-            .WithMany()
-            .HasForeignKey(passage => passage.RegistrationNumber)
-            .OnDelete(DeleteBehavior.Restrict);
     }
 }

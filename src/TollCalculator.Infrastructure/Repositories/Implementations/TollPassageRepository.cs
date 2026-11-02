@@ -21,11 +21,13 @@ internal sealed class TollPassageRepository : ITollPassageRepository
         _context = context;
     }
 
-    public async Task<ApplicationResult<Guid>> AddAsync(TollPassage passage, CancellationToken cancellationToken)
+    public async Task<ApplicationResult<Guid[]>> AddRangeAsync(
+        TollPassage[] passages,
+        CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(passage);
+        ArgumentNullException.ThrowIfNull(passages);
 
-        _context.TollPassages.Add(passage);
+        _context.TollPassages.AddRange(passages);
 
         try
         {
@@ -33,13 +35,16 @@ internal sealed class TollPassageRepository : ITollPassageRepository
         }
         catch (DbUpdateException exception) when (IsDuplicatePassage(exception))
         {
-            _context.Entry(passage).State = EntityState.Detached;
+            foreach (var passage in passages)
+            {
+                _context.Entry(passage).State = EntityState.Detached;
+            }
 
-            return ApplicationResult<Guid>.Conflict(
-                $"A passage for '{passage.RegistrationNumber}' at {passage.PassedAt:O} is already recorded.");
+            return ApplicationResult<Guid[]>.Conflict(
+                "One or more of the passages is already recorded; no passage in the batch was recorded.");
         }
 
-        return ApplicationResult<Guid>.Success(passage.Id);
+        return ApplicationResult<Guid[]>.Success(Array.ConvertAll(passages, passage => passage.Id));
     }
 
     public async Task<TollPassage[]> GetForDayAsync(
