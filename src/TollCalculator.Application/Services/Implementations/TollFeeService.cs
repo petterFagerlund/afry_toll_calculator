@@ -5,7 +5,7 @@ using TollCalculator.Domain.Models;
 
 namespace TollCalculator.Application.Services.Implementations;
 
-public sealed class TollFeeService : ITollFeeService
+internal sealed class TollFeeService : ITollFeeService
 {
     private readonly ITollFreeDateService _tollFreeDateService;
 

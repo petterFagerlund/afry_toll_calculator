@@ -30,16 +30,6 @@ public sealed record ApplicationResult<TValue>
         return new ApplicationResult<TValue>(value);
     }
 
-    public static ApplicationResult<TValue> Invalid(string message)
-    {
-        return WithError(ApplicationResultStatus.ValidationError, message);
-    }
-
-    public static ApplicationResult<TValue> NotFound(string message)
-    {
-        return WithError(ApplicationResultStatus.NotFound, message);
-    }
-
     public static ApplicationResult<TValue> Conflict(string message)
     {
         return WithError(ApplicationResultStatus.Conflict, message);

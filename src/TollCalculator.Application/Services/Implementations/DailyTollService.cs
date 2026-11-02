@@ -1,6 +1,5 @@
 using TollCalculator.Application.Repositories;
 using TollCalculator.Application.Results;
-using TollCalculator.Domain.Constants;
 using TollCalculator.Domain.Models;
 
 namespace TollCalculator.Application.Services.Implementations;
@@ -42,12 +41,7 @@ internal sealed class DailyTollService : IDailyTollService
         }
 
         var chargedPassages = new List<ChargedTollPassage>();
-        var totalFee = 0;
-
-        foreach (var passagesOnOneDay in GroupByStockholmDay(chargeablePassages))
-        {
-            totalFee += ChargeOneDay(passagesOnOneDay, tollTariff.DailyCap, chargedPassages);
-        }
+        var totalFee = ChargeOneDay(chargeablePassages, tollTariff.DailyCap, chargedPassages);
 
         return ApplicationResult<DailyToll>.Success(new DailyToll(totalFee, [.. chargedPassages]));
     }
@@ -74,31 +68,6 @@ internal sealed class DailyTollService : IDailyTollService
 
         return ApplicationResult<ChargedTollPassage[]>.Success(
             [.. chargeablePassages.OrderBy(chargeablePassage => chargeablePassage.PassedAt)]);
-    }
-
-    private static ChargedTollPassage[][] GroupByStockholmDay(ChargedTollPassage[] passagesInTimeOrder)
-    {
-        var days = new List<ChargedTollPassage[]>();
-        var passagesOnCurrentDay = new List<ChargedTollPassage>();
-        var currentDay = TollTimeZone.DateOf(passagesInTimeOrder[0].PassedAt);
-
-        foreach (var passage in passagesInTimeOrder)
-        {
-            var dayOfPassage = TollTimeZone.DateOf(passage.PassedAt);
-
-            if (dayOfPassage != currentDay)
-            {
-                days.Add([.. passagesOnCurrentDay]);
-                passagesOnCurrentDay.Clear();
-                currentDay = dayOfPassage;
-            }
-
-            passagesOnCurrentDay.Add(passage);
-        }
-
-        days.Add([.. passagesOnCurrentDay]);
-
-        return [.. days];
     }
 
     private static int ChargeOneDay(

@@ -137,32 +137,6 @@ public class DailyTollServiceTests
     }
 
     [Fact]
-    public async Task Calculate_PassagesOnTwoDays_AppliesTheCapPerDay()
-    {
-        DateTimeOffset[] passages =
-        [
-            PassageAt(6, 0), PassageAt(7, 5), PassageAt(8, 10), PassageAt(9, 15), PassageAt(15, 35),
-            PassageOnNextDayAt(6, 0), PassageOnNextDayAt(7, 5), PassageOnNextDayAt(8, 10),
-            PassageOnNextDayAt(9, 15), PassageOnNextDayAt(15, 35)
-        ];
-
-        var result = await _service.Calculate(PassagesOf(VehicleType.Car, passages), CancellationToken.None);
-
-        Assert.Equal(DailyCap * 2, result.Value!.TotalFee);
-    }
-
-    [Fact]
-    public async Task Calculate_OnePassageOnEachOfTwoDays_ChargesBoth()
-    {
-        DateTimeOffset[] passages = [PassageAt(7, 15), PassageOnNextDayAt(7, 15)];
-
-        var result = await _service.Calculate(PassagesOf(VehicleType.Car, passages), CancellationToken.None);
-
-        Assert.Equal(36, result.Value!.TotalFee);
-        Assert.Equal(2, result.Value!.ChargedPassages.Length);
-    }
-
-    [Fact]
     public async Task Calculate_NullPassages_Throws()
     {
         await Assert.ThrowsAsync<ArgumentNullException>(
@@ -192,11 +166,6 @@ public class DailyTollServiceTests
     private static DateTimeOffset PassageAt(int hour, int minute)
     {
         return PassageOn(Weekday, hour, minute);
-    }
-
-    private static DateTimeOffset PassageOnNextDayAt(int hour, int minute)
-    {
-        return PassageOn(Weekday.AddDays(1), hour, minute);
     }
 
     private static DateTimeOffset PassageOn(DateOnly date, int hour, int minute)

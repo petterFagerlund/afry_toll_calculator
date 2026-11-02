@@ -4,7 +4,6 @@ The toll fee assignment rewritten as a .NET 10 REST API: SQL Server with EF Core
 documented with Scalar, protected by a bearer token.
 
 The original Java and C# are left untouched in `Java/` and `C#/` as the reference this was rewritten from.
-`C#/TollCalculator.cs` is where the six bugs listed at the end live.
 
 ## Toll rules
 
@@ -35,7 +34,8 @@ dotnet run --project src/TollCalculator.WebApi.Host
 ```
 
 In Development the database is migrated and seeded on startup, and every endpoint is open. Scalar is at
-**https://localhost:7077/scalar**.
+**https://localhost:7077/scalar**. Migration on startup is deliberately Development-only — elsewhere
+schema changes belong to the deploy, not to whichever instance happens to boot first.
 
 ## Calling it
 
@@ -99,9 +99,9 @@ interfaces live in `Application/` and only `Infrastructure` implements them.
 
 The interesting part of this problem is a handful of rules that interact: the hourly window, the daily cap,
 toll-free dates, toll-free vehicle types. In the original they were tangled into one method together with
-the data they operate on, which is why four of the six bugs are arithmetic or precedence mistakes hiding
-inside an if-chain. They now live in `Application/Services/`, separated from that data and testable without
-a database. Every service returns `ApplicationResult<T>`, so a failure travels back to the controller as
+the data they operate on, which is where most of its bugs hid — arithmetic and operator-precedence mistakes
+buried in an if-chain. They now live in `Application/Services/`, separated from that data and testable
+without a database. Every service returns `ApplicationResult<T>`, so a failure travels back to the controller as
 data and `ApiControllerBase.MapErrorResponse` turns it into a status code.
 
 Rates are rows in the database because a rate table is reference data. The daily cap is a single number, so
@@ -119,74 +119,6 @@ dotnet test
 290 tests. The container-backed ones in `TollCalculator.WebApi.Host.IntegrationTests` **require Docker** —
 Testcontainers starts SQL Server, migrates it and runs the real API against it. They fail rather than skip
 when Docker is missing. The Domain, Application and Infrastructure projects need nothing but the SDK.
-
-## What was wrong with the original
-
-All six are in `C#/TollCalculator.cs`.
-
-**1. The hourly window was measured in milliseconds-of-second (line 25).**
-
-```csharp
-long diffInMillies = date.Millisecond - intervalStart.Millisecond;
-long minutes = diffInMillies/1000/60;
-```
-
-`DateTime.Millisecond` is the sub-second component, 0–999, not a timestamp, so `minutes` is always 0 and
-every passage counted as inside the same hour however far apart.
-*Fixed:* `DailyTollService` compares the passages against a real 60-minute window opened by the first
-charged passage.
-
-**2. The midday rate never applied (line 66).**
-
-```csharp
-else if (hour >= 8 && hour <= 14 && minute >= 30 && minute <= 59) return 8;
-```
-
-`minute >= 30` was meant to exclude 08:00–08:29. Applied to the whole 08–14 range it also excludes 09:05,
-10:12 and every other first-half-hour, which fall through to free.
-*Fixed:* the schedule is data, not control flow — `TollRateInterval` rows matched with `Covers(TimeOnly)`.
-
-**3. Mixed `&&` and `||` without parentheses (line 68).**
-
-```csharp
-else if (hour == 15 && minute >= 0 || hour == 16 && minute <= 59) return 18;
-```
-
-`&&` binds tighter, so this reads "15:00–15:59 **or** 16:00–16:59" and returns 18 for 15:00, which should be
-13. It only worked because an earlier branch caught 15:00–15:29 first; reordering would have changed the fee.
-*Fixed:* intervals cannot overlap and `TollSchedule` validates that on construction, so no ordering of the
-rules can change the answer.
-
-**4. Holidays were hardcoded to 2013 (line 82).**
-
-```csharp
-if (year == 2013)
-```
-
-From 2014 onward no holiday was toll free. The same block made all of July free via a bare `month == 7`.
-*Fixed:* `WeekendAndHolidayService` resolves the Swedish public holidays for whatever year the date falls in.
-
-**5. `GetTollFee` trusted its input (line 18).**
-
-```csharp
-DateTime intervalStart = dates[0];
-```
-
-An empty array throws `IndexOutOfRangeException`, and out-of-order passages produced a wrong total rather
-than an error.
-*Fixed:* `Calculate` sorts defensively and returns `DailyToll.None()` for an empty day; the API validates at
-the edge and answers 400 with the offending field.
-
-**6. Toll-free vehicles were matched by string (lines 43–53).**
-
-```csharp
-return vehicleType.Equals(TollFreeVehicles.Motorbike.ToString()) || ...
-```
-
-Six `ToString()` comparisons against a private enum nothing else could reuse. Any typo or casing difference
-silently meant "not toll free" — the vehicle got charged and nothing reported why.
-*Fixed:* a `VehicleType` enum in the domain and `TollFreeVehicleTypes` naming the free ones in one place,
-matched by value.
 
 ## Deliberately out of scope
 

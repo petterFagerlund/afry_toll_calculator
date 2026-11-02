@@ -3,7 +3,7 @@ using TollCalculator.Application.Results;
 
 namespace TollCalculator.Application.Services.Implementations;
 
-public sealed class TollFreeDateService : ITollFreeDateService
+internal sealed class TollFreeDateService : ITollFreeDateService
 {
     private readonly IHolidayProvider _holidayProvider;
 

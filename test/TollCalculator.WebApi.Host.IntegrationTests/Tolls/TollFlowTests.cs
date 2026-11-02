@@ -110,6 +110,26 @@ public class TollFlowTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task ABatchThatRepeatsAPassageWithinItself_RecordsNothingAtAll()
+    {
+        var passedAt = At(Weekday, 7, 15);
+
+        var response = await _api.PostAsync(new RecordTollPassagesRequest
+        {
+            Passages =
+            [
+                NewPassage("SELF01", VehicleType.Car, passedAt),
+                NewPassage("OTHER1", VehicleType.Car, passedAt),
+                NewPassage("SELF01", VehicleType.Car, passedAt),
+            ],
+        });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Equal(0, (await _api.GetDailyTollAsync("SELF01", Weekday)).TotalFee);
+        Assert.Equal(0, (await _api.GetDailyTollAsync("OTHER1", Weekday)).TotalFee);
+    }
+
+    [Fact]
     public async Task ABatchWithAPassageMissingItsVehicleType_IsRejectedBeforeAnythingIsRecorded()
     {
         var response = await _api.PostAsync(new RecordTollPassagesRequest

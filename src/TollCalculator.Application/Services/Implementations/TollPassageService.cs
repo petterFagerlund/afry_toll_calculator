@@ -30,7 +30,7 @@ internal sealed class TollPassageService : ITollPassageService
         var recordTollPassages = await _tollPassageRepository.AddRangeAsync(tollPassages, cancellationToken);
         if (!recordTollPassages.IsSuccess)
         {
-            _logger.LogError(
+            _logger.LogWarning(
                 "A batch of {PassageCount} toll passages was not recorded: {Reason}",
                 tollPassages.Length,
                 recordTollPassages.ErrorMessage);

@@ -10,9 +10,6 @@ namespace TollCalculator.WebApi.Host.Controllers;
 [ProducesResponseType(typeof(void), StatusCodes.Status401Unauthorized)]
 public abstract class ApiControllerBase : ControllerBase
 {
-    private const string RequestErrorKey = "request";
-    private const string UnknownErrorMessage = "Unknown";
-
     protected ActionResult MapValidationProblem(ModelStateDictionary modelState)
     {
         ArgumentNullException.ThrowIfNull(modelState);
@@ -23,28 +20,12 @@ public abstract class ApiControllerBase : ControllerBase
         });
     }
 
-    protected ActionResult MapValidationProblem(string? message)
-    {
-        return ValidationProblem(new ValidationProblemDetails
-        {
-            Status = StatusCodes.Status400BadRequest,
-            Errors = new Dictionary<string, string[]>
-            {
-                { RequestErrorKey, [message ?? UnknownErrorMessage] },
-            },
-        });
-    }
-
     protected ActionResult MapErrorResponse<TValue>(ApplicationResult<TValue> result)
     {
         ArgumentNullException.ThrowIfNull(result);
 
         switch (result.Status)
         {
-            case ApplicationResultStatus.ValidationError:
-                return MapValidationProblem(result.ErrorMessage);
-            case ApplicationResultStatus.NotFound:
-                return ProblemResult(StatusCodes.Status404NotFound, "Resource not found.", result.ErrorMessage);
             case ApplicationResultStatus.Conflict:
                 return ProblemResult(
                     StatusCodes.Status409Conflict,

@@ -26,40 +26,6 @@ public class ApiControllerBaseTests
     }
 
     [Fact]
-    public void MapValidationProblem_Message_KeysTheErrorOnTheRequest()
-    {
-        var problem = ValidationProblemOf(_controller.MapValidationProblem("'Hovercraft' is not a known vehicle type."));
-
-        Assert.Equal("'Hovercraft' is not a known vehicle type.", Assert.Single(problem.Errors["request"]));
-    }
-
-    [Fact]
-    public void MapValidationProblem_NullMessage_FallsBackToAPlaceholder()
-    {
-        var problem = ValidationProblemOf(_controller.MapValidationProblem(message: null));
-
-        Assert.Equal("Unknown", Assert.Single(problem.Errors["request"]));
-    }
-
-    [Fact]
-    public void MapErrorResponse_ValidationError_ReturnsBadRequest()
-    {
-        var result = _controller.MapErrorResponse(ApplicationResult<int>.Invalid("The year 0 is outside the supported range."));
-
-        var problem = ValidationProblemOf(result);
-        Assert.Equal("The year 0 is outside the supported range.", Assert.Single(problem.Errors["request"]));
-    }
-
-    [Fact]
-    public void MapErrorResponse_NotFound_ReturnsNotFound()
-    {
-        var result = _controller.MapErrorResponse(ApplicationResult<int>.NotFound("No vehicle is registered with 'ABC123'."));
-
-        var problem = ProblemOf(result, StatusCodes.Status404NotFound);
-        Assert.Equal("No vehicle is registered with 'ABC123'.", problem.Detail);
-    }
-
-    [Fact]
     public void MapErrorResponse_Conflict_ReturnsConflict()
     {
         var result = _controller.MapErrorResponse(ApplicationResult<int>.Conflict("The passage is already recorded."));
@@ -109,11 +75,6 @@ public class ApiControllerBaseTests
         public new ActionResult MapValidationProblem(ModelStateDictionary modelState)
         {
             return base.MapValidationProblem(modelState);
-        }
-
-        public new ActionResult MapValidationProblem(string? message)
-        {
-            return base.MapValidationProblem(message);
         }
 
         public new ActionResult MapErrorResponse<TValue>(ApplicationResult<TValue> result)

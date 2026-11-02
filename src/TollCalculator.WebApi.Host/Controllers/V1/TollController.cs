@@ -95,7 +95,12 @@ public sealed class TollController : ApiControllerBase
 
     private static TollPassage ToTollPassage(TollPassageToRecord passage)
     {
-        VehicleTypeParser.TryParse(passage.VehicleType, out var vehicleType);
+        if (!VehicleTypeParser.TryParse(passage.VehicleType, out var vehicleType))
+        {
+            throw new InvalidOperationException(
+                $"'{passage.VehicleType}' reached the mapper unparsed; the request validator should have rejected it.");
+        }
+
         return TollPassage.Create(passage.RegistrationNumber, vehicleType, passage.PassedAt);
     }
 }
