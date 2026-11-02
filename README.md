@@ -112,7 +112,6 @@ In Development every endpoint is open, so the examples below need no token.
 | GET | `/api/v1/toll-rates` | The seeded rate intervals |
 | GET | `/api/v1/holidays?year=` | Public holidays for a year, defaulting to the current one |
 | GET | `/api/v1/vehicle-types` | Every vehicle type and whether it is toll free |
-| POST | `/api/v1/auth/token` | Exchange client credentials for a bearer token |
 
 Start with `calculate`, which needs nothing in the database:
 
@@ -160,23 +159,18 @@ curl -k -X POST https://localhost:7077/api/v1/toll-passages \
 curl -k "https://localhost:7077/api/v1/vehicles/ABC123/toll?date=2026-03-16"
 ```
 
-### Getting a token
+### Authentication
 
-Development allows anonymous calls so Scalar works without one. Outside Development every endpoint except
-`/health` and the token endpoint itself requires `Authorization: Bearer <token>`.
+Development allows anonymous calls, so Scalar and the examples above work without a token. **In every other
+environment a bearer token is mandatory** on every endpoint except `/health` — enforced by an authorization
+fallback policy, so it covers any endpoint that does not opt out explicitly.
 
-```bash
-curl -k -X POST https://localhost:7077/api/v1/auth/token \
-  -H "Content-Type: application/json" \
-  -d '{"clientId":"toll-client","clientSecret":"development-only-client-secret"}'
-```
+This API **validates** tokens but does not **issue** them; it is a resource server, not an identity
+provider. Tokens come from whatever issuer owns that job. One is accepted when it is signed with the
+configured key, names the configured issuer and audience, and has not expired — see `JwtBearerOptionsSetup`.
 
-```json
-{"accessToken":"eyJhbGciOiJIUzI1NiIs...","tokenType":"Bearer","expiresAt":"2026-10-27T15:24:42+00:00"}
-```
-
-The credentials and signing key live in the `Jwt` section of `appsettings.Development.json`. The endpoint
-is rate limited to 10 requests per minute. In Scalar, paste the `accessToken` into the Authorize dialog.
+The signing key, issuer and audience live in the `Jwt` section of `appsettings.json`. In Scalar, paste a
+token into the Authorize dialog.
 
 ## Tests
 

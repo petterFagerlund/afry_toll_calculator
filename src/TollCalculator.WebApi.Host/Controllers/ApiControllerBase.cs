@@ -62,14 +62,6 @@ public abstract class ApiControllerBase : ControllerBase
         }
     }
 
-    protected ActionResult InvalidCredentials()
-    {
-        return ProblemResult(
-            StatusCodes.Status401Unauthorized,
-            "Invalid client credentials.",
-            "The client id and secret did not match a known client.");
-    }
-
     private static ActionResult ProblemResult(int statusCode, string title, string? detail)
     {
         var problemDetails = new ProblemDetails

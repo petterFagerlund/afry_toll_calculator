@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
 using Asp.Versioning;
 using TollCalculator.WebApi.Host.Configuration;
-using TollCalculator.WebApi.Host.ErrorHandling.Implementations;
 
 namespace TollCalculator.WebApi.Host.Registrations;
 
@@ -56,7 +55,6 @@ internal static class ServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddProblemDetails();
-        services.AddExceptionHandler<UnhandledExceptionHandler>();
 
         return services;
     }

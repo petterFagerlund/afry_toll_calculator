@@ -23,7 +23,6 @@ public class JwtBearerOptionsSetupTests
             SigningKey = SigningKey,
             Issuer = Issuer,
             Audience = Audience,
-            TokenLifetimeMinutes = 60,
         };
 
         new JwtBearerOptionsSetup(Options.Create(jwtOptions))

@@ -13,7 +13,6 @@ builder.Services.AddHealthChecks();
 
 builder.Services.AddJwtOptions(builder.Configuration);
 builder.Services.AddBearerAuthentication(builder.Environment);
-builder.Services.AddTokenRateLimiting();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication();
 builder.Services.AddVersionedOpenApi();
@@ -33,7 +32,6 @@ else
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseHttpsRedirection();
-app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

@@ -1,13 +1,9 @@
 using System.Net;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using TollCalculator.WebApi.Host.Configuration;
 using TollCalculator.WebApi.Host.IntegrationTests.Infrastructure;
-using TollCalculator.WebApi.Models.V1.Requests;
-using TollCalculator.WebApi.Models.V1.Responses;
 using Xunit;
 
 namespace TollCalculator.WebApi.Host.IntegrationTests.Auth;
@@ -16,9 +12,6 @@ namespace TollCalculator.WebApi.Host.IntegrationTests.Auth;
 public class AuthTests
 {
     private const string ProtectedRoute = "/api/v1/toll-rates";
-    private const string TokenRoute = "/api/v1/auth/token";
-
-    private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
 
     private readonly TollApiFixture _fixture;
 
@@ -41,21 +34,16 @@ public class AuthTests
     }
 
     [Fact]
-    public async Task OutsideDevelopment_ATokenFromTheTokenEndpointOpensTheProtectedRoute()
+    public async Task OutsideDevelopment_AValidTokenOpensTheProtectedRoute()
     {
         using var client = _fixture.Production.CreateClient();
-
-        var token = await RequestTokenAsync(client);
-
-        Assert.Equal("Bearer", token.TokenType);
-        Assert.True(token.ExpiresAt > DateTimeOffset.UtcNow);
-
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(token.TokenType, token.AccessToken);
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", TestTokenBuilder.CreateForTheApiUnderTest());
 
         using var response = await client.GetAsync(ProtectedRoute);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("06:00", await response.Content.ReadAsStringAsync());
+        Assert.Contains("06:00", await response.Content.ReadAsStringAsync(), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -72,11 +60,8 @@ public class AuthTests
     public async Task OutsideDevelopment_ATamperedTokenIsRejected()
     {
         using var client = _fixture.Production.CreateClient();
-
-        var token = await RequestTokenAsync(client);
-
         client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue(token.TokenType, token.AccessToken + "x");
+            new AuthenticationHeaderValue("Bearer", TestTokenBuilder.CreateForTheApiUnderTest() + "x");
 
         using var response = await client.GetAsync(ProtectedRoute);
 
@@ -84,11 +69,35 @@ public class AuthTests
     }
 
     [Fact]
-    public async Task TheTokenEndpoint_RejectsCredentialsThatDoNotMatch()
+    public async Task OutsideDevelopment_ATokenSignedWithAnotherKeyIsRejected()
     {
-        using var client = _fixture.Production.CreateClient();
+        var foreignToken = TestTokenBuilder.Create(
+            IntegrationTestFactory.Issuer,
+            IntegrationTestFactory.Audience,
+            "a-completely-different-key-of-sufficient-length",
+            TimeSpan.FromMinutes(60));
 
-        using var response = await PostTokenAsync(client, IntegrationTestFactory.ClientId, "not-the-right-secret");
+        using var client = _fixture.Production.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", foreignToken);
+
+        using var response = await client.GetAsync(ProtectedRoute);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task OutsideDevelopment_AnExpiredTokenIsRejected()
+    {
+        var expiredToken = TestTokenBuilder.Create(
+            IntegrationTestFactory.Issuer,
+            IntegrationTestFactory.Audience,
+            IntegrationTestFactory.SigningKey,
+            TimeSpan.FromMinutes(-5));
+
+        using var client = _fixture.Production.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", expiredToken);
+
+        using var response = await client.GetAsync(ProtectedRoute);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -120,14 +129,12 @@ public class AuthTests
     [Theory]
     [InlineData("Development")]
     [InlineData("Production")]
-    public void TheApplicationUnderTest_UsesTheCredentialsTheFactoryConfigures(string environmentName)
+    public void TheApplicationUnderTest_UsesTheJwtSettingsTheFactoryConfigures(string environmentName)
     {
         using var scope = FactoryFor(environmentName).Services.CreateScope();
 
         var options = scope.ServiceProvider.GetRequiredService<IOptions<JwtOptions>>().Value;
 
-        Assert.Equal(IntegrationTestFactory.ClientId, options.ClientId);
-        Assert.Equal(IntegrationTestFactory.ClientSecret, options.ClientSecret);
         Assert.Equal(IntegrationTestFactory.SigningKey, options.SigningKey);
         Assert.Equal(IntegrationTestFactory.Issuer, options.Issuer);
         Assert.Equal(IntegrationTestFactory.Audience, options.Audience);
@@ -141,25 +148,5 @@ public class AuthTests
         }
 
         return _fixture.Production;
-    }
-
-    private static async Task<TokenResponse> RequestTokenAsync(HttpClient client)
-    {
-        using var response = await PostTokenAsync(client, IntegrationTestFactory.ClientId,
-            IntegrationTestFactory.ClientSecret);
-
-        response.EnsureSuccessStatusCode();
-
-        return (await response.Content.ReadFromJsonAsync<TokenResponse>(SerializerOptions))!;
-    }
-
-    private static async Task<HttpResponseMessage> PostTokenAsync(
-        HttpClient client,
-        string clientId,
-        string clientSecret)
-    {
-        var request = new TokenRequest { ClientId = clientId, ClientSecret = clientSecret };
-
-        return await client.PostAsJsonAsync(TokenRoute, request, SerializerOptions);
     }
 }

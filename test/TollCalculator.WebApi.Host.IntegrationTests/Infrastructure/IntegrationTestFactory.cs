@@ -17,8 +17,6 @@ internal sealed class IntegrationTestFactory : WebApplicationFactory<Program>
     public const string SigningKey = "an-integration-test-signing-key-of-sufficient-length";
     public const string Issuer = "toll-calculator";
     public const string Audience = "toll-calculator-api";
-    public const string ClientId = "toll-client";
-    public const string ClientSecret = "an-integration-test-client-secret";
 
     private readonly string _connectionString;
     private readonly string _environmentName;
@@ -72,9 +70,6 @@ internal sealed class IntegrationTestFactory : WebApplicationFactory<Program>
             [$"{JwtOptions.SectionName}:SigningKey"] = SigningKey,
             [$"{JwtOptions.SectionName}:Issuer"] = Issuer,
             [$"{JwtOptions.SectionName}:Audience"] = Audience,
-            [$"{JwtOptions.SectionName}:TokenLifetimeMinutes"] = "60",
-            [$"{JwtOptions.SectionName}:ClientId"] = ClientId,
-            [$"{JwtOptions.SectionName}:ClientSecret"] = ClientSecret,
         };
     }
 }

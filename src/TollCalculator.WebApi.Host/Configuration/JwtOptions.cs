@@ -6,7 +6,6 @@ public sealed class JwtOptions
 {
     public const string SectionName = "Jwt";
     private const int MinimumSigningKeyLength = 32;
-    private const int MinimumClientSecretLength = 16;
 
     [Required]
     [MinLength(MinimumSigningKeyLength)]
@@ -17,14 +16,4 @@ public sealed class JwtOptions
 
     [Required]
     public string Audience { get; init; } = string.Empty;
-
-    [Range(1, 1440)]
-    public int TokenLifetimeMinutes { get; init; } = 60;
-
-    [Required]
-    public string ClientId { get; init; } = string.Empty;
-
-    [Required]
-    [MinLength(MinimumClientSecretLength)]
-    public string ClientSecret { get; init; } = string.Empty;
 }
