@@ -6,5 +6,5 @@ namespace TollCalculator.Application.Services;
 
 public interface ITollFeeService
 {
-    ApplicationResult<int> CalculateFee(VehicleType vehicleType, DateTimeOffset passedAt, TollSchedule schedule);
+    ApplicationResult<int> CalculateFee(VehicleType vehicleType, DateTimeOffset passedAt, TollSchedule tollSchedule);
 }

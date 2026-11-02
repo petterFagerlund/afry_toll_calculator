@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using TollCalculator.WebApi.Host.Controllers.V1;
 using TollCalculator.WebApi.Host.Registrations;
 using TollCalculator.WebApi.Models.V1.Responses;
-using Xunit;
 
 namespace TollCalculator.WebApi.Host.IntegrationTests.Controllers;
 

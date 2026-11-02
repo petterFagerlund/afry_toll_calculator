@@ -16,10 +16,12 @@ public sealed class TollFeeService : ITollFeeService
         _tollFreeDateService = tollFreeDateService;
     }
 
-    public ApplicationResult<int> CalculateFee(VehicleType vehicleType, DateTimeOffset passedAt, TollSchedule schedule)
+    public ApplicationResult<int> CalculateFee(
+        VehicleType vehicleType,
+        DateTimeOffset passedAt,
+        TollSchedule tollSchedule)
     {
-        ArgumentNullException.ThrowIfNull(schedule);
-
+        ArgumentNullException.ThrowIfNull(tollSchedule);
         if (TollFreeVehicleTypes.Contains(vehicleType))
         {
             return ApplicationResult<int>.Success(0);
@@ -27,7 +29,6 @@ public sealed class TollFeeService : ITollFeeService
 
         var localPassedAt = TollTimeZone.ToLocalTime(passedAt);
         var tollFreeDate = _tollFreeDateService.IsTollFree(DateOnly.FromDateTime(localPassedAt));
-
         if (!tollFreeDate.IsSuccess)
         {
             return ApplicationResult<int>.Error(tollFreeDate.ErrorMessage!);
@@ -38,6 +39,6 @@ public sealed class TollFeeService : ITollFeeService
             return ApplicationResult<int>.Success(0);
         }
 
-        return ApplicationResult<int>.Success(schedule.FeeFor(TimeOnly.FromDateTime(localPassedAt)));
+        return ApplicationResult<int>.Success(tollSchedule.FeeFor(TimeOnly.FromDateTime(localPassedAt)));
     }
 }

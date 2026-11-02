@@ -1,8 +1,6 @@
-using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
 using TollCalculator.WebApi.Host.OpenApi;
 using TollCalculator.WebApi.Host.OpenApi.Transformers;
-using Xunit;
 
 namespace TollCalculator.WebApi.Host.IntegrationTests.OpenApi;
 

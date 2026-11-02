@@ -12,7 +12,6 @@ internal sealed class TollPassageRepository : ITollPassageRepository
 {
     private const int UniqueIndexViolation = 2601;
     private const int UniqueConstraintViolation = 2627;
-
     private readonly TollDbContext _context;
 
     public TollPassageRepository(TollDbContext context)

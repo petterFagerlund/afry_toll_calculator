@@ -2,7 +2,6 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using TollCalculator.Infrastructure.Persistence;
-using Xunit;
 
 namespace TollCalculator.WebApi.Host.IntegrationTests.Infrastructure;
 

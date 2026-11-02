@@ -1,5 +1,3 @@
-using TollCalculator.Domain.Models;
-
 namespace TollCalculator.Infrastructure.Persistence.Seed;
 
 internal static class TollSeedData

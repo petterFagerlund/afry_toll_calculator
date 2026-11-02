@@ -1,6 +1,5 @@
 using TollCalculator.Domain.Models;
 using TollCalculator.WebApi.Host.Mappers;
-using Xunit;
 
 namespace TollCalculator.WebApi.Host.IntegrationTests.Mappers;
 

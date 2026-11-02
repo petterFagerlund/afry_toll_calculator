@@ -6,5 +6,5 @@ namespace TollCalculator.Application.Services;
 
 public interface IDailyTollService
 {
-    ApplicationResult<DailyToll> Calculate(VehicleType vehicleType, DateTimeOffset[] passedAt, TollTariff tariff);
+    ApplicationResult<DailyToll> Calculate(VehicleType vehicleType, DateTimeOffset[] timeStamps, TollTariff tariff);
 }

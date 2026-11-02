@@ -1,6 +1,5 @@
 using System.Reflection;
 using TollCalculator.WebApi.Models.V1.Requests;
-using Xunit;
 
 namespace TollCalculator.WebApi.Host.IntegrationTests.Contracts;
 

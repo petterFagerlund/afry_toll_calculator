@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using TollCalculator.WebApi.Host.Configuration;
 using TollCalculator.WebApi.Host.Registrations;
-using Xunit;
 
 namespace TollCalculator.WebApi.Host.IntegrationTests.Configuration;
 

@@ -5,9 +5,8 @@ namespace TollCalculator.WebApi.Host.Validators.Implementations;
 internal static class DailyTollQueryValidator
 {
     private const string RegistrationNumberMember = "registrationNumber";
-    private const string DateMember = "date";
 
-    public static ModelStateDictionary Validate(string? registrationNumber, DateOnly? date)
+    public static ModelStateDictionary Validate(string? registrationNumber)
     {
         var modelState = new ModelStateDictionary();
 
@@ -16,11 +15,6 @@ internal static class DailyTollQueryValidator
         if (registrationNumberError is not null)
         {
             modelState.AddModelError(RegistrationNumberMember, registrationNumberError);
-        }
-
-        if (date is null)
-        {
-            modelState.AddModelError(DateMember, "A date in the format yyyy-MM-dd is required.");
         }
 
         return modelState;

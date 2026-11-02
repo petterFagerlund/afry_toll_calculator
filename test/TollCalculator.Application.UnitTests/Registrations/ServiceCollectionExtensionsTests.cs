@@ -1,12 +1,10 @@
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using TollCalculator.Domain.Models;
 using NSubstitute;
 using TollCalculator.Application.Providers;
 using TollCalculator.Application.Registrations;
 using TollCalculator.Application.Services;
 using TollCalculator.Application.Repositories;
-using Xunit;
 
 namespace TollCalculator.Application.UnitTests.Registrations;
 

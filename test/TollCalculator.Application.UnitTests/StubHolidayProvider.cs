@@ -1,7 +1,6 @@
 using TollCalculator.Application.Providers;
 using TollCalculator.Application.Results;
 using TollCalculator.Domain.Models;
-using TollCalculator.Application.Services;
 
 namespace TollCalculator.Application.UnitTests;
 

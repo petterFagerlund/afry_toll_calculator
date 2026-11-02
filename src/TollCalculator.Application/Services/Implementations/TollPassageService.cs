@@ -31,7 +31,6 @@ internal sealed class TollPassageService : ITollPassageService
         CancellationToken cancellationToken)
     {
         var vehicle = await _vehicleRepository.GetAsync(registrationNumber, cancellationToken);
-
         if (vehicle is null)
         {
             _logger.LogInformation(
@@ -42,27 +41,17 @@ internal sealed class TollPassageService : ITollPassageService
                 $"No vehicle is registered with the number '{RegistrationNumbers.Normalize(registrationNumber)}'.");
         }
 
-        var passage = TollPassage.Create(vehicle.RegistrationNumber, passedAt);
-
-        var added = await _tollPassageRepository.AddAsync(passage, cancellationToken);
-
-        if (!added.IsSuccess)
+        var tollPassage = TollPassage.Create(vehicle.RegistrationNumber, passedAt);
+        var applicationResult = await _tollPassageRepository.AddAsync(tollPassage, cancellationToken);
+        if (!applicationResult.IsSuccess)
         {
             _logger.LogInformation(
                 "The passage for {RegistrationNumber} at {PassedAt} was not recorded: {Reason}",
                 vehicle.RegistrationNumber,
                 passedAt,
-                added.ErrorMessage);
-
-            return added;
+                applicationResult.ErrorMessage);
         }
 
-        _logger.LogInformation(
-            "Recorded passage {TollPassageId} for {RegistrationNumber} at {PassedAt}.",
-            added.Value,
-            vehicle.RegistrationNumber,
-            passedAt);
-
-        return added;
+        return applicationResult;
     }
 }

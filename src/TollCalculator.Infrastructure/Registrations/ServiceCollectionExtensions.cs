@@ -3,7 +3,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TollCalculator.Application.Providers;
 using TollCalculator.Application.Repositories;
-using TollCalculator.Application.Services;
 using TollCalculator.Infrastructure.Persistence;
 using TollCalculator.Infrastructure.Providers;
 using TollCalculator.Infrastructure.Repositories.Implementations;

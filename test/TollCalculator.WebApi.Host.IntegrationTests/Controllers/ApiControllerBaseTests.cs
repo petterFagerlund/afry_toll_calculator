@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using TollCalculator.Application.Results;
 using TollCalculator.WebApi.Host.Controllers;
-using Xunit;
 
 namespace TollCalculator.WebApi.Host.IntegrationTests.Controllers;
 

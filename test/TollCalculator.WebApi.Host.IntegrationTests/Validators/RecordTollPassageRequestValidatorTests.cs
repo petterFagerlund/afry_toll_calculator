@@ -1,6 +1,5 @@
 using TollCalculator.WebApi.Host.Validators.Implementations;
 using TollCalculator.WebApi.Models.V1.Requests;
-using Xunit;
 
 namespace TollCalculator.WebApi.Host.IntegrationTests.Validators;
 

@@ -1,5 +1,4 @@
 using TollCalculator.Domain.Models;
-using Xunit;
 
 namespace TollCalculator.Domain.UnitTests.Models;
 

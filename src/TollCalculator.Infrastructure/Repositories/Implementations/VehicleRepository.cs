@@ -12,14 +12,12 @@ internal sealed class VehicleRepository : IVehicleRepository
     public VehicleRepository(TollDbContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
-
         _context = context;
     }
 
     public async Task<Vehicle?> GetAsync(string registrationNumber, CancellationToken cancellationToken)
     {
         var normalized = RegistrationNumbers.Normalize(registrationNumber);
-
         return await _context.Vehicles
             .AsNoTracking()
             .SingleOrDefaultAsync(vehicle => vehicle.RegistrationNumber == normalized, cancellationToken);

@@ -5,11 +5,8 @@ using TollCalculator.Application.Results;
 using TollCalculator.Application.Services;
 using TollCalculator.Domain.Models;
 using TollCalculator.WebApi.Host.Controllers.V1;
-using TollCalculator.WebApi.Host.Mappers;
-using TollCalculator.WebApi.Host.Validators.Implementations;
 using TollCalculator.WebApi.Models.V1.Requests;
 using TollCalculator.WebApi.Models.V1.Responses;
-using Xunit;
 
 namespace TollCalculator.WebApi.Host.IntegrationTests.Controllers;
 
@@ -111,18 +108,6 @@ public class TollPassagesControllerTests
         Assert.Equal(Date, response.Date);
         Assert.Equal(18, response.TotalFee);
         Assert.Equal(18, Assert.Single(response.ChargedPassages).Amount);
-    }
-
-    [Fact]
-    public async Task GetDailyToll_ReturnsBadRequestWhenTheDateIsMissing()
-    {
-        var result = await _controller.GetDailyToll(RegistrationNumber, null, CancellationToken.None);
-
-        var problem = Assert.IsType<BadRequestObjectResult>(result.Result);
-        Assert.Equal(StatusCodes.Status400BadRequest, problem.StatusCode);
-        Assert.IsType<ValidationProblemDetails>(problem.Value);
-
-        await _tollService.DidNotReceiveWithAnyArgs().GetDailyTollAsync(default!, default, default);
     }
 
     [Fact]

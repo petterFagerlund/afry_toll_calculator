@@ -1,10 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
 using TollCalculator.Infrastructure.Persistence;
-using Xunit;
 
 namespace TollCalculator.Infrastructure.UnitTests.Persistence;
 

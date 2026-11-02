@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TollCalculator.Domain.Models;
 using TollCalculator.Infrastructure.Persistence;
-using Xunit;
 
 namespace TollCalculator.Infrastructure.UnitTests.Persistence;
 

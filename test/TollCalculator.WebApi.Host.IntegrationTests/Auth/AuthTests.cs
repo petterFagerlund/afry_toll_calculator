@@ -6,7 +6,6 @@ using TollCalculator.WebApi.Host.Configuration;
 using TollCalculator.Domain.Enums;
 using TollCalculator.WebApi.Host.IntegrationTests.Infrastructure;
 using TollCalculator.WebApi.Host.IntegrationTests.Tolls;
-using Xunit;
 
 namespace TollCalculator.WebApi.Host.IntegrationTests.Auth;
 

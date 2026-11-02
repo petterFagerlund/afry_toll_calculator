@@ -1,5 +1,3 @@
-using Xunit;
-
 namespace TollCalculator.WebApi.Host.IntegrationTests.Infrastructure;
 
 [CollectionDefinition(Name)]

@@ -1,5 +1,4 @@
 using TollCalculator.Domain.Constants;
-using Xunit;
 
 namespace TollCalculator.Domain.UnitTests.Constants;
 

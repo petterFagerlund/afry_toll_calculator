@@ -7,8 +7,8 @@ namespace TollCalculator.Application.Services.Implementations;
 
 public sealed class DailyTollService : IDailyTollService
 {
-    private static readonly TimeSpan ChargeWindow = TimeSpan.FromMinutes(60);
-    private sealed record TollWindow(DateTimeOffset PassedAt, int Amount, int NextIndex);
+    private static readonly TimeSpan ChargeWindowLength = TimeSpan.FromMinutes(60);
+    private sealed record ChargeWindow(DateTimeOffset PassedAt, int Amount, int IndexAfterWindow);
     private readonly ITollFeeService _tollFeeService;
 
     public DailyTollService(ITollFeeService tollFeeService)
@@ -19,121 +19,129 @@ public sealed class DailyTollService : IDailyTollService
 
     public ApplicationResult<DailyToll> Calculate(
         VehicleType vehicleType,
-        DateTimeOffset[] passedAt,
+        DateTimeOffset[] timeStamps,
         TollTariff tariff)
     {
-        ArgumentNullException.ThrowIfNull(passedAt);
+        ArgumentNullException.ThrowIfNull(timeStamps);
         ArgumentNullException.ThrowIfNull(tariff);
 
-        var chargeablePassages = ChargeablePassages(vehicleType, passedAt, tariff.Schedule);
-
-        if (!chargeablePassages.IsSuccess)
+        var chargeablePassagesResult = ChargeablePassagesInTimeOrder(vehicleType, timeStamps, tariff.Schedule);
+        if (!chargeablePassagesResult.IsSuccess)
         {
-            return ApplicationResult<DailyToll>.Error(chargeablePassages.ErrorMessage!);
+            return ApplicationResult<DailyToll>.Error(chargeablePassagesResult.ErrorMessage!);
         }
 
-        var chargeable = chargeablePassages.Value!;
-
-        if (chargeable.Length == 0)
+        var chargeablePassages = chargeablePassagesResult.Value!;
+        if (chargeablePassages.Length == 0)
         {
             return ApplicationResult<DailyToll>.Success(DailyToll.None());
         }
 
-        var charged = new List<ChargedTollPassage>();
-        var total = 0;
-        var index = 0;
+        var chargedPassages = new List<ChargedTollPassage>();
+        var totalFee = 0;
 
-        while (index < chargeable.Length)
+        foreach (var passagesOnOneDay in GroupByStockholmDay(chargeablePassages))
         {
-            var dayEnd = EndOfDay(chargeable, index);
-
-            total += ChargeDay(chargeable, index, dayEnd, tariff.DailyCap, charged);
-            index = dayEnd;
+            totalFee += ChargeOneDay(passagesOnOneDay, tariff.DailyCap, chargedPassages);
         }
 
-        return ApplicationResult<DailyToll>.Success(new DailyToll(total, charged.ToArray()));
+        return ApplicationResult<DailyToll>.Success(new DailyToll(totalFee, [.. chargedPassages]));
     }
 
-    private ApplicationResult<ChargedTollPassage[]> ChargeablePassages(
+    private ApplicationResult<ChargedTollPassage[]> ChargeablePassagesInTimeOrder(
         VehicleType vehicleType,
-        DateTimeOffset[] passedAt,
+        DateTimeOffset[] timeStamps,
         TollSchedule schedule)
     {
-        var chargeable = new List<ChargedTollPassage>();
+        var chargeablePassages = new List<ChargedTollPassage>();
 
-        foreach (var moment in passedAt)
+        foreach (var passedAt in timeStamps)
         {
-            var fee = _tollFeeService.CalculateFee(vehicleType, moment, schedule);
-
-            if (!fee.IsSuccess)
+            var tollFee = _tollFeeService.CalculateFee(vehicleType, passedAt, schedule);
+            if (!tollFee.IsSuccess)
             {
-                return ApplicationResult<ChargedTollPassage[]>.Error(fee.ErrorMessage!);
+                return ApplicationResult<ChargedTollPassage[]>.Error(tollFee.ErrorMessage!);
             }
 
-            if (fee.Value > 0)
+            if (tollFee.Value > 0)
             {
-                chargeable.Add(new ChargedTollPassage(moment, fee.Value));
+                chargeablePassages.Add(new ChargedTollPassage(passedAt, tollFee.Value));
             }
         }
 
-        var ordered = chargeable.ToArray();
-        Array.Sort(ordered, (left, right) => left.PassedAt.CompareTo(right.PassedAt));
-
-        return ApplicationResult<ChargedTollPassage[]>.Success(ordered);
+        return ApplicationResult<ChargedTollPassage[]>.Success(
+            [.. chargeablePassages.OrderBy(chargeablePassage => chargeablePassage.PassedAt)]);
     }
 
-    private static int EndOfDay(ChargedTollPassage[] chargeable, int startIndex)
+    private static ChargedTollPassage[][] GroupByStockholmDay(ChargedTollPassage[] passagesInTimeOrder)
     {
-        var day = TollTimeZone.DateOf(chargeable[startIndex].PassedAt);
-        var next = startIndex + 1;
+        var days = new List<ChargedTollPassage[]>();
+        var passagesOnCurrentDay = new List<ChargedTollPassage>();
+        var currentDay = TollTimeZone.DateOf(passagesInTimeOrder[0].PassedAt);
 
-        while (next < chargeable.Length && TollTimeZone.DateOf(chargeable[next].PassedAt) == day)
+        foreach (var passage in passagesInTimeOrder)
         {
-            next++;
+            var dayOfPassage = TollTimeZone.DateOf(passage.PassedAt);
+
+            if (dayOfPassage != currentDay)
+            {
+                days.Add([.. passagesOnCurrentDay]);
+                passagesOnCurrentDay.Clear();
+                currentDay = dayOfPassage;
+            }
+
+            passagesOnCurrentDay.Add(passage);
         }
 
-        return next;
+        days.Add([.. passagesOnCurrentDay]);
+
+        return [.. days];
     }
 
-    private static int ChargeDay(
-        ChargedTollPassage[] chargeable,
-        int startIndex,
-        int endIndex,
+    private static int ChargeOneDay(
+        ChargedTollPassage[] passagesOnOneDay,
         int dailyCap,
-        List<ChargedTollPassage> charged)
+        List<ChargedTollPassage> chargedPassages)
     {
-        var dayTotal = 0;
-        var index = startIndex;
+        var feeChargedSoFar = 0;
 
-        while (index < endIndex && dayTotal < dailyCap)
+        // The index advances by a whole charge window, which is only known once the body has measured it.
+        for (var windowStartIndex = 0; windowStartIndex < passagesOnOneDay.Length && feeChargedSoFar < dailyCap;)
         {
-            var window = HighestWithinWindow(chargeable, index, endIndex);
-            var amount = Math.Min(window.Amount, dailyCap - dayTotal);
+            var window = DearestPassageInChargeWindow(passagesOnOneDay, windowStartIndex);
+            var amountToCharge = Math.Min(window.Amount, dailyCap - feeChargedSoFar);
 
-            charged.Add(new ChargedTollPassage(window.PassedAt, amount));
-            dayTotal += amount;
-            index = window.NextIndex;
+            chargedPassages.Add(new ChargedTollPassage(window.PassedAt, amountToCharge));
+            feeChargedSoFar += amountToCharge;
+            windowStartIndex = window.IndexAfterWindow;
         }
 
-        return dayTotal;
+        return feeChargedSoFar;
     }
 
-    private static TollWindow HighestWithinWindow(ChargedTollPassage[] chargeable, int startIndex, int endIndex)
+    private static ChargeWindow DearestPassageInChargeWindow(
+        ChargedTollPassage[] passagesOnOneDay,
+        int windowStartIndex)
     {
-        var windowStart = chargeable[startIndex].PassedAt;
-        var highest = chargeable[startIndex];
-        var next = startIndex + 1;
+        var windowOpenedAt = passagesOnOneDay[windowStartIndex].PassedAt;
+        var dearestPassage = passagesOnOneDay[windowStartIndex];
+        var indexAfterWindow = windowStartIndex + 1;
 
-        while (next < endIndex && chargeable[next].PassedAt - windowStart < ChargeWindow)
+        for (var index = windowStartIndex + 1; index < passagesOnOneDay.Length; index++)
         {
-            if (chargeable[next].Amount > highest.Amount)
+            if (passagesOnOneDay[index].PassedAt - windowOpenedAt >= ChargeWindowLength)
             {
-                highest = chargeable[next];
+                break;
             }
 
-            next++;
+            if (passagesOnOneDay[index].Amount > dearestPassage.Amount)
+            {
+                dearestPassage = passagesOnOneDay[index];
+            }
+
+            indexAfterWindow = index + 1;
         }
 
-        return new TollWindow(highest.PassedAt, highest.Amount, next);
+        return new ChargeWindow(dearestPassage.PassedAt, dearestPassage.Amount, indexAfterWindow);
     }
 }

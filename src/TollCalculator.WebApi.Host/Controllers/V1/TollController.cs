@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using TollCalculator.Application.Services;
 using TollCalculator.Domain.Constants;
 using TollCalculator.Domain.Models;
@@ -82,23 +83,22 @@ public sealed class TollController : ApiControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<DailyTollResponse>> GetDailyToll(
         string registrationNumber,
-        [FromQuery] DateOnly? date,
+        [FromQuery] [BindRequired] DateOnly date,
         CancellationToken cancellationToken)
     {
-        var modelState = DailyTollQueryValidator.Validate(registrationNumber, date);
+        var modelState = DailyTollQueryValidator.Validate(registrationNumber);
         if (!modelState.IsValid)
         {
             return MapValidationProblem(modelState);
         }
 
-        var result = await _tollService.GetDailyTollAsync(registrationNumber, date!.Value, cancellationToken);
+        var result = await _tollService.GetDailyTollAsync(registrationNumber, date, cancellationToken);
         if (!result.IsSuccess)
         {
             return MapErrorResponse(result);
         }
 
-        var normalized = RegistrationNumbers.Normalize(registrationNumber);
-
-        return Ok(DailyTollMapper.ToDailyTollResponse(normalized, date.Value, result.Value!));
+        var normalizedRegNr = RegistrationNumbers.Normalize(registrationNumber);
+        return Ok(DailyTollMapper.ToDailyTollResponse(normalizedRegNr, date, result.Value!));
     }
 }

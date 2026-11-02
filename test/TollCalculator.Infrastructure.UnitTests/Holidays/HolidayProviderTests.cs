@@ -1,9 +1,6 @@
 using Microsoft.Extensions.Logging.Abstractions;
-using NSubstitute;
 using TollCalculator.Application.Providers;
-using TollCalculator.Application.Services;
 using TollCalculator.Infrastructure.Providers;
-using Xunit;
 
 namespace TollCalculator.Infrastructure.UnitTests.Holidays;
 

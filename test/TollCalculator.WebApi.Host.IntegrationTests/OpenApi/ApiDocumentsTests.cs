@@ -2,7 +2,6 @@ using System.Reflection;
 using Asp.Versioning;
 using TollCalculator.WebApi.Host.Controllers;
 using TollCalculator.WebApi.Host.OpenApi;
-using Xunit;
 
 namespace TollCalculator.WebApi.Host.IntegrationTests.OpenApi;
 

@@ -1,9 +1,7 @@
 using Microsoft.Extensions.Logging;
 using TollCalculator.Application.Results;
-using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
 using TollCalculator.Application.Repositories;
-using TollCalculator.Application.Services;
 
 namespace TollCalculator.Application.Services.Implementations;
 
@@ -41,7 +39,6 @@ internal sealed class TollService : ITollService
         CancellationToken cancellationToken)
     {
         var vehicle = await _vehicleRepository.GetAsync(registrationNumber, cancellationToken);
-
         if (vehicle is null)
         {
             _logger.LogInformation(
@@ -53,17 +50,13 @@ internal sealed class TollService : ITollService
         }
 
         var passages = await _tollPassageRepository.GetForDayAsync(registrationNumber, date, cancellationToken);
+        if (passages.Length == 0)
+        {
+            return ApplicationResult<DailyToll>.Success(DailyToll.None());
+        }
+
         var timestamps = Array.ConvertAll(passages, passage => passage.PassedAt);
-
-        return await CalculateTollAsync(vehicle.VehicleType, timestamps, cancellationToken);
-    }
-
-    private async Task<ApplicationResult<DailyToll>> CalculateTollAsync(
-        VehicleType vehicleType,
-        DateTimeOffset[] passedAt,
-        CancellationToken cancellationToken)
-    {
         var tariff = await _tollScheduleRepository.GetTariffAsync(cancellationToken);
-        return _dailyTollService.Calculate(vehicleType, passedAt, tariff);
+        return _dailyTollService.Calculate(vehicle.VehicleType, timestamps, tariff);
     }
 }

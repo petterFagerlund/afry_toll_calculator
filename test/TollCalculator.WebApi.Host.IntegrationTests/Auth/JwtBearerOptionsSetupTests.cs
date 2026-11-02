@@ -4,7 +4,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using TollCalculator.WebApi.Host.Auth;
 using TollCalculator.WebApi.Host.Configuration;
-using Xunit;
 
 namespace TollCalculator.WebApi.Host.IntegrationTests.Auth;
 

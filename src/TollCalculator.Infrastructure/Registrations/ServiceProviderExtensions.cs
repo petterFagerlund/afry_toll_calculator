@@ -7,7 +7,7 @@ namespace TollCalculator.Infrastructure.Registrations;
 
 public static class ServiceProviderExtensions
 {
-    public static async Task<int> MigrateDatabaseAsync(this IServiceProvider services, CancellationToken cancellationToken)
+    public static async Task MigrateDatabaseAsync(this IServiceProvider services, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(services);
 
@@ -25,14 +25,12 @@ public static class ServiceProviderExtensions
             {
                 logger.LogInformation("The toll database is up to date; no migrations were applied.");
 
-                return 0;
+                return;
             }
 
             await context.Database.MigrateAsync(cancellationToken);
 
             logger.LogInformation("Applied {MigrationCount} migrations to the toll database.", pendingCount);
-
-            return pendingCount;
         }
         catch (Exception exception)
         {

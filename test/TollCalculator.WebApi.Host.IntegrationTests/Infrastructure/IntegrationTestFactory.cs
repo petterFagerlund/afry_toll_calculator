@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using TollCalculator.Infrastructure.Persistence;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using TollCalculator.Infrastructure.Registrations;
 using TollCalculator.WebApi.Host.Configuration;

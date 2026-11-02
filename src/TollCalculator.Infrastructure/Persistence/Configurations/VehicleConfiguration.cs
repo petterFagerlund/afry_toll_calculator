@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
 
 namespace TollCalculator.Infrastructure.Persistence.Configurations;

@@ -1,7 +1,6 @@
 using System.Net;
 using TollCalculator.Domain.Enums;
 using TollCalculator.WebApi.Host.IntegrationTests.Infrastructure;
-using Xunit;
 
 namespace TollCalculator.WebApi.Host.IntegrationTests.Tolls;
 
@@ -185,6 +184,18 @@ public class TollFlowTests : IAsyncLifetime
         var dailyToll = await _api.GetDailyTollAsync(registrationNumber, Weekday);
 
         Assert.Equal(8, dailyToll.TotalFee);
+    }
+
+    [Theory]
+    [InlineData("/api/v1/vehicles/ABC123/toll")]
+    [InlineData("/api/v1/vehicles/ABC123/toll?date=")]
+    [InlineData("/api/v1/vehicles/ABC123/toll?date=not-a-date")]
+    [InlineData("/api/v1/vehicles/ABC123/toll?date=2026-13-45")]
+    public async Task ADailyTollWithoutAUsableDate_IsRejected(string route)
+    {
+        using var response = await _client.GetAsync(route);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]

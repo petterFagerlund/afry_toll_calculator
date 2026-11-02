@@ -1,13 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using TollCalculator.Application.Providers;
 using TollCalculator.Infrastructure.Persistence;
 using TollCalculator.Infrastructure.Registrations;
 using TollCalculator.Application.Repositories;
-using TollCalculator.Application.Services;
-using Xunit;
 
 namespace TollCalculator.Infrastructure.UnitTests.Registrations;
 

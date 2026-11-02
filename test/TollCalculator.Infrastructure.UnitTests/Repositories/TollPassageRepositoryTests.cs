@@ -2,7 +2,6 @@ using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
 using TollCalculator.Application.Repositories;
 using TollCalculator.Infrastructure.Repositories.Implementations;
-using Xunit;
 
 namespace TollCalculator.Infrastructure.UnitTests.Repositories;
 

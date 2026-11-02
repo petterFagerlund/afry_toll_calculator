@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using TollCalculator.WebApi.Host.Auth.Registrations;
-using Xunit;
 
 namespace TollCalculator.WebApi.Host.IntegrationTests.Auth;
 

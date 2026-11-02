@@ -1,6 +1,5 @@
 using System.Net;
 using Microsoft.Data.SqlClient;
-using Xunit;
 
 namespace TollCalculator.WebApi.Host.IntegrationTests.Infrastructure;
 
