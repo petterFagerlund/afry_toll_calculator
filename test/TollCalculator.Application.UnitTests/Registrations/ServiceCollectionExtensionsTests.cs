@@ -5,9 +5,7 @@ using NSubstitute;
 using TollCalculator.Application.Providers;
 using TollCalculator.Application.Registrations;
 using TollCalculator.Application.Services;
-using TollCalculator.Application.Services;
 using TollCalculator.Application.Repositories;
-using TollCalculator.Application.Services;
 using Xunit;
 
 namespace TollCalculator.Application.UnitTests.Registrations;

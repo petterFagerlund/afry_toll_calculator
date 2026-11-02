@@ -11,7 +11,7 @@ internal static class WebApplicationExtensions
     {
         ArgumentNullException.ThrowIfNull(app);
 
-        app.MapOpenApi();
+        app.MapOpenApi().WithDocumentPerVersion();
 
         app.MapScalarApiReference(ScalarRoute, options =>
         {

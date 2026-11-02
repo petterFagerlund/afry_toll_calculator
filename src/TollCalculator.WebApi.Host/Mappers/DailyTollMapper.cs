@@ -22,17 +22,10 @@ internal static class DailyTollMapper
 
     private static ChargedTollPassageResponse[] ToChargedPassages(DomainChargedTollPassage[] chargedPassages)
     {
-        var responses = new List<ChargedTollPassageResponse>();
-
-        foreach (var chargedPassage in chargedPassages)
+        return Array.ConvertAll(chargedPassages, chargedPassage => new ChargedTollPassageResponse
         {
-            responses.Add(new ChargedTollPassageResponse
-            {
-                PassedAt = chargedPassage.PassedAt,
-                Amount = chargedPassage.Amount,
-            });
-        }
-
-        return responses.ToArray();
+            PassedAt = chargedPassage.PassedAt,
+            Amount = chargedPassage.Amount,
+        });
     }
 }

@@ -17,14 +17,16 @@ public sealed record TollRateInterval
 
     public bool Covers(TimeOnly timeOfDay)
     {
-        return timeOfDay >= Start && timeOfDay <= End;
+        return timeOfDay >= Start && timeOfDay < End;
     }
 
     public static TollRateInterval Create(TimeOnly start, TimeOnly end, int amount)
     {
-        if (end < start)
+        if (end <= start)
         {
-            throw new ArgumentException($"The interval end {end} precedes its start {start}.", nameof(end));
+            throw new ArgumentException(
+                $"The interval end {end} does not follow its start {start}.",
+                nameof(end));
         }
 
         if (amount < 0)

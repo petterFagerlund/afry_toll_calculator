@@ -6,6 +6,7 @@ using TollCalculator.WebApi.Host.Registrations;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddControllers();
 builder.Services.AddVersionedApi();
 builder.Services.AddProblemDetailsErrorHandling();
@@ -15,7 +16,6 @@ builder.Services.AddJwtOptions(builder.Configuration);
 builder.Services.AddBearerAuthentication(builder.Environment);
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication();
-builder.Services.AddVersionedOpenApi();
 
 var app = builder.Build();
 

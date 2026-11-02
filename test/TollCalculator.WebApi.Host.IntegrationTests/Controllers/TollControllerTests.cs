@@ -26,7 +26,7 @@ public class TollPassagesControllerTests
 
     public TollPassagesControllerTests()
     {
-        _controller = new TollController(_tollPassageService, _tollService);
+        _controller = new TollController(_tollPassageService, _tollService, TimeProvider.System);
     }
 
     [Fact]

@@ -27,7 +27,7 @@ internal sealed class TollScheduleRepository : ITollScheduleRepository
         return TollTariff.Create(TollSchedule.Create(intervals), settings.DailyCap);
     }
 
-    public async Task<TollRateInterval[]> GetRateIntervalsAsync(CancellationToken cancellationToken)
+    private async Task<TollRateInterval[]> GetRateIntervalsAsync(CancellationToken cancellationToken)
     {
         return await _context.TollRateIntervals
             .AsNoTracking()

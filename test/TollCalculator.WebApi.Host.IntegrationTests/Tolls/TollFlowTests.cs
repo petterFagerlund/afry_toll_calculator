@@ -145,6 +145,49 @@ public class TollFlowTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task TheSamePassageRecordedTwice_IsRejectedAsAConflict()
+    {
+        var registrationNumber = await _vehicles.AddAsync("DUP123", VehicleType.Car);
+        var passedAt = At(Weekday, 7, 15);
+
+        using var first = await _api.RecordPassageAsync(registrationNumber, passedAt);
+        using var second = await _api.RecordPassageAsync(registrationNumber, passedAt);
+
+        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
+
+        var dailyToll = await _api.GetDailyTollAsync(registrationNumber, Weekday);
+
+        Assert.Equal(18, dailyToll.TotalFee);
+    }
+
+    [Fact]
+    public async Task APassageInTheFuture_IsRejected()
+    {
+        var registrationNumber = await _vehicles.AddAsync("FUT123", VehicleType.Car);
+
+        using var response = await _api.RecordPassageAsync(
+            registrationNumber, DateTimeOffset.UtcNow.AddDays(1));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task APassageInTheHalfMinuteBetweenTwoRates_IsChargedAtTheEarlierRate()
+    {
+        var registrationNumber = await _vehicles.AddAsync("SEC123", VehicleType.Car);
+        var passedAt = At(Weekday, 6, 29).AddSeconds(30);
+
+        using var recorded = await _api.RecordPassageAsync(registrationNumber, passedAt);
+
+        Assert.Equal(HttpStatusCode.Created, recorded.StatusCode);
+
+        var dailyToll = await _api.GetDailyTollAsync(registrationNumber, Weekday);
+
+        Assert.Equal(8, dailyToll.TotalFee);
+    }
+
+    [Fact]
     public async Task ADayWithoutPassages_CostsNothing()
     {
         var registrationNumber = await _vehicles.AddAsync("QUIET1", VehicleType.Car);

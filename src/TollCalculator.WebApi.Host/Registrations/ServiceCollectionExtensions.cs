@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using TollCalculator.WebApi.Host.Configuration;
+using TollCalculator.WebApi.Host.OpenApi.Transformers;
 
 namespace TollCalculator.WebApi.Host.Registrations;
 
@@ -35,6 +36,12 @@ internal static class ServiceCollectionExtensions
             {
                 options.GroupNameFormat = VersionGroupNameFormat;
                 options.SubstituteApiVersionInUrl = true;
+            })
+            .AddOpenApi(options =>
+            {
+                options.Document.AddDocumentTransformer(
+                    new ApiVersionInfoDocumentTransformer(options.Description.GroupName));
+                options.Document.AddDocumentTransformer(new BearerSecuritySchemeDocumentTransformer());
             });
 
         return services;

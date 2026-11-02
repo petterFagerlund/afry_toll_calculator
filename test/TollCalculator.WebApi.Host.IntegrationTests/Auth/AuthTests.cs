@@ -3,7 +3,9 @@ using System.Net.Http.Headers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using TollCalculator.WebApi.Host.Configuration;
+using TollCalculator.Domain.Enums;
 using TollCalculator.WebApi.Host.IntegrationTests.Infrastructure;
+using TollCalculator.WebApi.Host.IntegrationTests.Tolls;
 using Xunit;
 
 namespace TollCalculator.WebApi.Host.IntegrationTests.Auth;
@@ -11,7 +13,7 @@ namespace TollCalculator.WebApi.Host.IntegrationTests.Auth;
 [Collection(TollApiCollection.Name)]
 public class AuthTests
 {
-    private const string ProtectedRoute = "/api/v1/toll-rates";
+    private const string ProtectedRoute = "/api/v1/vehicles/AUTH01/toll?date=2026-03-16";
 
     private readonly TollApiFixture _fixture;
 
@@ -40,10 +42,12 @@ public class AuthTests
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", TestTokenBuilder.CreateForTheApiUnderTest());
 
+        await SeedTheVehicleUnderTestAsync();
+
         using var response = await client.GetAsync(ProtectedRoute);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("06:00", await response.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+        Assert.Contains("AUTH01", await response.Content.ReadAsStringAsync(), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -51,9 +55,17 @@ public class AuthTests
     {
         using var client = _fixture.Development.CreateClient();
 
+        await SeedTheVehicleUnderTestAsync();
+
         using var response = await client.GetAsync(ProtectedRoute);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    private async Task SeedTheVehicleUnderTestAsync()
+    {
+        await _fixture.ResetTestDataAsync();
+        await new TestVehicleSeeder(_fixture.ConnectionString).AddAsync("AUTH01", VehicleType.Car);
     }
 
     [Fact]

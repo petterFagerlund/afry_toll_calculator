@@ -7,7 +7,6 @@ using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
 using TollCalculator.Application.Repositories;
 using TollCalculator.Application.Services;
-using TollCalculator.Application.Services.Implementations;
 using Xunit;
 
 namespace TollCalculator.Application.UnitTests.Services;
@@ -25,7 +24,7 @@ public class TollServiceTests
     public TollServiceTests()
     {
         _tollScheduleRepository.GetTariffAsync(Arg.Any<CancellationToken>())
-            .Returns(TollTariff.Create(StandardSchedule(), 60));
+            .Returns(TollTariff.Create(TestSchedules.Standard(), 60));
 
         _holidayProvider.GetHolidays(Arg.Any<int>()).Returns(ApplicationResult<Holiday[]>.Success([]));
 
@@ -104,19 +103,4 @@ public class TollServiceTests
         return new DateTimeOffset(local, TollCalculator.Domain.Constants.TollTimeZone.Instance.GetUtcOffset(local));
     }
 
-    private static TollSchedule StandardSchedule()
-    {
-        return TollSchedule.Create(
-        [
-            TollRateInterval.Create(new TimeOnly(6, 0), new TimeOnly(6, 29), 8),
-            TollRateInterval.Create(new TimeOnly(6, 30), new TimeOnly(6, 59), 13),
-            TollRateInterval.Create(new TimeOnly(7, 0), new TimeOnly(7, 59), 18),
-            TollRateInterval.Create(new TimeOnly(8, 0), new TimeOnly(8, 29), 13),
-            TollRateInterval.Create(new TimeOnly(8, 30), new TimeOnly(14, 59), 8),
-            TollRateInterval.Create(new TimeOnly(15, 0), new TimeOnly(15, 29), 13),
-            TollRateInterval.Create(new TimeOnly(15, 30), new TimeOnly(16, 59), 18),
-            TollRateInterval.Create(new TimeOnly(17, 0), new TimeOnly(17, 59), 13),
-            TollRateInterval.Create(new TimeOnly(18, 0), new TimeOnly(18, 29), 8)
-        ]);
-    }
 }

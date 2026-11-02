@@ -77,6 +77,7 @@ public sealed class TollApiFixture : IAsyncLifetime
             .Build();
 
         var services = new ServiceCollection();
+        services.AddLogging();
         services.AddInfrastructure(configuration);
 
         await using var provider = services.BuildServiceProvider();

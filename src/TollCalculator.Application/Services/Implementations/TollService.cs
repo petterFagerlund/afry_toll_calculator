@@ -49,18 +49,13 @@ internal sealed class TollService : ITollService
                 registrationNumber);
 
             return ApplicationResult<DailyToll>.NotFound(
-                $"No vehicle is registered with the number '{registrationNumber.Trim().ToUpperInvariant()}'.");
+                $"No vehicle is registered with the number '{RegistrationNumbers.Normalize(registrationNumber)}'.");
         }
 
         var passages = await _tollPassageRepository.GetForDayAsync(registrationNumber, date, cancellationToken);
-        var timestamps = new List<DateTimeOffset>();
+        var timestamps = Array.ConvertAll(passages, passage => passage.PassedAt);
 
-        foreach (var passage in passages)
-        {
-            timestamps.Add(passage.PassedAt);
-        }
-
-        return await CalculateTollAsync(vehicle.VehicleType, timestamps.ToArray(), cancellationToken);
+        return await CalculateTollAsync(vehicle.VehicleType, timestamps, cancellationToken);
     }
 
     private async Task<ApplicationResult<DailyToll>> CalculateTollAsync(

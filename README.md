@@ -21,6 +21,10 @@ was rewritten from. `C#/TollCalculator.cs` is also where the six bugs listed at 
 | 18:00–18:29 | 8 SEK  |
 | 18:30–05:59 | 0 SEK  |
 
+Each band runs from its start up to, **but not including**, the next one: a passage at 06:29:30 costs 8 SEK,
+not nothing. The rows store the exclusive end (`06:00`–`06:30`), so there is no gap between the bands for a
+timestamp with seconds to fall into.
+
 A vehicle is charged at most once per 60-minute window, and the highest fee in that window applies.
 Each day is capped at 60 SEK. Weekends and holidays are free, as are Motorbike, Tractor, Emergency,
 Diplomat, Foreign and Military vehicles. Every timestamp is converted to Europe/Stockholm before the
@@ -121,6 +125,13 @@ In Development every endpoint is open, so the examples below need no token.
 | POST | `/api/v1/toll-passages` | Record that a vehicle passed a toll station |
 | GET | `/api/v1/vehicles/{registrationNumber}/toll?date=yyyy-MM-dd` | A vehicle's toll for one day |
 
+A passage is rejected with 400 when its timestamp is in the future or before the year 2000, with 404 when
+no vehicle carries that registration number, and with 409 when the same vehicle is already recorded at that
+exact instant — the `(RegistrationNumber, PassedAt)` index makes recording idempotent to retry.
+
+The daily toll lists only the passages that were *charged*. A passage sharing its 60-minute window with a
+dearer one, and every passage after the 60 SEK cap is reached, costs nothing and is left out of the list.
+
 Two endpoints, because a toll system has two consumers: the roadside equipment that reports passages, and
 billing that asks what a vehicle owes. Anything else — a stateless fee calculator, a published rate list,
 the holiday calendar, the vehicle-type table — had no caller in production and was removed rather than
@@ -150,7 +161,9 @@ curl -k "https://localhost:7077/api/v1/vehicles/ABC123/toll?date=2026-03-16"
 
 ### Authentication
 
-Development allows anonymous calls, so Scalar and the examples above work without a token. **In every other
+Development allows anonymous calls, so Scalar and the examples above work without a token. The signing key
+in `appsettings.Development.json` is a throwaway for exactly that reason — it is committed on purpose, is
+never read outside Development, and startup fails if a real environment is left without one of its own. **In every other
 environment a bearer token is mandatory** on every endpoint except `/health` — enforced by an authorization
 fallback policy, so it covers any endpoint that does not opt out explicitly.
 

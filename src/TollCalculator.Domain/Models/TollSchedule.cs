@@ -37,7 +37,7 @@ public sealed class TollSchedule
 
         for (var i = 1; i < ordered.Length; i++)
         {
-            if (ordered[i].Start <= ordered[i - 1].End)
+            if (ordered[i].Start < ordered[i - 1].End)
             {
                 throw new ArgumentException(
                     $"The interval starting {ordered[i].Start} overlaps the one ending {ordered[i - 1].End}.",

@@ -15,6 +15,8 @@ internal static class ServiceCollectionExtensions
         services.AddSingleton<IConfigureOptions<JwtBearerOptions>, JwtBearerOptionsSetup>();
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
 
+        // Development deliberately opens every route so the Scalar reference is usable without a token.
+        // Any other environment requires a bearer token, and the signing key must come from configuration.
         var fallbackPolicy = environment.IsDevelopment()
             ? AuthorizationPolicies.AnonymousAllowed()
             : AuthorizationPolicies.AuthenticatedUser();

@@ -5,7 +5,7 @@ namespace TollCalculator.WebApi.Host.Validators.Implementations;
 
 internal static class RecordTollPassageRequestValidator
 {
-    public static ModelStateDictionary Validate(RecordTollPassageRequest? request)
+    public static ModelStateDictionary Validate(RecordTollPassageRequest? request, DateTimeOffset now)
     {
         var modelState = new ModelStateDictionary();
 
@@ -22,7 +22,7 @@ internal static class RecordTollPassageRequestValidator
             modelState.AddModelError(nameof(RecordTollPassageRequest.RegistrationNumber), registrationNumberError);
         }
 
-        var passedAtError = PassageTimestampRule.Check(request.PassedAt);
+        var passedAtError = PassageTimestampRule.Check(request.PassedAt, now);
 
         if (passedAtError is not null)
         {

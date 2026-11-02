@@ -19,9 +19,9 @@ public class TollFeeServiceTests
 
         _schedule = TollSchedule.Create(
         [
-            TollRateInterval.Create(new TimeOnly(6, 0), new TimeOnly(6, 29), 8),
-            TollRateInterval.Create(new TimeOnly(7, 0), new TimeOnly(7, 59), 18),
-            TollRateInterval.Create(new TimeOnly(15, 30), new TimeOnly(16, 59), 18)
+            TollRateInterval.Create(new TimeOnly(6, 0), new TimeOnly(6, 30), 8),
+            TollRateInterval.Create(new TimeOnly(7, 0), new TimeOnly(8, 0), 18),
+            TollRateInterval.Create(new TimeOnly(15, 30), new TimeOnly(17, 0), 18)
         ]);
     }
 
@@ -59,6 +59,22 @@ public class TollFeeServiceTests
         var passedAt = new DateTimeOffset(2026, 1, 1, 7, 15, 0, Offset);
 
         Assert.Equal(0, _service.CalculateFee(vehicleType, passedAt, _schedule).Value);
+    }
+
+    [Theory]
+    [InlineData(6, 29, 30, 8)]
+    [InlineData(6, 29, 59, 8)]
+    [InlineData(7, 59, 59, 18)]
+    public void CalculateFee_SecondsInsideAnInterval_ReturnsThatIntervalsFee(
+        int hour,
+        int minute,
+        int second,
+        int expected)
+    {
+        var vehicleType = VehicleType.Car;
+        var passedAt = new DateTimeOffset(2026, 10, 23, hour, minute, second, Offset);
+
+        Assert.Equal(expected, _service.CalculateFee(vehicleType, passedAt, _schedule).Value);
     }
 
     [Fact]

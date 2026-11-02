@@ -30,7 +30,8 @@ public class TollPassageServiceTests
     {
         var expectedId = Guid.CreateVersion7();
         KnownVehicle("ABC123");
-        _tollPassageRepository.AddAsync(Arg.Any<TollPassage>(), Arg.Any<CancellationToken>()).Returns(expectedId);
+        _tollPassageRepository.AddAsync(Arg.Any<TollPassage>(), Arg.Any<CancellationToken>())
+            .Returns(ApplicationResult<Guid>.Success(expectedId));
 
         var result = await _service.RecordTollPassageAsync("ABC123", PassedAt, CancellationToken.None);
 
@@ -43,6 +44,8 @@ public class TollPassageServiceTests
     public async Task RecordTollPassageAsync_KnownVehicle_PersistsTheNormalizedRegistrationNumberAndTimestamp()
     {
         KnownVehicle(" abc123 ");
+        _tollPassageRepository.AddAsync(Arg.Any<TollPassage>(), Arg.Any<CancellationToken>())
+            .Returns(ApplicationResult<Guid>.Success(Guid.CreateVersion7()));
 
         await _service.RecordTollPassageAsync(" abc123 ", PassedAt, CancellationToken.None);
 
@@ -63,6 +66,20 @@ public class TollPassageServiceTests
         Assert.Contains("XYZ789", result.ErrorMessage);
 
         await _tollPassageRepository.DidNotReceiveWithAnyArgs().AddAsync(null!, CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task RecordTollPassageAsync_PassageAlreadyRecorded_ReturnsConflict()
+    {
+        KnownVehicle("ABC123");
+        _tollPassageRepository.AddAsync(Arg.Any<TollPassage>(), Arg.Any<CancellationToken>())
+            .Returns(ApplicationResult<Guid>.Conflict("A passage for 'ABC123' is already recorded."));
+
+        var result = await _service.RecordTollPassageAsync("ABC123", PassedAt, CancellationToken.None);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(ApplicationResultStatus.Conflict, result.Status);
+        Assert.Contains("ABC123", result.ErrorMessage);
     }
 
 

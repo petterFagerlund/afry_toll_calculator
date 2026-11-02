@@ -39,19 +39,30 @@ internal sealed class TollPassageService : ITollPassageService
                 registrationNumber);
 
             return ApplicationResult<Guid>.NotFound(
-                $"No vehicle is registered with the number '{registrationNumber.Trim().ToUpperInvariant()}'.");
+                $"No vehicle is registered with the number '{RegistrationNumbers.Normalize(registrationNumber)}'.");
         }
 
         var passage = TollPassage.Create(vehicle.RegistrationNumber, passedAt);
 
-        var id = await _tollPassageRepository.AddAsync(passage, cancellationToken);
+        var added = await _tollPassageRepository.AddAsync(passage, cancellationToken);
+
+        if (!added.IsSuccess)
+        {
+            _logger.LogInformation(
+                "The passage for {RegistrationNumber} at {PassedAt} was not recorded: {Reason}",
+                vehicle.RegistrationNumber,
+                passedAt,
+                added.ErrorMessage);
+
+            return added;
+        }
 
         _logger.LogInformation(
             "Recorded passage {TollPassageId} for {RegistrationNumber} at {PassedAt}.",
-            id,
+            added.Value,
             vehicle.RegistrationNumber,
             passedAt);
 
-        return ApplicationResult<Guid>.Success(id);
+        return added;
     }
 }

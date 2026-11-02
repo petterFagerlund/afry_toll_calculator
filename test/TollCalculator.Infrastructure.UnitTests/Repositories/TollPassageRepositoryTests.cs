@@ -26,9 +26,10 @@ public class TollPassageRepositoryTests : IDisposable
     {
         var passage = TollPassage.Create("ABC123", new DateTimeOffset(2026, 10, 23, 7, 15, 0, Offset));
 
-        var id = await _repository.AddAsync(passage, CancellationToken.None);
+        var added = await _repository.AddAsync(passage, CancellationToken.None);
 
-        Assert.Equal(passage.Id, id);
+        Assert.True(added.IsSuccess);
+        Assert.Equal(passage.Id, added.Value);
         Assert.Single(_fixture.Context.TollPassages);
     }
 

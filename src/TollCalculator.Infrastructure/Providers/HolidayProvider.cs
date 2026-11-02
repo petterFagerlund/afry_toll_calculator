@@ -23,7 +23,26 @@ internal sealed class HolidayProvider : IHolidayProvider
 
     public ApplicationResult<Holiday[]> GetHolidays(int year)
     {
-        return ApplicationResult<Holiday[]>.Success(_holidaysByYear.GetOrAdd(year, ResolveHolidays));
+        if (_holidaysByYear.TryGetValue(year, out var cached))
+        {
+            return ApplicationResult<Holiday[]>.Success(cached);
+        }
+
+        try
+        {
+            var resolved = ResolveHolidays(year);
+
+            _holidaysByYear[year] = resolved;
+
+            return ApplicationResult<Holiday[]>.Success(resolved);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "Resolving the Swedish public holidays for {Year} failed.", year);
+
+            return ApplicationResult<Holiday[]>.Error(
+                $"The Swedish public holidays for {year} could not be resolved.");
+        }
     }
 
     private Holiday[] ResolveHolidays(int year)

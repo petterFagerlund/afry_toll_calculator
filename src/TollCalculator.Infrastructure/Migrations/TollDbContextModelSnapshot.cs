@@ -73,63 +73,63 @@ namespace TollCalculator.Infrastructure.Migrations
                         {
                             Id = 1,
                             Amount = 8,
-                            End = new TimeOnly(6, 29, 0),
+                            End = new TimeOnly(6, 30, 0),
                             Start = new TimeOnly(6, 0, 0)
                         },
                         new
                         {
                             Id = 2,
                             Amount = 13,
-                            End = new TimeOnly(6, 59, 0),
+                            End = new TimeOnly(7, 0, 0),
                             Start = new TimeOnly(6, 30, 0)
                         },
                         new
                         {
                             Id = 3,
                             Amount = 18,
-                            End = new TimeOnly(7, 59, 0),
+                            End = new TimeOnly(8, 0, 0),
                             Start = new TimeOnly(7, 0, 0)
                         },
                         new
                         {
                             Id = 4,
                             Amount = 13,
-                            End = new TimeOnly(8, 29, 0),
+                            End = new TimeOnly(8, 30, 0),
                             Start = new TimeOnly(8, 0, 0)
                         },
                         new
                         {
                             Id = 5,
                             Amount = 8,
-                            End = new TimeOnly(14, 59, 0),
+                            End = new TimeOnly(15, 0, 0),
                             Start = new TimeOnly(8, 30, 0)
                         },
                         new
                         {
                             Id = 6,
                             Amount = 13,
-                            End = new TimeOnly(15, 29, 0),
+                            End = new TimeOnly(15, 30, 0),
                             Start = new TimeOnly(15, 0, 0)
                         },
                         new
                         {
                             Id = 7,
                             Amount = 18,
-                            End = new TimeOnly(16, 59, 0),
+                            End = new TimeOnly(17, 0, 0),
                             Start = new TimeOnly(15, 30, 0)
                         },
                         new
                         {
                             Id = 8,
                             Amount = 13,
-                            End = new TimeOnly(17, 59, 0),
+                            End = new TimeOnly(18, 0, 0),
                             Start = new TimeOnly(17, 0, 0)
                         },
                         new
                         {
                             Id = 9,
                             Amount = 8,
-                            End = new TimeOnly(18, 29, 0),
+                            End = new TimeOnly(18, 30, 0),
                             Start = new TimeOnly(18, 0, 0)
                         });
                 });

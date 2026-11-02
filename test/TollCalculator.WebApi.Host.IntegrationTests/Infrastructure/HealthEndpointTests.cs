@@ -1,4 +1,5 @@
 using System.Net;
+using Microsoft.Data.SqlClient;
 using Xunit;
 
 namespace TollCalculator.WebApi.Host.IntegrationTests.Infrastructure;
@@ -29,13 +30,22 @@ public class HealthEndpointTests
     [Fact]
     public async Task TheMigrationCreatedTheSeededReferenceData()
     {
-        using var client = _fixture.Development.CreateClient();
+        Assert.Equal(9, await CountAsync("SELECT COUNT(*) FROM [TollRateIntervals];"));
+        Assert.Equal(60, await CountAsync("SELECT [DailyCap] FROM [TollSettings];"));
+    }
 
-        var rates = await client.GetAsync("/api/v1/toll-rates");
-        var vehicleTypes = await client.GetAsync("/api/v1/vehicle-types");
+    [Fact]
+    public async Task TheSeededRateIntervals_LeaveNoGapInTheChargedDay()
+    {
+        var intervals = await RateIntervalsAsync();
 
-        Assert.Equal(HttpStatusCode.OK, rates.StatusCode);
-        Assert.Equal(HttpStatusCode.OK, vehicleTypes.StatusCode);
+        Assert.Equal(new TimeOnly(6, 0), intervals[0].Start);
+        Assert.Equal(new TimeOnly(18, 30), intervals[^1].End);
+
+        for (var i = 1; i < intervals.Length; i++)
+        {
+            Assert.Equal(intervals[i - 1].End, intervals[i].Start);
+        }
     }
 
     [Fact]
@@ -43,11 +53,37 @@ public class HealthEndpointTests
     {
         await _fixture.ResetTestDataAsync();
 
-        using var client = _fixture.Development.CreateClient();
+        Assert.Equal(9, await CountAsync("SELECT COUNT(*) FROM [TollRateIntervals];"));
+        Assert.Equal(60, await CountAsync("SELECT [DailyCap] FROM [TollSettings];"));
+    }
 
-        var response = await client.GetAsync("/api/v1/holidays");
+    private async Task<(TimeOnly Start, TimeOnly End)[]> RateIntervalsAsync()
+    {
+        await using var connection = new SqlConnection(_fixture.ConnectionString);
+        await connection.OpenAsync();
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("Nyårsdagen", await response.Content.ReadAsStringAsync());
+        await using var command = new SqlCommand(
+            "SELECT [Start], [End] FROM [TollRateIntervals] ORDER BY [Start];", connection);
+
+        var intervals = new List<(TimeOnly Start, TimeOnly End)>();
+
+        await using var reader = await command.ExecuteReaderAsync();
+
+        while (await reader.ReadAsync())
+        {
+            intervals.Add((TimeOnly.FromTimeSpan(reader.GetTimeSpan(0)), TimeOnly.FromTimeSpan(reader.GetTimeSpan(1))));
+        }
+
+        return intervals.ToArray();
+    }
+
+    private async Task<int> CountAsync(string sql)
+    {
+        await using var connection = new SqlConnection(_fixture.ConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new SqlCommand(sql, connection);
+
+        return (int)(await command.ExecuteScalarAsync())!;
     }
 }

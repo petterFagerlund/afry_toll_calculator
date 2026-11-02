@@ -47,6 +47,8 @@ public class TollApiFixtureTests
     [Fact]
     public async Task ResetTestDataAsync_RemovesTestRowsButKeepsReferenceData()
     {
+        await _fixture.ResetTestDataAsync();
+
         await using var connection = new SqlConnection(_fixture.ConnectionString);
         await connection.OpenAsync();
 
