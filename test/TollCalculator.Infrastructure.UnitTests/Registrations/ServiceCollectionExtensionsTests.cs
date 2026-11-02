@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using TollCalculator.Infrastructure.Configuration;
+using Microsoft.Extensions.Options;
 using TollCalculator.Application.Providers;
 using TollCalculator.Infrastructure.Persistence;
 using TollCalculator.Infrastructure.Registrations;
@@ -11,13 +13,13 @@ namespace TollCalculator.Infrastructure.UnitTests.Registrations;
 public class ServiceCollectionExtensionsTests
 {
     private const string ConnectionStringKey = "ConnectionStrings:TollDatabase";
+    private const string DailyCapKey = "Toll:DailyCap";
 
     private const string ConnectionString =
         "Server=localhost;Database=TollCalculatorRegistration;Trusted_Connection=True;TrustServerCertificate=True";
 
     [Theory]
     [InlineData(typeof(TollDbContext))]
-    [InlineData(typeof(IVehicleRepository))]
     [InlineData(typeof(ITollPassageRepository))]
     [InlineData(typeof(ITollScheduleRepository))]
     [InlineData(typeof(IHolidayProvider))]
@@ -37,10 +39,10 @@ public class ServiceCollectionExtensionsTests
         using var firstScope = provider.CreateScope();
         using var secondScope = provider.CreateScope();
 
-        var first = firstScope.ServiceProvider.GetRequiredService<IVehicleRepository>();
+        var first = firstScope.ServiceProvider.GetRequiredService<ITollPassageRepository>();
 
-        Assert.Same(first, firstScope.ServiceProvider.GetRequiredService<IVehicleRepository>());
-        Assert.NotSame(first, secondScope.ServiceProvider.GetRequiredService<IVehicleRepository>());
+        Assert.Same(first, firstScope.ServiceProvider.GetRequiredService<ITollPassageRepository>());
+        Assert.NotSame(first, secondScope.ServiceProvider.GetRequiredService<ITollPassageRepository>());
     }
 
     [Fact]
@@ -79,7 +81,33 @@ public class ServiceCollectionExtensionsTests
     private static IConfiguration BuildConfiguration(string? connectionString)
     {
         return new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { [ConnectionStringKey] = connectionString })
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                [ConnectionStringKey] = connectionString,
+                [DailyCapKey] = "60",
+            })
             .Build();
+    }
+
+    [Theory]
+    [InlineData("0")]
+    [InlineData(null)]
+    public void AddInfrastructure_RejectsADailyCapThatWouldChargeNothing(string? dailyCap)
+    {
+        var services = new ServiceCollection();
+
+        services.AddLogging();
+        services.AddInfrastructure(new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                [ConnectionStringKey] = ConnectionString,
+                [DailyCapKey] = dailyCap,
+            })
+            .Build());
+
+        using var provider = services.BuildServiceProvider();
+
+        Assert.Throws<OptionsValidationException>(
+            () => provider.GetRequiredService<IOptions<TollOptions>>().Value);
     }
 }

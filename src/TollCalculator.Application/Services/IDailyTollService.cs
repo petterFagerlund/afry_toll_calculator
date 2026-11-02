@@ -5,5 +5,5 @@ namespace TollCalculator.Application.Services;
 
 public interface IDailyTollService
 {
-    ApplicationResult<DailyToll> Calculate(TollPassage[] passages, TollTariff tariff);
+    Task<ApplicationResult<DailyToll>> Calculate(TollPassage[] passages, CancellationToken cancellationToken);
 }

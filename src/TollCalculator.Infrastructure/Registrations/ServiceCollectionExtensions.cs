@@ -34,7 +34,6 @@ public static class ServiceCollectionExtensions
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
-        services.AddScoped<IVehicleRepository, VehicleRepository>();
         services.AddScoped<ITollPassageRepository, TollPassageRepository>();
         services.AddScoped<ITollScheduleRepository, TollScheduleRepository>();
         services.AddSingleton<IHolidayProvider, HolidayProvider>();

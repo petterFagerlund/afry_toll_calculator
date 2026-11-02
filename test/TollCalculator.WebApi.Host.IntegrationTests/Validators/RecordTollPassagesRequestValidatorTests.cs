@@ -156,4 +156,35 @@ public class RecordTollPassagesRequestValidatorTests
     {
         return new RecordTollPassagesRequest { Passages = passages };
     }
+
+    [Fact]
+    public void Validate_RejectsABatchLargerThanTheLimit()
+    {
+        var passages = new TollPassageToRecord[1001];
+
+        for (var index = 0; index < passages.Length; index++)
+        {
+            passages[index] = Passage(RegistrationNumber, nameof(VehicleType.Car), PassedAt.AddSeconds(index));
+        }
+
+        var modelState = RecordTollPassagesRequestValidator.Validate(RequestOf(passages), Now);
+
+        Assert.False(modelState.IsValid);
+        Assert.Contains("passages", modelState.Keys);
+    }
+
+    [Fact]
+    public void Validate_AcceptsABatchExactlyAtTheLimit()
+    {
+        var passages = new TollPassageToRecord[1000];
+
+        for (var index = 0; index < passages.Length; index++)
+        {
+            passages[index] = Passage(RegistrationNumber, nameof(VehicleType.Car), PassedAt.AddSeconds(index));
+        }
+
+        var modelState = RecordTollPassagesRequestValidator.Validate(RequestOf(passages), Now);
+
+        Assert.True(modelState.IsValid);
+    }
 }

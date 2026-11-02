@@ -16,9 +16,10 @@ public sealed record TollTariff
     {
         ArgumentNullException.ThrowIfNull(schedule);
 
-        if (dailyCap < 0)
+        if (dailyCap < 1)
         {
-            throw new ArgumentOutOfRangeException(nameof(dailyCap), dailyCap, "A daily cap cannot be negative.");
+            throw new ArgumentOutOfRangeException(
+                nameof(dailyCap), dailyCap, "A daily cap must be at least 1; a zero cap charges nothing.");
         }
 
         return new TollTariff(schedule, dailyCap);

@@ -12,8 +12,7 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<ITollFreeDateService, WeekendAndHolidayService>();
         services.AddSingleton<ITollFeeService, TollFeeService>();
-        services.AddSingleton<IDailyTollService, DailyTollService>();
-
+        services.AddScoped<IDailyTollService, DailyTollService>();
         services.AddScoped<ITollPassageService, TollPassageService>();
         services.AddScoped<ITollService, TollService>();
 

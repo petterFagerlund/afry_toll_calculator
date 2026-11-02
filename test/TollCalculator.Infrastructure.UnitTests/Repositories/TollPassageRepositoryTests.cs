@@ -14,10 +14,6 @@ public class TollPassageRepositoryTests : IDisposable
     public TollPassageRepositoryTests()
     {
         _repository = new TollPassageRepository(_fixture.Context);
-
-        _fixture.Context.Vehicles.Add(Vehicle.Create("ABC123", VehicleType.Car));
-        _fixture.Context.Vehicles.Add(Vehicle.Create("XYZ789", VehicleType.Car));
-        _fixture.Context.SaveChanges();
     }
 
     [Fact]

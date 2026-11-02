@@ -9,10 +9,7 @@ namespace TollCalculator.WebApi.Host.IntegrationTests.Infrastructure;
 public sealed class TollApiFixture : IAsyncLifetime
 {
     private const string ResetTestDataSql =
-        """
-        DELETE FROM [TollPassages];
-        DELETE FROM [Vehicles];
-        """;
+        "DELETE FROM [TollPassages];";
 
     private const string SqlServerImage = "mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04";
 
@@ -72,6 +69,7 @@ public sealed class TollApiFixture : IAsyncLifetime
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 [$"ConnectionStrings:{ServiceCollectionExtensions.ConnectionStringName}"] = ConnectionString,
+                ["Toll:DailyCap"] = "60",
             })
             .Build();
 

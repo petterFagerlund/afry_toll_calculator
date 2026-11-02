@@ -9,8 +9,6 @@ public sealed class TollDbContext : DbContext
     {
     }
 
-    public DbSet<Vehicle> Vehicles { get; init; } = null!;
-
     public DbSet<TollPassage> TollPassages { get; init; } = null!;
 
     public DbSet<TollRateInterval> TollRateIntervals { get; init; } = null!;

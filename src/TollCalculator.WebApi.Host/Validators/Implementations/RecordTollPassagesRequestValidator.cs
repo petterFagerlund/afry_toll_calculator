@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using TollCalculator.Domain.Enums;
 using TollCalculator.WebApi.Models.V1.Requests;
 
 namespace TollCalculator.WebApi.Host.Validators.Implementations;
@@ -7,6 +6,10 @@ namespace TollCalculator.WebApi.Host.Validators.Implementations;
 internal static class RecordTollPassagesRequestValidator
 {
     private const string PassagesMember = "passages";
+
+    // One request is one roadside batch. The cap keeps a single POST from loading an unbounded number of
+    // entities into the change tracker and holding one transaction open across all of them.
+    private const int MaximumPassages = 1000;
 
     public static ModelStateDictionary Validate(RecordTollPassagesRequest? request, DateTimeOffset now)
     {
@@ -22,6 +25,15 @@ internal static class RecordTollPassagesRequestValidator
         if (request.Passages.Length == 0)
         {
             modelState.AddModelError(PassagesMember, "At least one passage is required.");
+
+            return modelState;
+        }
+
+        if (request.Passages.Length > MaximumPassages)
+        {
+            modelState.AddModelError(
+                PassagesMember,
+                $"A batch cannot hold more than {MaximumPassages} passages; {request.Passages.Length} were sent.");
 
             return modelState;
         }

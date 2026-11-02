@@ -69,6 +69,7 @@ internal sealed class IntegrationTestFactory : WebApplicationFactory<Program>
             [$"{JwtOptions.SectionName}:SigningKey"] = SigningKey,
             [$"{JwtOptions.SectionName}:Issuer"] = Issuer,
             [$"{JwtOptions.SectionName}:Audience"] = Audience,
+            ["Toll:DailyCap"] = "60",
         };
     }
 }

@@ -37,27 +37,34 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddApplication_ComposesTheDomainServices()
+    public async Task AddApplication_ComposesTheDomainServices()
     {
         using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
 
-        var dailyTollService = provider.GetRequiredService<IDailyTollService>();
-        var tariff = TollTariff.Create(TollSchedule.Create([]), 60);
+        var tollScheduleRepository = scope.ServiceProvider.GetRequiredService<ITollScheduleRepository>();
+        tollScheduleRepository.GetTariffAsync(Arg.Any<CancellationToken>())
+            .Returns(TollTariff.Create(TollSchedule.Create([]), 60));
 
-        Assert.Equal(0, dailyTollService.Calculate([], tariff).Value!.TotalFee);
+        var dailyTollService = scope.ServiceProvider.GetRequiredService<IDailyTollService>();
+
+        var result = await dailyTollService.Calculate([], CancellationToken.None);
+
+        Assert.Equal(0, result.Value!.TotalFee);
     }
 
     [Fact]
-    public void AddApplication_RegistersTheDomainServicesAsSingletons()
+    public void AddApplication_RegistersTheDailyTollServiceAsScoped()
     {
         using var provider = BuildProvider();
 
         using var firstScope = provider.CreateScope();
         using var secondScope = provider.CreateScope();
 
-        Assert.Same(
-            firstScope.ServiceProvider.GetRequiredService<IDailyTollService>(),
-            secondScope.ServiceProvider.GetRequiredService<IDailyTollService>());
+        var first = firstScope.ServiceProvider.GetRequiredService<IDailyTollService>();
+
+        Assert.Same(first, firstScope.ServiceProvider.GetRequiredService<IDailyTollService>());
+        Assert.NotSame(first, secondScope.ServiceProvider.GetRequiredService<IDailyTollService>());
     }
 
     [Fact]
@@ -72,9 +79,8 @@ public class ServiceCollectionExtensionsTests
 
         services.AddLogging();
 
-        services.AddSingleton(Substitute.For<IVehicleRepository>());
         services.AddSingleton(Substitute.For<ITollPassageRepository>());
-        services.AddSingleton(Substitute.For<ITollScheduleRepository>());
+        services.AddScoped(_ => Substitute.For<ITollScheduleRepository>());
         services.AddSingleton(Substitute.For<IHolidayProvider>());
 
         services.AddApplication();

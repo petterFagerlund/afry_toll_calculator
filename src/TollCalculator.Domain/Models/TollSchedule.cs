@@ -35,14 +35,18 @@ public sealed class TollSchedule
         Array.Copy(intervals, ordered, intervals.Length);
         Array.Sort(ordered, (left, right) => left.Start.CompareTo(right.Start));
 
-        for (var i = 1; i < ordered.Length; i++)
+        TollRateInterval? previous = null;
+
+        foreach (var interval in ordered)
         {
-            if (ordered[i].Start < ordered[i - 1].End)
+            if (previous is not null && interval.Start < previous.End)
             {
                 throw new ArgumentException(
-                    $"The interval starting {ordered[i].Start} overlaps the one ending {ordered[i - 1].End}.",
+                    $"The interval starting {interval.Start} overlaps the one ending {previous.End}.",
                     nameof(intervals));
             }
+
+            previous = interval;
         }
 
         return new TollSchedule(ordered);

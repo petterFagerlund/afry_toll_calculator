@@ -58,8 +58,6 @@ internal sealed class HolidayProvider : IHolidayProvider
         var ordered = holidays.ToArray();
         Array.Sort(ordered, (left, right) => left.Date.CompareTo(right.Date));
 
-        _logger.LogDebug("Resolved {HolidayCount} Swedish public holidays for {Year}.", ordered.Length, year);
-
         return ordered;
     }
 }

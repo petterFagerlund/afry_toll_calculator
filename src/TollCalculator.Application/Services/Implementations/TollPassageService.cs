@@ -27,20 +27,15 @@ internal sealed class TollPassageService : ITollPassageService
     {
         ArgumentNullException.ThrowIfNull(passages);
 
-        var recorded = await _tollPassageRepository.AddRangeAsync(passages, cancellationToken);
-
-        if (!recorded.IsSuccess)
+        var recordedPassages = await _tollPassageRepository.AddRangeAsync(passages, cancellationToken);
+        if (!recordedPassages.IsSuccess)
         {
             _logger.LogInformation(
                 "A batch of {PassageCount} passages was not recorded: {Reason}",
                 passages.Length,
-                recorded.ErrorMessage);
-
-            return recorded;
+                recordedPassages.ErrorMessage);
         }
 
-        _logger.LogInformation("Recorded {PassageCount} toll passages.", passages.Length);
-
-        return recorded;
+        return recordedPassages;
     }
 }

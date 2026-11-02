@@ -138,22 +138,6 @@ namespace TollCalculator.Infrastructure.Migrations
                             Start = new TimeOnly(18, 0, 0)
                         });
                 });
-
-            modelBuilder.Entity("TollCalculator.Domain.Models.Vehicle", b =>
-                {
-                    b.Property<string>("RegistrationNumber")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("VehicleType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.HasKey("RegistrationNumber");
-
-                    b.ToTable("Vehicles", (string)null);
-                });
 #pragma warning restore 612, 618
         }
     }

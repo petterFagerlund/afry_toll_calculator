@@ -52,13 +52,16 @@ public class TollApiFixtureTests
         await connection.OpenAsync();
 
         await ExecuteAsync(connection,
-            "INSERT INTO [Vehicles] ([RegistrationNumber], [VehicleType]) VALUES ('RESET01', 1);");
+            """
+            INSERT INTO [TollPassages] ([Id], [RegistrationNumber], [VehicleType], [PassedAt])
+            VALUES (NEWID(), 'RESET01', 'Car', '2026-03-16T07:15:00+01:00');
+            """);
 
-        Assert.Equal(1, await CountAsync(connection, "[Vehicles]"));
+        Assert.Equal(1, await CountAsync(connection, "[TollPassages]"));
 
         await _fixture.ResetTestDataAsync();
 
-        Assert.Equal(0, await CountAsync(connection, "[Vehicles]"));
+        Assert.Equal(0, await CountAsync(connection, "[TollPassages]"));
         Assert.Equal(9, await CountAsync(connection, "[TollRateIntervals]"));
     }
 

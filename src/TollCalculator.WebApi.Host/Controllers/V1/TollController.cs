@@ -53,15 +53,13 @@ public sealed class TollController : ApiControllerBase
         }
 
         var passages = Array.ConvertAll(request.Passages, ToTollPassage);
-
-        var result = await _tollPassageService.RecordTollPassagesAsync(passages, cancellationToken);
-        if (!result.IsSuccess)
+        var recordedTollPassages = await _tollPassageService.RecordTollPassagesAsync(passages, cancellationToken);
+        if (!recordedTollPassages.IsSuccess)
         {
-            return MapErrorResponse(result);
+            return MapErrorResponse(recordedTollPassages);
         }
 
-        var response = new RecordTollPassagesResponse { TollPassageIds = result.Value! };
-
+        var response = new RecordTollPassagesResponse { TollPassageIds = recordedTollPassages.Value! };
         return StatusCode(StatusCodes.Status201Created, response);
     }
 
@@ -78,7 +76,7 @@ public sealed class TollController : ApiControllerBase
         [FromBody] CalculateDailyTollRequest request,
         CancellationToken cancellationToken)
     {
-        var modelState = CalculateDailyTollRequestValidator.Validate(request);
+        var modelState = CalculateDailyTollRequestValidator.Validate(request, _timeProvider.GetUtcNow());
         if (!modelState.IsValid)
         {
             return MapValidationProblem(modelState);
@@ -98,6 +96,6 @@ public sealed class TollController : ApiControllerBase
     private static TollPassage ToTollPassage(TollPassageToRecord passage)
     {
         VehicleTypeParser.TryParse(passage.VehicleType, out var vehicleType);
-        return TollPassage.Create(passage.RegistrationNumber!, vehicleType, passage.PassedAt);
+        return TollPassage.Create(passage.RegistrationNumber, vehicleType, passage.PassedAt);
     }
 }

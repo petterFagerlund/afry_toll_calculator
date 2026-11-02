@@ -23,7 +23,6 @@ public sealed record TollPassage
     public static TollPassage Create(string registrationNumber, VehicleType vehicleType, DateTimeOffset passedAt)
     {
         var normalized = RegistrationNumbers.Normalize(registrationNumber);
-
         return new TollPassage(Guid.CreateVersion7(), normalized, vehicleType, passedAt);
     }
 }

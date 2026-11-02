@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using TollCalculator.Domain.Constants;
 using TollCalculator.WebApi.Models.V1.Requests;
 
 namespace TollCalculator.WebApi.Host.Validators.Implementations;
@@ -11,7 +12,7 @@ internal static class CalculateDailyTollRequestValidator
 
     private static readonly DateOnly EarliestAccepted = new(2000, 1, 1);
 
-    public static ModelStateDictionary Validate(CalculateDailyTollRequest? request)
+    public static ModelStateDictionary Validate(CalculateDailyTollRequest? request, DateTimeOffset now)
     {
         var modelState = new ModelStateDictionary();
 
@@ -32,6 +33,13 @@ internal static class CalculateDailyTollRequestValidator
         if (request.Date < EarliestAccepted)
         {
             modelState.AddModelError(DateMember, $"A date cannot be earlier than {EarliestAccepted:yyyy-MM-dd}.");
+        }
+
+        var latestAccepted = TollTimeZone.DateOf(now);
+
+        if (request.Date > latestAccepted)
+        {
+            modelState.AddModelError(DateMember, $"A date cannot be later than {latestAccepted:yyyy-MM-dd}.");
         }
 
         return modelState;

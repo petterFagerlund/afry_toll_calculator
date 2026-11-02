@@ -1,3 +1,4 @@
+using TollCalculator.Domain.Constants;
 using TollCalculator.Domain.Enums;
 
 namespace TollCalculator.WebApi.Host.Validators.Implementations;
@@ -21,16 +22,6 @@ internal static class VehicleTypeRule
 
     private static string KnownVehicleTypes()
     {
-        var names = new List<string>();
-
-        foreach (var vehicleType in Enum.GetValues<VehicleType>())
-        {
-            if (vehicleType != VehicleType.Unknown)
-            {
-                names.Add(vehicleType.ToString());
-            }
-        }
-
-        return string.Join(", ", names);
+        return string.Join(", ", ReportableVehicleTypes.Names());
     }
 }

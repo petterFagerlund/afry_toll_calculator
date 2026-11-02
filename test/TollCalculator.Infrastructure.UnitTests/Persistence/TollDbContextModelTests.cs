@@ -18,7 +18,6 @@ public class TollDbContextModelTests
     }
 
     [Theory]
-    [InlineData(typeof(Vehicle), "Vehicles")]
     [InlineData(typeof(TollPassage), "TollPassages")]
     [InlineData(typeof(TollRateInterval), "TollRateIntervals")]
     public void Model_Entity_MapsToExpectedTable(Type entityType, string expectedTable)
@@ -27,24 +26,6 @@ public class TollDbContextModelTests
 
         Assert.NotNull(entity);
         Assert.Equal(expectedTable, entity.GetTableName());
-    }
-
-    [Fact]
-    public void Model_Vehicle_IsKeyedOnRegistrationNumber()
-    {
-        var key = _context.Model.FindEntityType(typeof(Vehicle))!.FindPrimaryKey();
-
-        Assert.NotNull(key);
-        Assert.Equal(nameof(Vehicle.RegistrationNumber), Assert.Single(key.Properties).Name);
-    }
-
-    [Fact]
-    public void Model_VehicleType_IsStoredAsText()
-    {
-        var property = _context.Model.FindEntityType(typeof(Vehicle))!.FindProperty(nameof(Vehicle.VehicleType));
-
-        Assert.NotNull(property);
-        Assert.Equal(typeof(string), property.GetProviderClrType());
     }
 
     [Fact]

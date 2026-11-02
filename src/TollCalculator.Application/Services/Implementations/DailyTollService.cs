@@ -1,27 +1,35 @@
+using TollCalculator.Application.Repositories;
 using TollCalculator.Application.Results;
 using TollCalculator.Domain.Constants;
 using TollCalculator.Domain.Models;
 
 namespace TollCalculator.Application.Services.Implementations;
 
-public sealed class DailyTollService : IDailyTollService
+internal sealed class DailyTollService : IDailyTollService
 {
     private static readonly TimeSpan ChargeWindowLength = TimeSpan.FromMinutes(60);
-    private sealed record ChargeWindow(DateTimeOffset PassedAt, int Amount, int IndexAfterWindow);
-    private readonly ITollFeeService _tollFeeService;
 
-    public DailyTollService(ITollFeeService tollFeeService)
+    private sealed record ChargeWindow(DateTimeOffset PassedAt, int Amount, int IndexAfterWindow);
+
+    private readonly ITollFeeService _tollFeeService;
+    private readonly ITollScheduleRepository _tollScheduleRepository;
+
+    public DailyTollService(ITollFeeService tollFeeService, ITollScheduleRepository tollScheduleRepository)
     {
         ArgumentNullException.ThrowIfNull(tollFeeService);
+        ArgumentNullException.ThrowIfNull(tollScheduleRepository);
+
         _tollFeeService = tollFeeService;
+        _tollScheduleRepository = tollScheduleRepository;
     }
 
-    public ApplicationResult<DailyToll> Calculate(TollPassage[] passages, TollTariff tariff)
+    public async Task<ApplicationResult<DailyToll>> Calculate(TollPassage[] passages, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(passages);
-        ArgumentNullException.ThrowIfNull(tariff);
 
-        var chargeablePassagesResult = ChargeablePassagesInTimeOrder(passages, tariff.Schedule);
+        var tollTariff = await _tollScheduleRepository.GetTariffAsync(cancellationToken);
+
+        var chargeablePassagesResult = ChargeablePassagesInTimeOrder(passages, tollTariff.Schedule);
         if (!chargeablePassagesResult.IsSuccess)
         {
             return ApplicationResult<DailyToll>.Error(chargeablePassagesResult.ErrorMessage!);
@@ -38,7 +46,7 @@ public sealed class DailyTollService : IDailyTollService
 
         foreach (var passagesOnOneDay in GroupByStockholmDay(chargeablePassages))
         {
-            totalFee += ChargeOneDay(passagesOnOneDay, tariff.DailyCap, chargedPassages);
+            totalFee += ChargeOneDay(passagesOnOneDay, tollTariff.DailyCap, chargedPassages);
         }
 
         return ApplicationResult<DailyToll>.Success(new DailyToll(totalFee, [.. chargedPassages]));

@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
+using TollCalculator.Domain.Constants;
 using TollCalculator.Domain.Enums;
 using TollCalculator.WebApi.Models.V1.Requests;
 
@@ -47,26 +48,11 @@ internal sealed class VehicleTypeSchemaTransformer : IOpenApiSchemaTransformer
         return Task.CompletedTask;
     }
 
-    internal static string[] AcceptedVehicleTypeNames()
-    {
-        var names = new List<string>();
-
-        foreach (var vehicleType in Enum.GetValues<VehicleType>())
-        {
-            if (vehicleType != VehicleType.Unknown)
-            {
-                names.Add(vehicleType.ToString());
-            }
-        }
-
-        return [.. names];
-    }
-
     private static List<JsonNode> AcceptedVehicleTypes()
     {
         var values = new List<JsonNode>();
 
-        foreach (var name in AcceptedVehicleTypeNames())
+        foreach (var name in ReportableVehicleTypes.Names())
         {
             values.Add(JsonValue.Create(name)!);
         }

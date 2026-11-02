@@ -12,8 +12,8 @@ using TollCalculator.Infrastructure.Persistence;
 namespace TollCalculator.Infrastructure.Migrations
 {
     [DbContext(typeof(TollDbContext))]
-    [Migration("20261102215056_MoveDailyCapToConfiguration")]
-    partial class MoveDailyCapToConfiguration
+    [Migration("20261102223622_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -140,22 +140,6 @@ namespace TollCalculator.Infrastructure.Migrations
                             End = new TimeOnly(18, 30, 0),
                             Start = new TimeOnly(18, 0, 0)
                         });
-                });
-
-            modelBuilder.Entity("TollCalculator.Domain.Models.Vehicle", b =>
-                {
-                    b.Property<string>("RegistrationNumber")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("VehicleType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.HasKey("RegistrationNumber");
-
-                    b.ToTable("Vehicles", (string)null);
                 });
 #pragma warning restore 612, 618
         }
