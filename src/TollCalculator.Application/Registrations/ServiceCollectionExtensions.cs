@@ -1,8 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using TollCalculator.Application.Services;
 using TollCalculator.Application.Services.Implementations;
-using TollCalculator.Domain.Services;
-using TollCalculator.Domain.Services.Implementations;
+using TollCalculator.Application.Services;
+using TollCalculator.Application.Services.Implementations;
 
 namespace TollCalculator.Application.Registrations;
 

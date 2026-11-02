@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
 using TollCalculator.Application.Results;
 using TollCalculator.Domain.Models;
-using TollCalculator.Domain.Repositories;
+using TollCalculator.Application.Repositories;
 
 namespace TollCalculator.Application.Services.Implementations;
 

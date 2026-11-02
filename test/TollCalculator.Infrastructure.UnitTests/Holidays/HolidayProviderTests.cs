@@ -1,15 +1,16 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
-using TollCalculator.Domain.Services;
-using TollCalculator.Infrastructure.Holidays;
+using TollCalculator.Application.Providers;
+using TollCalculator.Application.Services;
+using TollCalculator.Infrastructure.Providers;
 using Xunit;
 
 namespace TollCalculator.Infrastructure.UnitTests.Holidays;
 
-public class NagerHolidayProviderTests
+public class HolidayProviderTests
 {
     private readonly IHolidayProvider _provider =
-        new NagerHolidayProvider(NullLogger<NagerHolidayProvider>.Instance);
+        new HolidayProvider(NullLogger<HolidayProvider>.Instance);
 
     [Theory]
     [InlineData(2026, 1, 1, "Nyårsdagen")]
@@ -23,7 +24,7 @@ public class NagerHolidayProviderTests
     [InlineData(2026, 12, 26, "Annandag jul")]
     public void GetHolidays_ReturnsTheKnownSwedishHolidays(int year, int month, int day, string name)
     {
-        var holidays = _provider.GetHolidays(year);
+        var holidays = _provider.GetHolidays(year).Value!;
 
         var holiday = Assert.Single(holidays, candidate => candidate.Date == new DateOnly(year, month, day));
         Assert.Equal(name, holiday.Name);
@@ -35,7 +36,7 @@ public class NagerHolidayProviderTests
     [InlineData(2099, 4, 10)]
     public void GetHolidays_ResolvesEasterForYearsBeyondAnySeededTable(int year, int month, int day)
     {
-        var holidays = _provider.GetHolidays(year);
+        var holidays = _provider.GetHolidays(year).Value!;
 
         Assert.Contains(holidays, holiday => holiday.Date == new DateOnly(year, month, day));
     }
@@ -43,7 +44,7 @@ public class NagerHolidayProviderTests
     [Fact]
     public void GetHolidays_IncludesTheEveDaysNagerReportsAsPublic()
     {
-        var holidays = _provider.GetHolidays(2026);
+        var holidays = _provider.GetHolidays(2026).Value!;
 
         Assert.Contains(holidays, holiday => holiday.Date == new DateOnly(2026, 6, 19));
         Assert.Contains(holidays, holiday => holiday.Date == new DateOnly(2026, 12, 24));
@@ -53,7 +54,7 @@ public class NagerHolidayProviderTests
     [Fact]
     public void GetHolidays_ReturnsThemInDateOrder()
     {
-        var holidays = _provider.GetHolidays(2026);
+        var holidays = _provider.GetHolidays(2026).Value!;
 
         for (var i = 1; i < holidays.Length; i++)
         {
@@ -64,7 +65,7 @@ public class NagerHolidayProviderTests
     [Fact]
     public void GetHolidays_ReturnsOnlyDatesWithinTheRequestedYear()
     {
-        var holidays = _provider.GetHolidays(2026);
+        var holidays = _provider.GetHolidays(2026).Value!;
 
         Assert.All(holidays, holiday => Assert.Equal(2026, holiday.Date.Year));
     }
@@ -72,6 +73,6 @@ public class NagerHolidayProviderTests
     [Fact]
     public void GetHolidays_CalledTwice_ReturnsTheSameCachedInstance()
     {
-        Assert.Same(_provider.GetHolidays(2026), _provider.GetHolidays(2026));
+        Assert.Same(_provider.GetHolidays(2026).Value!, _provider.GetHolidays(2026).Value!);
     }
 }

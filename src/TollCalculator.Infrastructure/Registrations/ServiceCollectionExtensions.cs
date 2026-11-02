@@ -1,10 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using TollCalculator.Domain.Repositories;
-using TollCalculator.Domain.Services;
-using TollCalculator.Infrastructure.Holidays;
+using TollCalculator.Application.Providers;
+using TollCalculator.Application.Repositories;
+using TollCalculator.Application.Services;
 using TollCalculator.Infrastructure.Persistence;
+using TollCalculator.Infrastructure.Providers;
 using TollCalculator.Infrastructure.Repositories.Implementations;
 
 namespace TollCalculator.Infrastructure.Registrations;
@@ -31,7 +32,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IVehicleRepository, VehicleRepository>();
         services.AddScoped<ITollPassageRepository, TollPassageRepository>();
         services.AddScoped<ITollScheduleRepository, TollScheduleRepository>();
-        services.AddSingleton<IHolidayProvider, NagerHolidayProvider>();
+        services.AddSingleton<IHolidayProvider, HolidayProvider>();
 
         return services;
     }

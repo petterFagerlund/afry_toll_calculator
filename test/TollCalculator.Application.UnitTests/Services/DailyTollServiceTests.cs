@@ -1,10 +1,10 @@
 using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
-using TollCalculator.Domain.Services;
-using TollCalculator.Domain.Services.Implementations;
+using TollCalculator.Application.Services;
+using TollCalculator.Application.Services.Implementations;
 using Xunit;
 
-namespace TollCalculator.Domain.UnitTests.Services;
+namespace TollCalculator.Application.UnitTests.Services;
 
 public class DailyTollServiceTests
 {
@@ -28,8 +28,8 @@ public class DailyTollServiceTests
     {
         var result = _service.Calculate(VehicleType.Car, [], _tariff);
 
-        Assert.Equal(0, result.TotalFee);
-        Assert.Empty(result.ChargedPassages);
+        Assert.Equal(0, result.Value!.TotalFee);
+        Assert.Empty(result.Value!.ChargedPassages);
     }
 
     [Fact]
@@ -39,8 +39,8 @@ public class DailyTollServiceTests
 
         var result = _service.Calculate(VehicleType.Car, unsorted, _tariff);
 
-        Assert.Equal(36, result.TotalFee);
-        Assert.Equal(PassageAt(7, 15), result.ChargedPassages[0].PassedAt);
+        Assert.Equal(36, result.Value!.TotalFee);
+        Assert.Equal(PassageAt(7, 15), result.Value!.ChargedPassages[0].PassedAt);
     }
 
     [Fact]
@@ -50,9 +50,9 @@ public class DailyTollServiceTests
 
         var result = _service.Calculate(VehicleType.Car, passages, _tariff);
 
-        Assert.Equal(13, result.TotalFee);
-        Assert.Single(result.ChargedPassages);
-        Assert.Equal(PassageAt(6, 35), result.ChargedPassages[0].PassedAt);
+        Assert.Equal(13, result.Value!.TotalFee);
+        Assert.Single(result.Value!.ChargedPassages);
+        Assert.Equal(PassageAt(6, 35), result.Value!.ChargedPassages[0].PassedAt);
     }
 
     [Fact]
@@ -62,8 +62,8 @@ public class DailyTollServiceTests
 
         var result = _service.Calculate(VehicleType.Car, passages, _tariff);
 
-        Assert.Equal(26, result.TotalFee);
-        Assert.Equal(2, result.ChargedPassages.Length);
+        Assert.Equal(26, result.Value!.TotalFee);
+        Assert.Equal(2, result.Value!.ChargedPassages.Length);
     }
 
     [Fact]
@@ -73,8 +73,8 @@ public class DailyTollServiceTests
 
         var result = _service.Calculate(VehicleType.Car, passages, _tariff);
 
-        Assert.Equal(26, result.TotalFee);
-        Assert.Equal(2, result.ChargedPassages.Length);
+        Assert.Equal(26, result.Value!.TotalFee);
+        Assert.Equal(2, result.Value!.ChargedPassages.Length);
     }
 
     [Fact]
@@ -87,8 +87,8 @@ public class DailyTollServiceTests
 
         var result = _service.Calculate(VehicleType.Car, passages, _tariff);
 
-        Assert.Equal(DailyCap, result.TotalFee);
-        Assert.Equal(DailyCap, result.ChargedPassages.Sum(charged => charged.Amount));
+        Assert.Equal(DailyCap, result.Value!.TotalFee);
+        Assert.Equal(DailyCap, result.Value!.ChargedPassages.Sum(charged => charged.Amount));
     }
 
     [Fact]
@@ -96,8 +96,8 @@ public class DailyTollServiceTests
     {
         var result = _service.Calculate(VehicleType.Motorbike, [PassageAt(7, 15)], _tariff);
 
-        Assert.Equal(0, result.TotalFee);
-        Assert.Empty(result.ChargedPassages);
+        Assert.Equal(0, result.Value!.TotalFee);
+        Assert.Empty(result.Value!.ChargedPassages);
     }
 
     [Fact]
@@ -107,8 +107,8 @@ public class DailyTollServiceTests
 
         var result = _service.Calculate(VehicleType.Car, [onNewYearsDay], _tariff);
 
-        Assert.Equal(0, result.TotalFee);
-        Assert.Empty(result.ChargedPassages);
+        Assert.Equal(0, result.Value!.TotalFee);
+        Assert.Empty(result.Value!.ChargedPassages);
     }
 
     [Fact]
@@ -118,8 +118,8 @@ public class DailyTollServiceTests
 
         var result = _service.Calculate(VehicleType.Car, passages, _tariff);
 
-        Assert.Equal(0, result.TotalFee);
-        Assert.Empty(result.ChargedPassages);
+        Assert.Equal(0, result.Value!.TotalFee);
+        Assert.Empty(result.Value!.ChargedPassages);
     }
 
     [Fact]
@@ -129,8 +129,8 @@ public class DailyTollServiceTests
 
         var result = _service.Calculate(VehicleType.Car, passages, _tariff);
 
-        Assert.Equal(13, result.TotalFee);
-        Assert.Single(result.ChargedPassages);
+        Assert.Equal(13, result.Value!.TotalFee);
+        Assert.Single(result.Value!.ChargedPassages);
     }
 
     [Fact]
@@ -145,7 +145,7 @@ public class DailyTollServiceTests
 
         var result = _service.Calculate(VehicleType.Car, passages, _tariff);
 
-        Assert.Equal(DailyCap * 2, result.TotalFee);
+        Assert.Equal(DailyCap * 2, result.Value!.TotalFee);
     }
 
     [Fact]
@@ -155,8 +155,8 @@ public class DailyTollServiceTests
 
         var result = _service.Calculate(VehicleType.Car, passages, _tariff);
 
-        Assert.Equal(36, result.TotalFee);
-        Assert.Equal(2, result.ChargedPassages.Length);
+        Assert.Equal(36, result.Value!.TotalFee);
+        Assert.Equal(2, result.Value!.ChargedPassages.Length);
     }
 
     [Fact]

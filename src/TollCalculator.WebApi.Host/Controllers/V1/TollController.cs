@@ -71,14 +71,12 @@ public sealed class TollController : ApiControllerBase
         CancellationToken cancellationToken)
     {
         var modelState = DailyTollQueryValidator.Validate(registrationNumber, date);
-
         if (!modelState.IsValid)
         {
             return MapValidationProblem(modelState);
         }
 
         var result = await _tollService.GetDailyTollAsync(registrationNumber, date!.Value, cancellationToken);
-
         if (!result.IsSuccess)
         {
             return MapErrorResponse(result);

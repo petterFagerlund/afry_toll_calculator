@@ -1,10 +1,10 @@
 using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
-using TollCalculator.Domain.Services;
-using TollCalculator.Domain.Services.Implementations;
+using TollCalculator.Application.Services;
+using TollCalculator.Application.Services.Implementations;
 using Xunit;
 
-namespace TollCalculator.Domain.UnitTests.Services;
+namespace TollCalculator.Application.UnitTests.Services;
 
 public class TollFeeServiceTests
 {
@@ -31,7 +31,7 @@ public class TollFeeServiceTests
         var vehicleType = VehicleType.Car;
         var passedAt = new DateTimeOffset(2026, 10, 23, 7, 15, 0, Offset);
 
-        Assert.Equal(18, _service.CalculateFee(vehicleType, passedAt, _schedule));
+        Assert.Equal(18, _service.CalculateFee(vehicleType, passedAt, _schedule).Value);
     }
 
     [Fact]
@@ -40,7 +40,7 @@ public class TollFeeServiceTests
         var vehicleType = VehicleType.Motorbike;
         var passedAt = new DateTimeOffset(2026, 10, 23, 7, 15, 0, Offset);
 
-        Assert.Equal(0, _service.CalculateFee(vehicleType, passedAt, _schedule));
+        Assert.Equal(0, _service.CalculateFee(vehicleType, passedAt, _schedule).Value);
     }
 
     [Fact]
@@ -49,7 +49,7 @@ public class TollFeeServiceTests
         var vehicleType = VehicleType.Car;
         var passedAt = new DateTimeOffset(2026, 10, 24, 7, 15, 0, Offset);
 
-        Assert.Equal(0, _service.CalculateFee(vehicleType, passedAt, _schedule));
+        Assert.Equal(0, _service.CalculateFee(vehicleType, passedAt, _schedule).Value);
     }
 
     [Fact]
@@ -58,7 +58,7 @@ public class TollFeeServiceTests
         var vehicleType = VehicleType.Car;
         var passedAt = new DateTimeOffset(2026, 1, 1, 7, 15, 0, Offset);
 
-        Assert.Equal(0, _service.CalculateFee(vehicleType, passedAt, _schedule));
+        Assert.Equal(0, _service.CalculateFee(vehicleType, passedAt, _schedule).Value);
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public class TollFeeServiceTests
         var vehicleType = VehicleType.Car;
         var passedAt = new DateTimeOffset(2026, 10, 23, 3, 0, 0, Offset);
 
-        Assert.Equal(0, _service.CalculateFee(vehicleType, passedAt, _schedule));
+        Assert.Equal(0, _service.CalculateFee(vehicleType, passedAt, _schedule).Value);
     }
 
     [Fact]
@@ -76,7 +76,7 @@ public class TollFeeServiceTests
         var vehicleType = VehicleType.Car;
         var fridayLateEvening = new DateTimeOffset(2026, 10, 23, 23, 30, 0, Offset);
 
-        Assert.Equal(0, _service.CalculateFee(vehicleType, fridayLateEvening, _schedule));
+        Assert.Equal(0, _service.CalculateFee(vehicleType, fridayLateEvening, _schedule).Value);
     }
 
     [Fact]
@@ -87,8 +87,8 @@ public class TollFeeServiceTests
         var utcNotation = stockholmNotation.ToUniversalTime();
 
         Assert.Equal(
-            _service.CalculateFee(vehicleType, stockholmNotation, _schedule),
-            _service.CalculateFee(vehicleType, utcNotation, _schedule));
+            _service.CalculateFee(vehicleType, stockholmNotation, _schedule).Value,
+            _service.CalculateFee(vehicleType, utcNotation, _schedule).Value);
     }
 
     [Fact]
@@ -97,7 +97,7 @@ public class TollFeeServiceTests
         var vehicleType = VehicleType.Car;
         var utcNotation = new DateTimeOffset(2026, 10, 23, 5, 15, 0, TimeSpan.Zero);
 
-        Assert.Equal(18, _service.CalculateFee(vehicleType, utcNotation, _schedule));
+        Assert.Equal(18, _service.CalculateFee(vehicleType, utcNotation, _schedule).Value);
     }
 
     [Fact]
@@ -106,6 +106,6 @@ public class TollFeeServiceTests
         var vehicleType = VehicleType.Car;
         var passedAt = new DateTimeOffset(2026, 10, 23, 7, 15, 0, Offset);
 
-        Assert.Throws<ArgumentNullException>(() => _service.CalculateFee(vehicleType, passedAt, null!));
+        Assert.Throws<ArgumentNullException>(() => _service.CalculateFee(vehicleType, passedAt, null!).Value);
     }
 }

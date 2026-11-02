@@ -2,11 +2,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using TollCalculator.Domain.Models;
 using NSubstitute;
+using TollCalculator.Application.Providers;
 using TollCalculator.Application.Registrations;
 using TollCalculator.Application.Services;
-using TollCalculator.Domain.Services;
-using TollCalculator.Domain.Repositories;
-using TollCalculator.Domain.Services;
+using TollCalculator.Application.Services;
+using TollCalculator.Application.Repositories;
+using TollCalculator.Application.Services;
 using Xunit;
 
 namespace TollCalculator.Application.UnitTests.Registrations;
@@ -47,7 +48,7 @@ public class ServiceCollectionExtensionsTests
         var dailyTollService = provider.GetRequiredService<IDailyTollService>();
         var tariff = TollTariff.Create(TollSchedule.Create([]), 60);
 
-        Assert.Equal(0, dailyTollService.Calculate(Domain.Enums.VehicleType.Car, [], tariff).TotalFee);
+        Assert.Equal(0, dailyTollService.Calculate(Domain.Enums.VehicleType.Car, [], tariff).Value!.TotalFee);
     }
 
     [Fact]

@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TollCalculator.Domain\TollCalculator.Domain.csproj" />
+    <ProjectReference Include="..\TollCalculator.Application\TollCalculator.Application.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

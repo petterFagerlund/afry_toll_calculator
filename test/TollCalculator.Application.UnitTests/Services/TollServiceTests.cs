@@ -1,12 +1,13 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
+using TollCalculator.Application.Providers;
 using TollCalculator.Application.Results;
 using TollCalculator.Application.Services.Implementations;
 using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
-using TollCalculator.Domain.Repositories;
-using TollCalculator.Domain.Services;
-using TollCalculator.Domain.Services.Implementations;
+using TollCalculator.Application.Repositories;
+using TollCalculator.Application.Services;
+using TollCalculator.Application.Services.Implementations;
 using Xunit;
 
 namespace TollCalculator.Application.UnitTests.Services;
@@ -25,6 +26,8 @@ public class TollServiceTests
     {
         _tollScheduleRepository.GetTariffAsync(Arg.Any<CancellationToken>())
             .Returns(TollTariff.Create(StandardSchedule(), 60));
+
+        _holidayProvider.GetHolidays(Arg.Any<int>()).Returns(ApplicationResult<Holiday[]>.Success([]));
 
         _service = new TollService(
             _vehicleRepository,

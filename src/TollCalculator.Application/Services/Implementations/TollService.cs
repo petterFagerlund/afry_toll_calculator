@@ -2,8 +2,8 @@ using Microsoft.Extensions.Logging;
 using TollCalculator.Application.Results;
 using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
-using TollCalculator.Domain.Repositories;
-using TollCalculator.Domain.Services;
+using TollCalculator.Application.Repositories;
+using TollCalculator.Application.Services;
 
 namespace TollCalculator.Application.Services.Implementations;
 
@@ -69,6 +69,6 @@ internal sealed class TollService : ITollService
         CancellationToken cancellationToken)
     {
         var tariff = await _tollScheduleRepository.GetTariffAsync(cancellationToken);
-        return ApplicationResult<DailyToll>.Success(_dailyTollService.Calculate(vehicleType, passedAt, tariff));
+        return _dailyTollService.Calculate(vehicleType, passedAt, tariff);
     }
 }

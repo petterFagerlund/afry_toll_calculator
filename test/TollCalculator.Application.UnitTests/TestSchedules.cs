@@ -1,6 +1,6 @@
 using TollCalculator.Domain.Models;
 
-namespace TollCalculator.Domain.UnitTests;
+namespace TollCalculator.Application.UnitTests;
 
 internal static class TestSchedules
 {

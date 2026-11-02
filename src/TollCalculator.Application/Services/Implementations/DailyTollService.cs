@@ -1,8 +1,9 @@
+using TollCalculator.Application.Results;
 using TollCalculator.Domain.Constants;
 using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
 
-namespace TollCalculator.Domain.Services.Implementations;
+namespace TollCalculator.Application.Services.Implementations;
 
 public sealed class DailyTollService : IDailyTollService
 {
@@ -16,16 +17,26 @@ public sealed class DailyTollService : IDailyTollService
         _tollFeeService = tollFeeService;
     }
 
-    public DailyToll Calculate(VehicleType vehicleType, DateTimeOffset[] passedAt, TollTariff tariff)
+    public ApplicationResult<DailyToll> Calculate(
+        VehicleType vehicleType,
+        DateTimeOffset[] passedAt,
+        TollTariff tariff)
     {
         ArgumentNullException.ThrowIfNull(passedAt);
         ArgumentNullException.ThrowIfNull(tariff);
 
-        var chargeable = ChargeablePassages(vehicleType, passedAt, tariff.Schedule);
+        var chargeablePassages = ChargeablePassages(vehicleType, passedAt, tariff.Schedule);
+
+        if (!chargeablePassages.IsSuccess)
+        {
+            return ApplicationResult<DailyToll>.Error(chargeablePassages.ErrorMessage!);
+        }
+
+        var chargeable = chargeablePassages.Value!;
 
         if (chargeable.Length == 0)
         {
-            return DailyToll.None();
+            return ApplicationResult<DailyToll>.Success(DailyToll.None());
         }
 
         var charged = new List<ChargedTollPassage>();
@@ -40,28 +51,35 @@ public sealed class DailyTollService : IDailyTollService
             index = dayEnd;
         }
 
-        return new DailyToll(total, charged.ToArray());
+        return ApplicationResult<DailyToll>.Success(new DailyToll(total, charged.ToArray()));
     }
 
-    private ChargedTollPassage[] ChargeablePassages(
+    private ApplicationResult<ChargedTollPassage[]> ChargeablePassages(
         VehicleType vehicleType,
         DateTimeOffset[] passedAt,
         TollSchedule schedule)
     {
         var chargeable = new List<ChargedTollPassage>();
+
         foreach (var moment in passedAt)
         {
             var fee = _tollFeeService.CalculateFee(vehicleType, moment, schedule);
-            if (fee > 0)
+
+            if (!fee.IsSuccess)
             {
-                chargeable.Add(new ChargedTollPassage(moment, fee));
+                return ApplicationResult<ChargedTollPassage[]>.Error(fee.ErrorMessage!);
+            }
+
+            if (fee.Value > 0)
+            {
+                chargeable.Add(new ChargedTollPassage(moment, fee.Value));
             }
         }
 
         var ordered = chargeable.ToArray();
         Array.Sort(ordered, (left, right) => left.PassedAt.CompareTo(right.PassedAt));
 
-        return ordered;
+        return ApplicationResult<ChargedTollPassage[]>.Success(ordered);
     }
 
     private static int EndOfDay(ChargedTollPassage[] chargeable, int startIndex)

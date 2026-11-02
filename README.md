@@ -36,9 +36,9 @@ one source of truth for them. Holidays are not stored at all — they are resolv
 
 ```
 src/
-  TollCalculator.Domain/           Models, Enums, Constants, Services, repository interfaces — references nothing
-  TollCalculator.Infrastructure/   DbContext, configurations, seed, repository implementations
-  TollCalculator.Application/      Services over the repository interfaces, ApplicationResult
+  TollCalculator.Domain/           Models, Enums, Constants — references nothing, holds no behaviour
+  TollCalculator.Application/      Services, repository and provider interfaces, ApplicationResult
+  TollCalculator.Infrastructure/   DbContext, configurations, seed, repository and provider implementations
   TollCalculator.WebApi.Models/    V1 request/response contracts        — references nothing
   TollCalculator.WebApi.Host/      Controllers, validators, mappers, auth, OpenAPI
 test/
@@ -48,19 +48,29 @@ test/
   TollCalculator.WebApi.Host.IntegrationTests/
 ```
 
-Dependencies point inward: Infrastructure → Domain, Application → Domain. Neither Application nor
-Domain knows that EF Core exists — the repository *interfaces* live in `Domain/Repositories/` and only
-`Infrastructure` implements them. `WebApi.Host` is the composition root and references all of them.
+Dependencies point inward: Application → Domain, Infrastructure → Application → Domain. Neither
+Application nor Domain knows that EF Core or Nager.Date exists — the repository and provider *interfaces*
+live in `Application/Repositories/` and `Application/Services/`, and only `Infrastructure` implements them.
+`WebApi.Host` is the composition root and references all of them.
 
-**Why DDD here.** The interesting part of this problem is a handful of rules that interact — the hourly
-window, the daily cap, toll-free dates, toll-free vehicle types. In the original they were tangled into
-one method together with the data they operate on, which is why four of the six bugs are arithmetic or
-operator-precedence mistakes hiding inside an if-chain. Putting the rules in `Domain` with no dependencies
-means they can be tested directly, exhaustively and without a database: `DailyTollService` takes a vehicle
-type, the instants it passed and a tariff (the schedule plus the daily cap), and returns the total plus
-which passages were charged — it asks for nothing it does not read, so no entity and no registration
-number. It holds no state, so it is a singleton. Everything else — SQL, HTTP, JSON, auth — is arranged
-around that and can be changed without touching it.
+**Where the rules live.** The interesting part of this problem is a handful of rules that interact — the
+hourly window, the daily cap, toll-free dates, toll-free vehicle types. In the original they were tangled
+into one method together with the data they operate on, which is why four of the six bugs are arithmetic
+or operator-precedence mistakes hiding inside an if-chain.
+
+They now live in `Application/Services/`, separated from the data they act on. `Domain` is deliberately
+behaviour-free: models, enums and constants only, no interfaces and no services. That keeps every
+abstraction in one layer — a reader looking for what the system *does* opens `Application` and finds all
+of it, implementations included, rather than following an interface across a project boundary.
+
+The rules are still testable without a database, because they depend on interfaces rather than on EF Core:
+`DailyTollService` takes a vehicle type, the instants it passed and a tariff (the schedule plus the daily
+cap), and returns the total plus which passages were charged — it asks for nothing it does not read, so no
+entity and no registration number. It holds no state, so it is a singleton.
+
+Every service returns `ApplicationResult<T>` rather than a bare value, so a failure anywhere in the chain
+travels back to the controller as data instead of an exception, and `ApiControllerBase.MapErrorResponse`
+turns it into the right status code.
 
 Passages are grouped by Stockholm day before the hourly window and the daily cap are applied, so a set of
 timestamps spanning several days is charged correctly rather than stopping at the first day's cap.

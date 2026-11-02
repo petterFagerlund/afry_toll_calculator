@@ -1,28 +1,29 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using Nager.Date;
+using TollCalculator.Application.Providers;
+using TollCalculator.Application.Results;
 using TollCalculator.Domain.Models;
-using TollCalculator.Domain.Services;
 
-namespace TollCalculator.Infrastructure.Holidays;
+namespace TollCalculator.Infrastructure.Providers;
 
-internal sealed class NagerHolidayProvider : IHolidayProvider
+internal sealed class HolidayProvider : IHolidayProvider
 {
     private const CountryCode Sweden = CountryCode.SE;
 
     private readonly ConcurrentDictionary<int, Holiday[]> _holidaysByYear = new();
-    private readonly ILogger<NagerHolidayProvider> _logger;
+    private readonly ILogger<HolidayProvider> _logger;
 
-    public NagerHolidayProvider(ILogger<NagerHolidayProvider> logger)
+    public HolidayProvider(ILogger<HolidayProvider> logger)
     {
         ArgumentNullException.ThrowIfNull(logger);
 
         _logger = logger;
     }
 
-    public Holiday[] GetHolidays(int year)
+    public ApplicationResult<Holiday[]> GetHolidays(int year)
     {
-        return _holidaysByYear.GetOrAdd(year, ResolveHolidays);
+        return ApplicationResult<Holiday[]>.Success(_holidaysByYear.GetOrAdd(year, ResolveHolidays));
     }
 
     private Holiday[] ResolveHolidays(int year)

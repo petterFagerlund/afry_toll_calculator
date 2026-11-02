@@ -1,6 +1,6 @@
 using TollCalculator.Domain.Models;
 
-namespace TollCalculator.Domain.Repositories;
+namespace TollCalculator.Application.Repositories;
 
 public interface ITollScheduleRepository
 {
