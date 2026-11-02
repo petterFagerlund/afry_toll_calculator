@@ -18,7 +18,7 @@ internal sealed class VehicleRepository : IVehicleRepository
 
     public async Task<Vehicle?> GetAsync(string registrationNumber, CancellationToken cancellationToken)
     {
-        var normalized = RegistrationNumbers.Normalize(registrationNumber, nameof(registrationNumber));
+        var normalized = RegistrationNumbers.Normalize(registrationNumber);
 
         return await _context.Vehicles
             .AsNoTracking()

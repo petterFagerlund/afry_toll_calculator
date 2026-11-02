@@ -77,7 +77,7 @@ public class TollServiceTests
     public async Task CalculateAsync_KnownVehicleType_ChargesTheHighestFeeWithinTheHourlyWindow()
     {
         var result = await _service.CalculateAsync(
-            "Car",
+            VehicleType.Car,
             [At(Monday, 7, 15), At(Monday, 7, 45)],
             CancellationToken.None);
 
@@ -89,29 +89,16 @@ public class TollServiceTests
     [Fact]
     public async Task CalculateAsync_TollFreeVehicleType_ReturnsZero()
     {
-        var result = await _service.CalculateAsync("Emergency", [At(Monday, 7, 15)], CancellationToken.None);
+        var result = await _service.CalculateAsync(VehicleType.Emergency, [At(Monday, 7, 15)], CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(0, result.Value!.TotalFee);
     }
 
-    [Theory]
-    [InlineData("Spaceship")]
-    [InlineData("Unknown")]
-    [InlineData("")]
-    [InlineData(null)]
-    public async Task CalculateAsync_UnknownVehicleTypeString_ReturnsInvalid(string? vehicleType)
-    {
-        var result = await _service.CalculateAsync(vehicleType!, [At(Monday, 7, 15)], CancellationToken.None);
-
-        Assert.False(result.IsSuccess);
-        Assert.Equal(ApplicationResultStatus.ValidationError, result.Status);
-    }
-
     [Fact]
     public async Task CalculateAsync_EmptyTimestamps_ReturnsZeroAndAnEmptyBreakdown()
     {
-        var result = await _service.CalculateAsync("Car", [], CancellationToken.None);
+        var result = await _service.CalculateAsync(VehicleType.Car, [], CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(0, result.Value!.TotalFee);
@@ -124,7 +111,7 @@ public class TollServiceTests
         var goodFriday = new DateOnly(2026, 4, 3);
         _holidayProvider.GetHolidays(2026).Returns([Holiday.Create(goodFriday, "Långfredagen")]);
 
-        var result = await _service.CalculateAsync("Car", [At(goodFriday, 7, 15)], CancellationToken.None);
+        var result = await _service.CalculateAsync(VehicleType.Car, [At(goodFriday, 7, 15)], CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(0, result.Value!.TotalFee);
@@ -133,7 +120,7 @@ public class TollServiceTests
     [Fact]
     public async Task CalculateAsync_PersistsNothing()
     {
-        await _service.CalculateAsync("Car", [At(Monday, 7, 15)], CancellationToken.None);
+        await _service.CalculateAsync(VehicleType.Car, [At(Monday, 7, 15)], CancellationToken.None);
 
         await _tollPassageRepository.DidNotReceiveWithAnyArgs().AddAsync(null!, CancellationToken.None);
     }

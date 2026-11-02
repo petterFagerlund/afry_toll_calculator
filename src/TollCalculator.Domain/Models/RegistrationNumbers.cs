@@ -2,11 +2,11 @@ namespace TollCalculator.Domain.Models;
 
 public static class RegistrationNumbers
 {
-    public static string Normalize(string registrationNumber, string parameterName)
+    public static string Normalize(string registrationNumber)
     {
         if (string.IsNullOrWhiteSpace(registrationNumber))
         {
-            throw new ArgumentException("A registration number is required.", parameterName);
+            throw new ArgumentException("A registration number is required.");
         }
 
         return registrationNumber.Trim().ToUpperInvariant();

@@ -270,5 +270,5 @@ Six `ToString()` comparisons against a private enum that nothing else could see 
 casing difference in the vehicle type silently meant "not toll free" — the vehicle got charged and nothing
 reported why.
 *Fixed:* a `VehicleType` enum in the domain, `TollFreeVehicleTypes` naming the free ones in one place, and
-`VehicleTypeRules` rows carrying the flag. `VehicleTypes.TryParse` converts the API's string once, and an
-unrecognised value is a 400 with a message, not a silent miss.
+`VehicleTypeRules` rows carrying the flag. The API contract has its own `VehicleType` enum, so an
+unrecognised value is a 400 from the deserializer and never reaches the domain.

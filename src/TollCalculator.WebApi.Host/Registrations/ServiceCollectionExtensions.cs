@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Asp.Versioning;
 using TollCalculator.WebApi.Host.Configuration;
 using TollCalculator.WebApi.Host.ErrorHandling.Implementations;
@@ -19,6 +20,15 @@ internal static class ServiceCollectionExtensions
             .ValidateOnStart();
 
         return services;
+    }
+
+    public static IMvcBuilder AddJsonApiControllers(this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        return services.AddControllers()
+            .AddJsonOptions(options =>
+                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
     }
 
     public static IServiceCollection AddVersionedApi(this IServiceCollection services)

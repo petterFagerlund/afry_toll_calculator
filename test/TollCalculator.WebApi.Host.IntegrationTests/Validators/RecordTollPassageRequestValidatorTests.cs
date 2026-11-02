@@ -22,6 +22,19 @@ public class RecordTollPassageRequestValidatorTests
     }
 
     [Fact]
+    public void Validate_RejectsAMaximumPassedAt()
+    {
+        var modelState = RecordTollPassageRequestValidator.Validate(new RecordTollPassageRequest
+        {
+            RegistrationNumber = "ABC123",
+            PassedAt = DateTimeOffset.MaxValue,
+        });
+
+        Assert.False(modelState.IsValid);
+        Assert.Contains(nameof(RecordTollPassageRequest.PassedAt), modelState.Keys);
+    }
+
+    [Fact]
     public void Validate_RejectsAMissingRequest()
     {
         var modelState = RecordTollPassageRequestValidator.Validate(null);

@@ -17,15 +17,16 @@ internal static class RecordTollPassageRequestValidator
         }
 
         var registrationNumberError = RegistrationNumberRule.Check(request.RegistrationNumber);
-
         if (registrationNumberError is not null)
         {
             modelState.AddModelError(nameof(RecordTollPassageRequest.RegistrationNumber), registrationNumberError);
         }
 
-        if (request.PassedAt == DateTimeOffset.MinValue)
+        var passedAtError = PassageTimestampRule.Check(request.PassedAt);
+
+        if (passedAtError is not null)
         {
-            modelState.AddModelError(nameof(RecordTollPassageRequest.PassedAt), "A passage timestamp is required.");
+            modelState.AddModelError(nameof(RecordTollPassageRequest.PassedAt), passedAtError);
         }
 
         return modelState;

@@ -14,7 +14,6 @@ public sealed class VehicleTypesController : ApiControllerBase
     public VehicleTypesController(IVehicleTypeService vehicleTypeService)
     {
         ArgumentNullException.ThrowIfNull(vehicleTypeService);
-
         _vehicleTypeService = vehicleTypeService;
     }
 
@@ -24,7 +23,6 @@ public sealed class VehicleTypesController : ApiControllerBase
     public async Task<ActionResult<VehicleTypeResponse[]>> GetVehicleTypes(CancellationToken cancellationToken)
     {
         var rules = await _vehicleTypeService.GetVehicleTypeRulesAsync(cancellationToken);
-
         return Ok(VehicleTypeMapper.ToResponses(rules));
     }
 }

@@ -26,7 +26,7 @@ public sealed record Vehicle
 
     public static Vehicle Create(string registrationNumber, VehicleType vehicleType)
     {
-        var normalized = RegistrationNumbers.Normalize(registrationNumber, nameof(registrationNumber));
+        var normalized = RegistrationNumbers.Normalize(registrationNumber);
 
         return new Vehicle(normalized, vehicleType);
     }

@@ -49,16 +49,11 @@ internal sealed class TollService : ITollService
     }
 
     public async Task<ApplicationResult<DailyToll>> CalculateAsync(
-        string vehicleType,
+        VehicleType vehicleType,
         DateTimeOffset[] timestamps,
         CancellationToken cancellationToken)
     {
-        if (!VehicleTypeParser.TryParse(vehicleType, out var parsedVehicleType))
-        {
-            return ApplicationResult<DailyToll>.Invalid($"'{vehicleType}' is not a known vehicle type.");
-        }
-
-        var vehicle = Vehicle.Unregistered(parsedVehicleType);
+        var vehicle = Vehicle.Unregistered(vehicleType);
         var passages = new TollPassage[timestamps.Length];
 
         for (var i = 0; i < timestamps.Length; i++)

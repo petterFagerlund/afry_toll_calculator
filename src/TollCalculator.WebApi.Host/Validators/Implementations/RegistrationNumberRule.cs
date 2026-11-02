@@ -2,7 +2,7 @@ namespace TollCalculator.WebApi.Host.Validators.Implementations;
 
 internal static class RegistrationNumberRule
 {
-    public const int MaximumLength = 20;
+    private const int MaximumLength = 20;
 
     public static string? Check(string? registrationNumber)
     {

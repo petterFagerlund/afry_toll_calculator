@@ -54,7 +54,6 @@ public sealed class DailyTollService : IDailyTollService
         foreach (var passage in passages)
         {
             var fee = _tollFeeService.CalculateFee(vehicle, passage.PassedAt, schedule);
-
             if (fee > 0)
             {
                 chargeable.Add(new ChargedTollPassage(passage.PassedAt, fee));

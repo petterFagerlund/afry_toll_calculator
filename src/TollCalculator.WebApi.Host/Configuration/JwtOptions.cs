@@ -5,10 +5,8 @@ namespace TollCalculator.WebApi.Host.Configuration;
 public sealed class JwtOptions
 {
     public const string SectionName = "Jwt";
-
-    public const int MinimumSigningKeyLength = 32;
-
-    public const int MinimumClientSecretLength = 16;
+    private const int MinimumSigningKeyLength = 32;
+    private const int MinimumClientSecretLength = 16;
 
     [Required]
     [MinLength(MinimumSigningKeyLength)]

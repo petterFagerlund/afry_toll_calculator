@@ -34,13 +34,14 @@ public sealed class TollController : ApiControllerBase
             return MapValidationProblem(modelState);
         }
 
-        var result = await _tollService.CalculateAsync(request.VehicleType!, request.Timestamps, cancellationToken);
+        var result = await _tollService.CalculateAsync(
+            VehicleTypeMapper.ToDomain(request.VehicleType), request.Timestamps, cancellationToken);
 
         if (!result.IsSuccess)
         {
             return MapErrorResponse(result);
         }
 
-        return Ok(DailyTollMapper.ToCalculateTollResponse(request.VehicleType!, result.Value!));
+        return Ok(DailyTollMapper.ToCalculateTollResponse(request.VehicleType, result.Value!));
     }
 }

@@ -7,9 +7,11 @@ using TollCalculator.Domain.Models;
 using TollCalculator.WebApi.Host.Controllers.V1;
 using TollCalculator.WebApi.Host.Mappers;
 using TollCalculator.WebApi.Host.Validators.Implementations;
+using TollCalculator.WebApi.Models.V1;
 using TollCalculator.WebApi.Models.V1.Requests;
 using TollCalculator.WebApi.Models.V1.Responses;
 using Xunit;
+using DomainVehicleType = TollCalculator.Domain.Enums.VehicleType;
 
 namespace TollCalculator.WebApi.Host.IntegrationTests.Controllers;
 
@@ -30,14 +32,14 @@ public class TollControllerTests
     {
         var dailyToll = new DailyToll(18, [new Domain.Models.ChargedTollPassage(Morning, 18)]);
         _tollService
-            .CalculateAsync("Car", Arg.Is<DateTimeOffset[]>(timestamps => timestamps.Length == 1),
+            .CalculateAsync(DomainVehicleType.Car, Arg.Is<DateTimeOffset[]>(timestamps => timestamps.Length == 1),
                 Arg.Any<CancellationToken>())
             .Returns(ApplicationResult<DailyToll>.Success(dailyToll));
 
-        var result = await _controller.Calculate(NewRequest("Car"), CancellationToken.None);
+        var result = await _controller.Calculate(NewRequest(VehicleType.Car), CancellationToken.None);
 
         var response = Assert.IsType<CalculateTollResponse>(Assert.IsType<OkObjectResult>(result.Result).Value);
-        Assert.Equal("Car", response.VehicleType);
+        Assert.Equal(VehicleType.Car, response.VehicleType);
         Assert.Equal(18, response.TotalFee);
         Assert.Equal(18, Assert.Single(response.ChargedPassages).Amount);
     }
@@ -55,35 +57,35 @@ public class TollControllerTests
     }
 
     [Fact]
-    public async Task Calculate_ReturnsBadRequestForAVehicleTypeTheServiceDoesNotKnow()
+    public async Task Calculate_ReturnsBadRequestWhenTheServiceRejectsTheRequest()
     {
         _tollService
-            .CalculateAsync("Hovercraft", Arg.Any<DateTimeOffset[]>(), Arg.Any<CancellationToken>())
-            .Returns(ApplicationResult<DailyToll>.Invalid("'Hovercraft' is not a known vehicle type."));
+            .CalculateAsync(DomainVehicleType.Car, Arg.Any<DateTimeOffset[]>(), Arg.Any<CancellationToken>())
+            .Returns(ApplicationResult<DailyToll>.Invalid("The request could not be calculated."));
 
-        var result = await _controller.Calculate(NewRequest("Hovercraft"), CancellationToken.None);
+        var result = await _controller.Calculate(NewRequest(VehicleType.Car), CancellationToken.None);
 
         var problem = Assert.IsType<BadRequestObjectResult>(result.Result);
         Assert.Equal(StatusCodes.Status400BadRequest, problem.StatusCode);
         var validationProblem = Assert.IsType<ValidationProblemDetails>(problem.Value);
-        Assert.Equal("'Hovercraft' is not a known vehicle type.", Assert.Single(validationProblem.Errors["request"]));
+        Assert.Equal("The request could not be calculated.", Assert.Single(validationProblem.Errors["request"]));
     }
 
     [Fact]
     public async Task Calculate_ReturnsZeroForATollFreeVehicle()
     {
         _tollService
-            .CalculateAsync("Motorbike", Arg.Any<DateTimeOffset[]>(), Arg.Any<CancellationToken>())
+            .CalculateAsync(DomainVehicleType.Motorbike, Arg.Any<DateTimeOffset[]>(), Arg.Any<CancellationToken>())
             .Returns(ApplicationResult<DailyToll>.Success(DailyToll.None()));
 
-        var result = await _controller.Calculate(NewRequest("Motorbike"), CancellationToken.None);
+        var result = await _controller.Calculate(NewRequest(VehicleType.Motorbike), CancellationToken.None);
 
         var response = Assert.IsType<CalculateTollResponse>(Assert.IsType<OkObjectResult>(result.Result).Value);
         Assert.Equal(0, response.TotalFee);
         Assert.Empty(response.ChargedPassages);
     }
 
-    private static CalculateTollRequest NewRequest(string vehicleType)
+    private static CalculateTollRequest NewRequest(VehicleType vehicleType)
     {
         return new CalculateTollRequest { VehicleType = vehicleType, Timestamps = [Morning] };
     }

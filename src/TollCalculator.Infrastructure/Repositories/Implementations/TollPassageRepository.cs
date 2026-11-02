@@ -32,7 +32,7 @@ internal sealed class TollPassageRepository : ITollPassageRepository
         DateOnly date,
         CancellationToken cancellationToken)
     {
-        var normalized = RegistrationNumbers.Normalize(registrationNumber, nameof(registrationNumber));
+        var normalized = RegistrationNumbers.Normalize(registrationNumber);
         var dayStart = TollTimeZone.StartOfDay(date);
         var nextDayStart = TollTimeZone.StartOfDay(date.AddDays(1));
 

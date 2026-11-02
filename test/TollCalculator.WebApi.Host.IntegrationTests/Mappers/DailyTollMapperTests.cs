@@ -1,5 +1,6 @@
 using TollCalculator.Domain.Models;
 using TollCalculator.WebApi.Host.Mappers;
+using TollCalculator.WebApi.Models.V1;
 using Xunit;
 
 namespace TollCalculator.WebApi.Host.IntegrationTests.Mappers;
@@ -33,13 +34,13 @@ public class DailyTollMapperTests
     }
 
     [Fact]
-    public void ToCalculateTollResponse_MapsTheVehicleTypeAsAString()
+    public void ToCalculateTollResponse_MapsTheVehicleType()
     {
         var dailyToll = new DailyToll(18, [new ChargedTollPassage(Morning, 18)]);
 
-        var response = DailyTollMapper.ToCalculateTollResponse("Car", dailyToll);
+        var response = DailyTollMapper.ToCalculateTollResponse(VehicleType.Car, dailyToll);
 
-        Assert.Equal("Car", response.VehicleType);
+        Assert.Equal(VehicleType.Car, response.VehicleType);
         Assert.Equal(18, response.TotalFee);
         Assert.Equal(Morning, Assert.Single(response.ChargedPassages).PassedAt);
     }
@@ -47,7 +48,7 @@ public class DailyTollMapperTests
     [Fact]
     public void ToCalculateTollResponse_MapsATollFreeResult()
     {
-        var response = DailyTollMapper.ToCalculateTollResponse("Motorbike", DailyToll.None());
+        var response = DailyTollMapper.ToCalculateTollResponse(VehicleType.Motorbike, DailyToll.None());
 
         Assert.Equal(0, response.TotalFee);
         Assert.Empty(response.ChargedPassages);
@@ -63,6 +64,6 @@ public class DailyTollMapperTests
     [Fact]
     public void ToCalculateTollResponse_ThrowsWhenTheDailyTollIsNull()
     {
-        Assert.Throws<ArgumentNullException>(() => DailyTollMapper.ToCalculateTollResponse("Car", null!));
+        Assert.Throws<ArgumentNullException>(() => DailyTollMapper.ToCalculateTollResponse(VehicleType.Car, null!));
     }
 }

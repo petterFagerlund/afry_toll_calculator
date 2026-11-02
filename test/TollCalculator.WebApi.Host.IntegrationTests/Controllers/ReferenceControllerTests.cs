@@ -9,6 +9,7 @@ using TollCalculator.WebApi.Host.Controllers.V1;
 using TollCalculator.WebApi.Host.Mappers;
 using TollCalculator.WebApi.Models.V1.Responses;
 using Xunit;
+using ContractVehicleType = TollCalculator.WebApi.Models.V1.VehicleType;
 
 namespace TollCalculator.WebApi.Host.IntegrationTests.Controllers;
 
@@ -109,7 +110,9 @@ public class VehicleTypesControllerTests
         var result = await _controller.GetVehicleTypes(CancellationToken.None);
 
         var responses = Assert.IsType<VehicleTypeResponse[]>(Assert.IsType<OkObjectResult>(result.Result).Value);
-        Assert.Equal(["Car", "Motorbike"], responses.Select(response => response.VehicleType));
+        Assert.Equal(
+            [ContractVehicleType.Car, ContractVehicleType.Motorbike],
+            responses.Select(response => response.VehicleType));
         Assert.Equal([false, true], responses.Select(response => response.IsTollFree));
     }
 

@@ -1,4 +1,5 @@
 using TollCalculator.Application.Results;
+using TollCalculator.Domain.Enums;
 using TollCalculator.Domain.Models;
 
 namespace TollCalculator.Application.Services;
@@ -11,7 +12,7 @@ public interface ITollService
         CancellationToken cancellationToken);
 
     Task<ApplicationResult<DailyToll>> CalculateAsync(
-        string vehicleType,
+        VehicleType vehicleType,
         DateTimeOffset[] timestamps,
         CancellationToken cancellationToken);
 }
