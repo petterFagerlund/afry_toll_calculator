@@ -9,44 +9,33 @@ public sealed class TollSchedule
         _intervals = intervals;
     }
 
-    public IReadOnlyList<TollRateInterval> Intervals
-    {
-        get { return _intervals; }
-    }
+    public IReadOnlyList<TollRateInterval> Intervals => _intervals;
 
     public int FeeFor(TimeOnly timeOfDay)
     {
-        foreach (var interval in _intervals)
+        var coveringInterval = _intervals.FirstOrDefault(interval => interval.Covers(timeOfDay));
+        if (coveringInterval is null)
         {
-            if (interval.Covers(timeOfDay))
-            {
-                return interval.Amount;
-            }
+            return 0;
         }
 
-        return 0;
+        return coveringInterval.Amount;
     }
 
     public static TollSchedule Create(TollRateInterval[] intervals)
     {
         ArgumentNullException.ThrowIfNull(intervals);
 
-        var ordered = new TollRateInterval[intervals.Length];
-        Array.Copy(intervals, ordered, intervals.Length);
-        Array.Sort(ordered, (left, right) => left.Start.CompareTo(right.Start));
+        var ordered = intervals.OrderBy(interval => interval.Start).ToArray();
 
-        TollRateInterval? previous = null;
-
-        foreach (var interval in ordered)
+        for (var index = 1; index < ordered.Length; index++)
         {
-            if (previous is not null && interval.Start < previous.End)
+            if (ordered[index].Start < ordered[index - 1].End)
             {
                 throw new ArgumentException(
-                    $"The interval starting {interval.Start} overlaps the one ending {previous.End}.",
+                    $"The interval starting {ordered[index].Start} overlaps the one ending {ordered[index - 1].End}.",
                     nameof(intervals));
             }
-
-            previous = interval;
         }
 
         return new TollSchedule(ordered);

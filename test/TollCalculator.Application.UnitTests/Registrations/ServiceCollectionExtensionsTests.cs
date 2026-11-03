@@ -13,7 +13,6 @@ public class ServiceCollectionExtensionsTests
     [Theory]
     [InlineData(typeof(ITollPassageService))]
     [InlineData(typeof(ITollService))]
-    [InlineData(typeof(IDailyTollService))]
     public void AddApplication_ResolvesRegisteredService(Type serviceType)
     {
         using var provider = BuildProvider();
@@ -42,29 +41,11 @@ public class ServiceCollectionExtensionsTests
         using var provider = BuildProvider();
         using var scope = provider.CreateScope();
 
-        var tollScheduleRepository = scope.ServiceProvider.GetRequiredService<ITollScheduleRepository>();
-        tollScheduleRepository.GetTariffAsync(Arg.Any<CancellationToken>())
-            .Returns(TollTariff.Create(TollSchedule.Create([]), 60));
+        var tollService = scope.ServiceProvider.GetRequiredService<ITollService>();
 
-        var dailyTollService = scope.ServiceProvider.GetRequiredService<IDailyTollService>();
-
-        var result = await dailyTollService.Calculate([], CancellationToken.None);
+        var result = await tollService.GetDailyTollAsync("ABC123", new DateOnly(2026, 3, 16), CancellationToken.None);
 
         Assert.Equal(0, result.Value!.TotalFee);
-    }
-
-    [Fact]
-    public void AddApplication_RegistersTheDailyTollServiceAsScoped()
-    {
-        using var provider = BuildProvider();
-
-        using var firstScope = provider.CreateScope();
-        using var secondScope = provider.CreateScope();
-
-        var first = firstScope.ServiceProvider.GetRequiredService<IDailyTollService>();
-
-        Assert.Same(first, firstScope.ServiceProvider.GetRequiredService<IDailyTollService>());
-        Assert.NotSame(first, secondScope.ServiceProvider.GetRequiredService<IDailyTollService>());
     }
 
     [Fact]

@@ -20,9 +20,18 @@ public sealed record ApplicationResult<TValue>
 
     public string? ErrorMessage { get; }
 
-    public bool IsSuccess
+    public bool IsSuccess => Status == ApplicationResultStatus.Success;
+
+    public ApplicationResult<TNext> Map<TNext>(Func<TValue, TNext> map)
     {
-        get { return Status == ApplicationResultStatus.Success; }
+        ArgumentNullException.ThrowIfNull(map);
+
+        if (!IsSuccess)
+        {
+            return ApplicationResult<TNext>.WithError(Status, ErrorMessage!);
+        }
+
+        return ApplicationResult<TNext>.Success(map(Value!));
     }
 
     public static ApplicationResult<TValue> Success(TValue value)

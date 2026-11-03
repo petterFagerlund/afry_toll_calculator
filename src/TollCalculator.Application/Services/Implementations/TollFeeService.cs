@@ -22,23 +22,22 @@ internal sealed class TollFeeService : ITollFeeService
         TollSchedule tollSchedule)
     {
         ArgumentNullException.ThrowIfNull(tollSchedule);
+
         if (TollFreeVehicleTypes.Contains(vehicleType))
         {
             return ApplicationResult<int>.Success(0);
         }
 
         var localPassedAt = TollTimeZone.ToLocalTime(passedAt);
-        var tollFreeDate = _tollFreeDateService.IsTollFree(DateOnly.FromDateTime(localPassedAt));
-        if (!tollFreeDate.IsSuccess)
-        {
-            return ApplicationResult<int>.Error(tollFreeDate.ErrorMessage!);
-        }
 
-        if (tollFreeDate.Value)
+        return _tollFreeDateService.IsTollFree(DateOnly.FromDateTime(localPassedAt)).Map(isTollFree =>
         {
-            return ApplicationResult<int>.Success(0);
-        }
+            if (isTollFree)
+            {
+                return 0;
+            }
 
-        return ApplicationResult<int>.Success(tollSchedule.FeeFor(TimeOnly.FromDateTime(localPassedAt)));
+            return tollSchedule.FeeFor(TimeOnly.FromDateTime(localPassedAt));
+        });
     }
 }

@@ -3,7 +3,7 @@
 The toll fee assignment rewritten as a .NET 10 REST API: SQL Server with EF Core, DDD-structured projects,
 documented with Scalar, protected by a bearer token.
 
-The original Java and C# are left untouched in `Java/` and `C#/` as the reference this was rewritten from.
+The original Java is left untouched in `Java/` as the reference this was rewritten from.
 
 ## Toll rules
 

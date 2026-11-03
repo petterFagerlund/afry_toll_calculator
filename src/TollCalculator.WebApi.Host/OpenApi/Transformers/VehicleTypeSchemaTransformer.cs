@@ -32,12 +32,8 @@ internal sealed class VehicleTypeSchemaTransformer : IOpenApiSchemaTransformer
             return Task.CompletedTask;
         }
 
-        if (schema.Properties?.TryGetValue(VehicleTypeProperty, out var property) != true)
-        {
-            return Task.CompletedTask;
-        }
-
-        if (property is not OpenApiSchema vehicleType)
+        if (schema.Properties?.TryGetValue(VehicleTypeProperty, out var property) != true
+            || property is not OpenApiSchema vehicleType)
         {
             return Task.CompletedTask;
         }
@@ -50,13 +46,6 @@ internal sealed class VehicleTypeSchemaTransformer : IOpenApiSchemaTransformer
 
     private static List<JsonNode> AcceptedVehicleTypes()
     {
-        var values = new List<JsonNode>();
-
-        foreach (var name in ReportableVehicleTypes.Names())
-        {
-            values.Add(JsonValue.Create(name)!);
-        }
-
-        return values;
+        return ReportableVehicleTypes.Names().Select(name => (JsonNode)JsonValue.Create(name)!).ToList();
     }
 }

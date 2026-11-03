@@ -82,15 +82,14 @@ public sealed class TollController : ApiControllerBase
             return MapValidationProblem(modelState);
         }
 
-        var result = await _tollService.GetDailyTollAsync(
-            request.RegistrationNumber, request.Date, cancellationToken);
+        var registrationNumber = RegistrationNumbers.Normalize(request.RegistrationNumber);
+        var result = await _tollService.GetDailyTollAsync(registrationNumber, request.Date, cancellationToken);
         if (!result.IsSuccess)
         {
             return MapErrorResponse(result);
         }
 
-        var normalizedRegNr = RegistrationNumbers.Normalize(request.RegistrationNumber);
-        return Ok(DailyTollMapper.ToDailyTollResponse(normalizedRegNr, request.Date, result.Value!));
+        return Ok(DailyTollMapper.ToDailyTollResponse(registrationNumber, request.Date, result.Value!));
     }
 
     private static TollPassage ToTollPassage(TollPassageToRecord passage)

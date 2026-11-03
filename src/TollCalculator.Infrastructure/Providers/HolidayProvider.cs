@@ -45,19 +45,13 @@ internal sealed class HolidayProvider : IHolidayProvider
         }
     }
 
-    private Holiday[] ResolveHolidays(int year)
+    private static Holiday[] ResolveHolidays(int year)
     {
-        var publicHolidays = DateSystem.GetPublicHolidays(year, Sweden);
-        var holidays = new List<Holiday>();
-
-        foreach (var publicHoliday in publicHolidays)
-        {
-            holidays.Add(Holiday.Create(DateOnly.FromDateTime(publicHoliday.Date), publicHoliday.LocalName));
-        }
-
-        var ordered = holidays.ToArray();
-        Array.Sort(ordered, (left, right) => left.Date.CompareTo(right.Date));
-
-        return ordered;
+        return
+        [
+            .. DateSystem.GetPublicHolidays(year, Sweden)
+                .Select(publicHoliday => Holiday.Create(DateOnly.FromDateTime(publicHoliday.Date), publicHoliday.LocalName))
+                .OrderBy(holiday => holiday.Date)
+        ];
     }
 }

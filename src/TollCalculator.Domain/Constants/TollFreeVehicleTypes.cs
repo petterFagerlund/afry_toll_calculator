@@ -16,6 +16,6 @@ public static class TollFreeVehicleTypes
 
     public static bool Contains(VehicleType vehicleType)
     {
-        return Array.IndexOf(All, vehicleType) >= 0;
+        return All.Contains(vehicleType);
     }
 }

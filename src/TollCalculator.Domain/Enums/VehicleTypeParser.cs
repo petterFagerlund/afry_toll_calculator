@@ -11,12 +11,7 @@ public static class VehicleTypeParser
             return false;
         }
 
-        if (!Enum.TryParse(value.Trim(), ignoreCase: true, out VehicleType parsed))
-        {
-            return false;
-        }
-
-        if (parsed == VehicleType.Unknown)
+        if (!Enum.TryParse(value.Trim(), ignoreCase: true, out VehicleType parsed) || parsed == VehicleType.Unknown)
         {
             return false;
         }

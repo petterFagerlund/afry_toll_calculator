@@ -21,21 +21,6 @@ internal sealed class TollFreeDateService : ITollFreeDateService
             return ApplicationResult<bool>.Success(true);
         }
 
-        var holidays = _holidayProvider.GetHolidays(date.Year);
-
-        if (!holidays.IsSuccess)
-        {
-            return ApplicationResult<bool>.Error(holidays.ErrorMessage!);
-        }
-
-        foreach (var holiday in holidays.Value!)
-        {
-            if (holiday.Date == date)
-            {
-                return ApplicationResult<bool>.Success(true);
-            }
-        }
-
-        return ApplicationResult<bool>.Success(false);
+        return _holidayProvider.GetHolidays(date.Year).Map(holidays => holidays.Any(holiday => holiday.Date == date));
     }
 }

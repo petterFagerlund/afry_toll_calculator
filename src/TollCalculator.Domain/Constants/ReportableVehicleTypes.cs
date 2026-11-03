@@ -8,25 +8,11 @@ namespace TollCalculator.Domain.Constants;
 /// </summary>
 public static class ReportableVehicleTypes
 {
-    public static readonly VehicleType[] All = BuildAll();
+    public static readonly VehicleType[] All =
+        [.. Enum.GetValues<VehicleType>().Where(vehicleType => vehicleType != VehicleType.Unknown)];
 
     public static string[] Names()
     {
         return Array.ConvertAll(All, vehicleType => vehicleType.ToString());
-    }
-
-    private static VehicleType[] BuildAll()
-    {
-        var reportable = new List<VehicleType>();
-
-        foreach (var vehicleType in Enum.GetValues<VehicleType>())
-        {
-            if (vehicleType != VehicleType.Unknown)
-            {
-                reportable.Add(vehicleType);
-            }
-        }
-
-        return [.. reportable];
     }
 }
